@@ -37,7 +37,7 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
   };
 
   return (
-    <header className="flex items-center h-16 px-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="relative z-[30] flex items-center h-16 px-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* Mobile menu toggle */}
       <Button 
         variant="ghost" 

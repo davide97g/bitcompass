@@ -128,6 +128,35 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
               );
             }
 
+            if (entity.type === 'automation') {
+              return (
+                <Card 
+                  key={entity.id} 
+                  className="cursor-pointer hover:bg-accent transition-colors border-primary/20"
+                  onClick={() => navigate(`/automations/${entity.id}`)}
+                >
+                  <CardContent className="p-3">
+                    <p className="font-medium text-sm mb-1">{entity.data.title}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                      {entity.data.description}
+                    </p>
+                    {entity.data.benefits?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {entity.data.benefits.slice(0, 2).map((b: string) => (
+                          <span key={b} className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                            {b}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <Button variant="default" size="sm" className="w-full gap-1">
+                      Use this automation <ArrowRight className="w-3 h-3" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            }
+
             return null;
           })}
         </div>

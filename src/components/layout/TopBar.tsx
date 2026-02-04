@@ -73,8 +73,8 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
         )}
       </div>
 
-      {/* User avatar */}
-      <div className="flex items-center gap-3 ml-4">
+      {/* User avatar - pushed to top right */}
+      <div className="flex items-center gap-3 ml-auto shrink-0">
         <Avatar className="w-9 h-9 cursor-pointer ring-2 ring-transparent hover:ring-primary/20 transition-all">
           <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" />
           <AvatarFallback>JD</AvatarFallback>

@@ -50,6 +50,32 @@ export interface Project {
   endDate?: string;
 }
 
+export interface AutomationStep {
+  order: number;
+  title: string;
+  description: string;
+}
+
+export interface Automation {
+  id: string;
+  title: string;
+  description: string;
+  category: 'onboarding' | 'deployment' | 'monitoring' | 'notifications' | 'data-sync' | 'development' | 'other';
+  steps: AutomationStep[];
+  videoThumbnail: string;
+  triggerLabel?: string;
+  /** Step order numbers (1-based) where AI is used to speed up the flow */
+  stepsWithAI?: number[];
+  /** Productivity benefits, e.g. "-30% writing test time", "+50% coverage" */
+  benefits?: string[];
+  /** Person IDs of authors (clickable on card/detail; shown on person detail page) */
+  authors?: string[];
+  /** Dev automations: link to GitHub repo (workflows, scripts). Mock URL. */
+  githubUrl?: string;
+  /** Non-dev automations: optional doc link (Google Drive, Word, PDF). Mock URL. */
+  docLink?: string;
+}
+
 // People data
 export const people: Person[] = [
   {
@@ -335,16 +361,212 @@ export const projects: Project[] = [
   },
 ];
 
+// Automations data
+export const automations: Automation[] = [
+  {
+    id: 'auto1',
+    title: 'New Hire Onboarding',
+    description: 'Automatically provision accounts, send welcome emails, and add new team members to the right channels and tools.',
+    category: 'onboarding',
+    triggerLabel: 'New user in HR system',
+    videoThumbnail: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=450&fit=crop',
+    authors: [],
+    docLink: 'https://drive.google.com/file/d/1abc-onboarding-runbook/view?usp=sharing',
+    steps: [
+      { order: 1, title: 'Detect new hire', description: 'Webhook triggers when a new employee is added to the HR system.' },
+      { order: 2, title: 'Create accounts', description: 'Provision Slack, Google Workspace, and internal tools via APIs.' },
+      { order: 3, title: 'Send welcome pack', description: 'Email welcome letter and onboarding checklist to the new hire.' },
+      { order: 4, title: 'Add to channels', description: 'Add user to team Slack channels and assign onboarding buddy.' },
+    ],
+  },
+  {
+    id: 'auto2',
+    title: 'Staging to Production Deploy',
+    description: 'Run tests on staging, then promote to production with approval and automatic rollback on failure.',
+    category: 'deployment',
+    triggerLabel: 'Merge to main',
+    videoThumbnail: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=450&fit=crop',
+    authors: [],
+    docLink: 'https://docs.google.com/document/d/2def-deploy-playbook/edit',
+    steps: [
+      { order: 1, title: 'Build & test', description: 'CI runs unit and integration tests on the new commit.' },
+      { order: 2, title: 'Deploy to staging', description: 'Deploy to staging environment and run E2E tests.' },
+      { order: 3, title: 'Approval gate', description: 'Notify team lead; deployment proceeds after approval or timeout.' },
+      { order: 4, title: 'Production deploy', description: 'Deploy to production with health checks and automatic rollback on failure.' },
+    ],
+  },
+  {
+    id: 'auto3',
+    title: 'Alert Triage & Escalation',
+    description: 'When an alert fires, enrich with context, notify the right on-call engineer, and escalate if unresolved.',
+    category: 'monitoring',
+    triggerLabel: 'PagerDuty alert',
+    videoThumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=450&fit=crop',
+    authors: [],
+    docLink: 'https://drive.google.com/file/d/3ghi-alert-runbook.pdf/view',
+    steps: [
+      { order: 1, title: 'Receive alert', description: 'PagerDuty sends incident to this workflow.' },
+      { order: 2, title: 'Enrich context', description: 'Fetch recent deploys, logs, and metrics for the affected service.' },
+      { order: 3, title: 'Notify on-call', description: 'Send Slack message and push notification to the current on-call engineer.' },
+      { order: 4, title: 'Escalate if needed', description: 'If not acknowledged in 15 min, escalate to team lead and create Jira ticket.' },
+    ],
+  },
+  {
+    id: 'auto4',
+    title: 'PR Review Reminders',
+    description: 'Remind reviewers when PRs are waiting, and ping the author when reviews are complete.',
+    category: 'notifications',
+    triggerLabel: 'PR opened or updated',
+    videoThumbnail: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=450&fit=crop',
+    authors: [],
+    docLink: 'https://docs.google.com/document/d/4jkl-pr-reminders-setup/edit',
+    steps: [
+      { order: 1, title: 'PR created', description: 'GitHub webhook fires when a PR is opened or new commits are pushed.' },
+      { order: 2, title: 'Assign reviewers', description: 'Auto-assign reviewers based on code ownership or round-robin.' },
+      { order: 3, title: 'Remind reviewers', description: 'Send Slack reminder after 24h if PR has no reviews.' },
+      { order: 4, title: 'Notify author', description: 'When all reviews are done, notify the author to address feedback or merge.' },
+    ],
+  },
+  {
+    id: 'auto5',
+    title: 'Daily Sync: CRM to Analytics',
+    description: 'Sync customer and deal data from Salesforce to the data warehouse every night for reporting.',
+    category: 'data-sync',
+    triggerLabel: 'Scheduled 2am UTC',
+    videoThumbnail: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=450&fit=crop',
+    authors: [],
+    docLink: 'https://drive.google.com/file/d/5mno-crm-sync-spec.docx/view',
+    steps: [
+      { order: 1, title: 'Extract from Salesforce', description: 'Query changed accounts, contacts, and opportunities since last run.' },
+      { order: 2, title: 'Transform', description: 'Map fields, deduplicate, and apply business rules.' },
+      { order: 3, title: 'Load to warehouse', description: 'Upsert into BigQuery tables used by BI tools.' },
+      { order: 4, title: 'Notify on failure', description: 'If any step fails, send alert to data team and retry once.' },
+    ],
+  },
+  {
+    id: 'auto6',
+    title: 'Customer Support Ticket Routing',
+    description: 'Route incoming support tickets to the right team based on product and priority.',
+    category: 'other',
+    triggerLabel: 'New ticket in Zendesk',
+    videoThumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=450&fit=crop',
+    authors: [],
+    docLink: 'https://docs.google.com/document/d/6pqr-ticket-routing-guide/edit',
+    steps: [
+      { order: 1, title: 'Parse ticket', description: 'Extract product, priority, and customer tier from the ticket.' },
+      { order: 2, title: 'Match rules', description: 'Apply routing rules (e.g. billing → finance, bug → engineering).' },
+      { order: 3, title: 'Assign queue', description: 'Add ticket to the correct team queue in Zendesk.' },
+      { order: 4, title: 'Slack notification', description: 'Post in the team channel with ticket summary and link.' },
+    ],
+  },
+  // Developer-focused automations
+  {
+    id: 'auto7',
+    title: 'Automatic Translations',
+    description: 'When new or updated copy is merged, extract translation keys, send to translation service, and open a PR with updated locale files.',
+    category: 'development',
+    triggerLabel: 'Merge to main (i18n paths)',
+    videoThumbnail: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=800&h=450&fit=crop',
+    githubUrl: 'https://github.com/company-compass/automation-i18n',
+    stepsWithAI: [2, 3],
+    benefits: ['-40% time on i18n updates', '+60% locale coverage', '-50% manual translation requests'],
+    authors: ['p1', 'p6'],
+    steps: [
+      { order: 1, title: 'Detect i18n changes', description: 'CI detects changes under locales/ or to translation keys in code.' },
+      { order: 2, title: 'Extract new keys', description: 'AI extracts missing keys and suggests context for translators; builds payload for translation API.' },
+      { order: 3, title: 'Fetch translations', description: 'AI-assisted translation service (e.g. Lokalise, Phrase) for configured target locales.' },
+      { order: 4, title: 'Open translation PR', description: 'Create a branch, update JSON/YAML locale files, and open PR for review.' },
+    ],
+  },
+  {
+    id: 'auto8',
+    title: 'E2E Assistant',
+    description: 'On PR open or test failure, suggest or generate E2E tests for changed flows and run them in a sandbox environment.',
+    category: 'development',
+    triggerLabel: 'PR opened or E2E failure',
+    videoThumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=450&fit=crop',
+    githubUrl: 'https://github.com/company-compass/e2e-assistant-workflow',
+    stepsWithAI: [1, 2, 3],
+    benefits: ['-30% writing test time', '+50% E2E coverage', '-60% flaky test triage time'],
+    authors: ['p1', 'p6'],
+    steps: [
+      { order: 1, title: 'Analyze changed code', description: 'AI parses PR diff to identify affected routes, components, and user flows.' },
+      { order: 2, title: 'Suggest test scenarios', description: 'AI suggests E2E scenarios (Playwright/Cypress) for critical paths.' },
+      { order: 3, title: 'Generate or run tests', description: 'AI generates test skeleton; run existing and new E2E in sandbox.' },
+      { order: 4, title: 'Post results to PR', description: 'Comment on PR with test results, coverage delta, and links to artifacts.' },
+    ],
+  },
+  {
+    id: 'auto9',
+    title: 'Autocomplete Test Data Forms',
+    description: 'When a developer focuses a form in dev/staging, suggest realistic test data and one-click fill for all fields.',
+    category: 'development',
+    triggerLabel: 'Form focus in dev/staging',
+    videoThumbnail: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=450&fit=crop',
+    githubUrl: 'https://github.com/company-compass/form-test-data-extension',
+    stepsWithAI: [2, 3],
+    benefits: ['-45% form testing time', '+35% test data variety', 'Fewer invalid submissions'],
+    authors: ['p1', 'p4'],
+    steps: [
+      { order: 1, title: 'Detect form context', description: 'Browser extension or dev overlay detects form in a dev/staging origin.' },
+      { order: 2, title: 'Infer field types', description: 'AI uses labels, placeholders, and input types to map fields to data kinds (email, name, etc.).' },
+      { order: 3, title: 'Generate test data', description: 'AI fills from Faker-like library or team-defined fixtures (e.g. valid VAT, addresses).' },
+      { order: 4, title: 'One-click apply', description: 'Developer clicks "Fill test data"; form is populated and optionally submitted for quick checks.' },
+    ],
+  },
+  {
+    id: 'auto10',
+    title: 'SonarQube Issue Autofix',
+    description: 'When SonarQube reports new issues on a branch, attempt automatic fixes and push a follow-up commit or comment with suggestions.',
+    category: 'development',
+    triggerLabel: 'SonarQube quality gate',
+    videoThumbnail: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=450&fit=crop',
+    githubUrl: 'https://github.com/company-compass/sonarqube-autofix-action',
+    stepsWithAI: [2, 3],
+    benefits: ['-55% time fixing code smells', '+25% auto-fixed issues', 'Faster quality gate pass'],
+    authors: ['p4', 'p5'],
+    steps: [
+      { order: 1, title: 'Fetch SonarQube report', description: 'After analysis, retrieve new issues (bugs, vulnerabilities, code smells) for the branch.' },
+      { order: 2, title: 'Classify fixable issues', description: 'AI filters issues that have known autofix patterns and suggests safe fixes.' },
+      { order: 3, title: 'Apply fixes', description: 'LLM-assisted patches fix safe issues; run linter/tests to validate.' },
+      { order: 4, title: 'Push or comment', description: 'Push a commit with fixes or post a PR comment with suggested patches and links to Sonar.' },
+    ],
+  },
+  {
+    id: 'auto11',
+    title: 'Daily Recap Summary',
+    description: 'Every morning, aggregate commits, PRs, reviews, and deploy activity into a short daily recap and post it in the team channel.',
+    category: 'development',
+    triggerLabel: 'Scheduled 8:00 AM',
+    videoThumbnail: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=450&fit=crop',
+    githubUrl: 'https://github.com/company-compass/daily-recap-workflow',
+    stepsWithAI: [2, 3],
+    benefits: ['-70% time reading updates', '+40% team awareness', 'Fewer missed follow-ups'],
+    authors: ['p2', 'p6'],
+    steps: [
+      { order: 1, title: 'Collect activity', description: 'Query GitHub/GitLab and CI for last 24h: merges, open PRs, reviews, deploys, failed builds.' },
+      { order: 2, title: 'Build summary', description: 'AI summarizes by repo and author; highlights blocked PRs, new bugs, and success metrics.' },
+      { order: 3, title: 'Generate digest', description: 'AI formats a short markdown or Slack message with sections and links.' },
+      { order: 4, title: 'Post to channel', description: 'Send daily recap to #engineering or team-specific Slack channel.' },
+    ],
+  },
+];
+
 // Helper functions to get related data
 export const getPersonById = (id: string) => people.find(p => p.id === id);
 export const getTopicById = (id: string) => topics.find(t => t.id === id);
 export const getProblemById = (id: string) => problems.find(p => p.id === id);
 export const getProjectById = (id: string) => projects.find(p => p.id === id);
+export const getAutomationById = (id: string) => automations.find(a => a.id === id);
 
 export const getPersonsByIds = (ids: string[]) => ids.map(id => getPersonById(id)).filter(Boolean) as Person[];
 export const getTopicsByIds = (ids: string[]) => ids.map(id => getTopicById(id)).filter(Boolean) as Topic[];
 export const getProblemsByIds = (ids: string[]) => ids.map(id => getProblemById(id)).filter(Boolean) as Problem[];
 export const getProjectsByIds = (ids: string[]) => ids.map(id => getProjectById(id)).filter(Boolean) as Project[];
+export const getAutomationsByIds = (ids: string[]) => ids.map(id => getAutomationById(id)).filter(Boolean) as Automation[];
+
+export const getAutomationsByAuthor = (personId: string) =>
+  automations.filter((a) => a.authors?.includes(personId));
 
 // Search function
 export const searchAll = (query: string) => {
@@ -375,11 +597,19 @@ export const searchAll = (query: string) => {
     p.techStack.some(t => t.toLowerCase().includes(q))
   );
 
+  const matchedAutomations = automations.filter(a =>
+    a.title.toLowerCase().includes(q) ||
+    a.description.toLowerCase().includes(q) ||
+    a.category.toLowerCase().includes(q) ||
+    a.steps.some(s => s.title.toLowerCase().includes(q) || s.description.toLowerCase().includes(q))
+  );
+
   return {
     people: matchedPeople,
     topics: matchedTopics,
     problems: matchedProblems,
     projects: matchedProjects,
-    hasResults: matchedPeople.length > 0 || matchedTopics.length > 0 || matchedProblems.length > 0 || matchedProjects.length > 0,
+    automations: matchedAutomations,
+    hasResults: matchedPeople.length > 0 || matchedTopics.length > 0 || matchedProblems.length > 0 || matchedProjects.length > 0 || matchedAutomations.length > 0,
   };
 };

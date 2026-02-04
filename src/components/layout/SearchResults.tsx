@@ -1,6 +1,5 @@
-import { User, Lightbulb, AlertCircle, FolderKanban } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { Person, Topic, Problem, Project } from '@/data/mockData';
+import { User, Lightbulb, AlertCircle, FolderKanban, Workflow } from 'lucide-react';
+import type { Person, Topic, Problem, Project, Automation } from '@/data/mockData';
 
 interface SearchResultsProps {
   results: {
@@ -8,6 +7,7 @@ interface SearchResultsProps {
     topics: Topic[];
     problems: Problem[];
     projects: Project[];
+    automations: Automation[];
   };
   onResultClick: (type: string, id: string) => void;
   onClose: () => void;
@@ -19,6 +19,7 @@ export function SearchResults({ results, onResultClick, onClose }: SearchResults
     { key: 'topics', title: 'Topics', items: results.topics, icon: Lightbulb, type: 'topics' },
     { key: 'problems', title: 'Problems', items: results.problems, icon: AlertCircle, type: 'problems' },
     { key: 'projects', title: 'Projects', items: results.projects, icon: FolderKanban, type: 'projects' },
+    { key: 'automations', title: 'Automations', items: results.automations, icon: Workflow, type: 'automations' },
   ];
 
   return (
@@ -50,7 +51,7 @@ export function SearchResults({ results, onResultClick, onClose }: SearchResults
                         {'role' in item && (
                           <p className="text-xs text-muted-foreground truncate">{item.role}</p>
                         )}
-                        {'description' in item && (
+                        {('description' in item && item.description) && (
                           <p className="text-xs text-muted-foreground truncate">{item.description}</p>
                         )}
                       </div>

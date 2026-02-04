@@ -7,7 +7,8 @@ import {
   MessageSquare, 
   ChevronLeft,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Workflow
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ const navItems = [
   { to: '/problems', icon: AlertCircle, label: 'Problems' },
   { to: '/projects', icon: FolderKanban, label: 'Projects' },
   { to: '/people', icon: Users, label: 'People' },
+  { to: '/automations', icon: Workflow, label: 'Automations' },
   { to: '/assistant', icon: MessageSquare, label: 'AI Assistant' },
 ];
 

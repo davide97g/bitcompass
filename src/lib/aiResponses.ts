@@ -1,4 +1,4 @@
-import { people, projects, problems, topics, searchAll } from '@/data/mockData';
+import { people, projects, problems, topics, automations, searchAll } from '@/data/mockData';
 
 export interface AIMessage {
   id: string;
@@ -6,7 +6,7 @@ export interface AIMessage {
   content: string;
   timestamp: Date;
   entities?: {
-    type: 'person' | 'project' | 'problem' | 'topic';
+    type: 'person' | 'project' | 'problem' | 'topic' | 'automation';
     id: string;
     data: any;
   }[];
@@ -18,7 +18,41 @@ export function generateAIResponse(query: string): AIMessage {
   const searchResults = searchAll(query);
 
   // Check for specific patterns
-  
+
+  // Find / suggest automation (hardcoded use case for quick action)
+  const automationKeywords = [
+    'automation', 'automations', 'workflow', 'find automation', 'suggest automation',
+    'e2e', 'e2e test', 'playwright', 'cypress', 'sonarqube', 'translation', 'i18n',
+    'test data', 'form fill', 'daily recap', 'code quality', 'autofix',
+  ];
+  const wantsAutomation = automationKeywords.some((kw) => q.includes(kw));
+  if (wantsAutomation) {
+    // Map intent to a suggested automation (dev-focused)
+    let suggested: (typeof automations)[0] | undefined;
+    if (q.includes('e2e') || q.includes('test') || q.includes('playwright') || q.includes('cypress')) {
+      suggested = automations.find((a) => a.id === 'auto8'); // E2E Assistant
+    } else if (q.includes('sonar') || q.includes('quality') || q.includes('autofix') || q.includes('code smell')) {
+      suggested = automations.find((a) => a.id === 'auto10'); // SonarQube Issue Autofix
+    } else if (q.includes('translation') || q.includes('i18n') || q.includes('locale')) {
+      suggested = automations.find((a) => a.id === 'auto7'); // Automatic Translations
+    } else if (q.includes('form') || q.includes('test data') || q.includes('fill')) {
+      suggested = automations.find((a) => a.id === 'auto9'); // Autocomplete Test Data Forms
+    } else if (q.includes('recap') || q.includes('daily') || q.includes('summary')) {
+      suggested = automations.find((a) => a.id === 'auto11'); // Daily Recap Summary
+    } else {
+      suggested = automations.find((a) => a.category === 'development'); // First dev automation as default
+    }
+    if (suggested) {
+      return {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `Here's an automation that might help:\n\n${suggested.title}\n${suggested.description}\n\nUse the quick action below to open it.`,
+        timestamp: new Date(),
+        entities: [{ type: 'automation', id: suggested.id, data: suggested }],
+      };
+    }
+  }
+
   // Who knows X?
   if (q.includes('who') && (q.includes('know') || q.includes('expert') || q.includes('skill'))) {
     const skillMatch = findTechInQuery(q);

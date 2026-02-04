@@ -1,12 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, FolderKanban, CheckCircle2, Briefcase } from 'lucide-react';
+import { ArrowLeft, Mail, FolderKanban, CheckCircle2, Briefcase, Workflow } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { TechTag, getTechColor } from '@/components/ui/tech-tag';
-import { getPersonById, getProjectsByIds, getProblemsByIds } from '@/data/mockData';
+import { getPersonById, getProjectsByIds, getProblemsByIds, getAutomationsByAuthor } from '@/data/mockData';
 import { ProjectCard } from '@/components/cards/ProjectCard';
 import { ProblemCard } from '@/components/cards/ProblemCard';
+import { AutomationCard } from '@/components/cards/AutomationCard';
 
 export default function PersonDetailPage() {
   const { id } = useParams();
@@ -26,6 +27,7 @@ export default function PersonDetailPage() {
 
   const workedOnProjects = getProjectsByIds(person.projects);
   const solvedProblems = getProblemsByIds(person.problemsSolved);
+  const authoredAutomations = getAutomationsByAuthor(person.id);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -121,6 +123,21 @@ export default function PersonDetailPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {solvedProblems.map((problem) => (
               <ProblemCard key={problem.id} problem={problem} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Automations (authored) */}
+      {authoredAutomations.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <Workflow className="w-5 h-5" />
+            Automations ({authoredAutomations.length})
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {authoredAutomations.map((automation) => (
+              <AutomationCard key={automation.id} automation={automation} />
             ))}
           </div>
         </div>

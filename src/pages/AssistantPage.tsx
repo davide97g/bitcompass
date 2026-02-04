@@ -12,7 +12,7 @@ export default function AssistantPage() {
     {
       id: '1',
       role: 'assistant',
-      content: "Hi! I'm your Knowledge Hub assistant. I can help you find information about people, projects, problems, and technologies in your organization.\n\nTry asking me things like:\n- \"Who knows Kubernetes?\"\n- \"Which projects use React?\"\n- \"Do we have solutions for performance issues?\"\n- \"Who worked on the Customer Portal?\"",
+      content: "Hi! I'm your Knowledge Hub assistant. I can help you find information about people, projects, problems, technologies, and automations.\n\nTry asking me things like:\n- \"Who knows Kubernetes?\"\n- \"Which projects use React?\"\n- \"Find an automation for E2E tests\"\n- \"Suggest an automation for SonarQube\"\n- \"Who worked on the Customer Portal?\"",
       timestamp: new Date(),
     },
   ]);
@@ -132,7 +132,7 @@ export default function AssistantPage() {
 
       {/* Suggested questions */}
       <div className="mt-4 flex flex-wrap gap-2">
-        {['Who knows React?', 'Show me open problems', 'What projects use GraphQL?'].map((question) => (
+        {['Who knows React?', 'Show me open problems', 'What projects use GraphQL?', 'Find an automation for E2E tests'].map((question) => (
           <Button
             key={question}
             variant="outline"

@@ -36,9 +36,11 @@ program
   .action(runWhoami);
 
 program
-  .command('log')
-  .description('Collect repo summary and git activity, then push to your activity logs')
-  .action(() => runLog().catch(handleErr));
+  .command('log [dates...]')
+  .description(
+    'Collect repo summary and git activity, then push to your activity logs. Optional: bitcompass log YYYY-MM-DD or bitcompass log YYYY-MM-DD YYYY-MM-DD'
+  )
+  .action((dates: string[]) => runLog(dates ?? []).catch(handleErr));
 
 const configCmd = program.command('config').description('Show or set config');
 configCmd.action(runConfigList);

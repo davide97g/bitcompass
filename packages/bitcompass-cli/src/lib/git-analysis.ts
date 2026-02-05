@@ -104,11 +104,64 @@ export const getPeriodForTimeFrame = (timeFrame: TimeFrame): PeriodBounds => {
 };
 
 /**
- * Run git log for the given period and return structured analysis.
+ * Parse an ISO date string (YYYY-MM-DD) to Date at start of day (UTC).
  */
-export const getGitAnalysis = (repoRoot: string, since: string): GitAnalysisResult => {
+const parseDate = (s: string): Date | null => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s.trim());
+  if (!match) return null;
+  const y = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10) - 1;
+  const d = parseInt(match[3], 10);
+  const date = new Date(Date.UTC(y, m, d, 0, 0, 0, 0));
+  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== m || date.getUTCDate() !== d) return null;
+  return date;
+};
+
+/**
+ * Compute period for custom date(s). Single date = that day; two dates = range (inclusive).
+ * period_end is end of last day (23:59:59.999).
+ */
+export const getPeriodForCustomDates = (
+  startDateStr: string,
+  endDateStr?: string
+): PeriodBounds => {
+  const startDate = parseDate(startDateStr);
+  if (!startDate) {
+    throw new Error(`Invalid start date: ${startDateStr}. Use YYYY-MM-DD.`);
+  }
+  let periodEnd: Date;
+  if (endDateStr !== undefined && endDateStr.trim() !== '') {
+    const endDate = parseDate(endDateStr);
+    if (!endDate) throw new Error(`Invalid end date: ${endDateStr}. Use YYYY-MM-DD.`);
+    if (endDate < startDate) throw new Error('End date must be on or after start date.');
+    periodEnd = new Date(endDate);
+    periodEnd.setUTCHours(23, 59, 59, 999);
+  } else {
+    periodEnd = new Date(startDate);
+    periodEnd.setUTCHours(23, 59, 59, 999);
+  }
+  const period_start = new Date(startDate);
+  period_start.setUTCHours(0, 0, 0, 0);
+  const since = period_start.toISOString();
+  return {
+    period_start: period_start.toISOString(),
+    period_end: periodEnd.toISOString(),
+    since,
+  };
+};
+
+/**
+ * Run git log for the given period and return structured analysis.
+ * If until is provided, commits are limited to the range [since, until].
+ */
+export const getGitAnalysis = (
+  repoRoot: string,
+  since: string,
+  until?: string
+): GitAnalysisResult => {
   const format = '%H%x00%s%x00%ci';
-  const logOut = exec(`git log --since="${since}" --format=${format}`, repoRoot);
+  const untilArg = until ? ` --until="${until}"` : '';
+  const logOut = exec(`git log --since="${since}"${untilArg} --format=${format}`, repoRoot);
   const commits: GitCommitInfo[] = [];
   if (logOut) {
     for (const line of logOut.split('\n')) {
@@ -123,7 +176,10 @@ export const getGitAnalysis = (repoRoot: string, since: string): GitAnalysisResu
     }
   }
 
-  const shortstatOut = exec(`git log --since="${since}" --shortstat --format=`, repoRoot);
+  const shortstatOut = exec(
+    `git log --since="${since}"${untilArg} --shortstat --format=`,
+    repoRoot
+  );
   let insertions = 0;
   let deletions = 0;
   if (shortstatOut) {

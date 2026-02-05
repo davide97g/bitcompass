@@ -9,6 +9,7 @@ import {
   getRepoSummary,
   getGitAnalysis,
   getPeriodForTimeFrame,
+  getPeriodForCustomDates,
 } from '../lib/git-analysis.js';
 
 /**
@@ -37,7 +38,61 @@ export const buildAndPushActivityLog = async (
   return { id: created.id };
 };
 
-export const runLog = async (): Promise<void> => {
+/**
+ * Push an activity log for a custom date or date range. timeFrame is used for display (day/week/month).
+ */
+export const buildAndPushActivityLogWithPeriod = async (
+  period: { period_start: string; period_end: string; since: string },
+  timeFrame: TimeFrame,
+  cwd: string
+): Promise<{ id: string }> => {
+  const repoRoot = getRepoRoot(cwd);
+  if (!repoRoot) {
+    throw new Error('Not a git repository. Run from a project with git or pass a valid repo path.');
+  }
+  const repo_summary = getRepoSummary(repoRoot);
+  const git_analysis = getGitAnalysis(repoRoot, period.since, period.period_end);
+  const payload: ActivityLogInsert = {
+    time_frame: timeFrame,
+    period_start: period.period_start,
+    period_end: period.period_end,
+    repo_summary: repo_summary as unknown as Record<string, unknown>,
+    git_analysis: git_analysis as unknown as Record<string, unknown>,
+  };
+  const created = await insertActivityLog(payload);
+  return { id: created.id };
+};
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const isDateArg = (s: string): boolean => ISO_DATE.test(s.trim());
+
+/** Parse argv for log: [start] or [start, end] or [start, '-', end]. Returns { start, end } or null for interactive. */
+export const parseLogArgs = (args: string[]): { start: string; end?: string } | null => {
+  const trimmed = args.map((a) => a.trim()).filter(Boolean);
+  if (trimmed.length === 0) return null;
+  if (trimmed.length === 1 && isDateArg(trimmed[0])) return { start: trimmed[0] };
+  if (trimmed.length === 2 && isDateArg(trimmed[0]) && isDateArg(trimmed[1])) {
+    return { start: trimmed[0], end: trimmed[1] };
+  }
+  if (trimmed.length === 3 && isDateArg(trimmed[0]) && trimmed[1] === '-' && isDateArg(trimmed[2])) {
+    return { start: trimmed[0], end: trimmed[2] };
+  }
+  throw new Error(
+    'Usage: bitcompass log [YYYY-MM-DD] or bitcompass log [YYYY-MM-DD] [YYYY-MM-DD] or bitcompass log [YYYY-MM-DD] - [YYYY-MM-DD]'
+  );
+};
+
+/** Choose time_frame for a custom range by span (day ≤ 1, week ≤ 7, else month). */
+const timeFrameForRange = (start: string, end: string): TimeFrame => {
+  const a = new Date(start);
+  const b = new Date(end);
+  const days = Math.round((b.getTime() - a.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+  if (days <= 1) return 'day';
+  if (days <= 7) return 'week';
+  return 'month';
+};
+
+export const runLog = async (args: string[] = []): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
     process.exit(1);
@@ -48,6 +103,16 @@ export const runLog = async (): Promise<void> => {
     console.error(chalk.red('Not a git repository. Run this command from a project with git.'));
     process.exit(1);
   }
+
+  const parsed = parseLogArgs(args);
+  if (parsed) {
+    const period = getPeriodForCustomDates(parsed.start, parsed.end);
+    const timeFrame = parsed.end ? timeFrameForRange(parsed.start, parsed.end) : 'day';
+    const result = await buildAndPushActivityLogWithPeriod(period, timeFrame, cwd);
+    console.log(chalk.green('Log saved.'), chalk.dim(result.id));
+    return;
+  }
+
   const choice = await inquirer.prompt<{ time_frame: TimeFrame }>([
     {
       name: 'time_frame',

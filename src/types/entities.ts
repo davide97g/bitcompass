@@ -102,3 +102,38 @@ export interface AutomationInsert {
   github_url?: string | null;
   doc_link?: string | null;
 }
+
+export type ActivityLogTimeFrame = 'day' | 'week' | 'month';
+
+export interface ActivityLogRepoSummary {
+  remote_url?: string;
+  branch?: string;
+  repo_path?: string;
+}
+
+export interface ActivityLogGitAnalysis {
+  commit_count?: number;
+  commits?: Array<{ hash?: string; subject?: string; date?: string }>;
+  files_changed?: { insertions?: number; deletions?: number };
+}
+
+export interface ActivityLogRow {
+  id: string;
+  user_id: string;
+  time_frame: ActivityLogTimeFrame;
+  period_start: string;
+  period_end: string;
+  repo_summary: ActivityLogRepoSummary;
+  git_analysis: ActivityLogGitAnalysis;
+  created_at: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  timeFrame: ActivityLogTimeFrame;
+  periodStart: string;
+  periodEnd: string;
+  repoSummary: ActivityLogRepoSummary;
+  gitAnalysis: ActivityLogGitAnalysis;
+  createdAt: string;
+}

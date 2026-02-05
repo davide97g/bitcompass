@@ -11,7 +11,8 @@ import {
   Workflow,
   PlusCircle,
   BookMarked,
-  Terminal
+  Terminal,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ const navItems = [
   { to: '/people', icon: Users, label: 'People' },
   { to: '/automations', icon: Workflow, label: 'Automations' },
   { to: '/rules', icon: BookMarked, label: 'Rules & solutions' },
+  { to: '/logs', icon: History, label: 'Activity logs' },
   { to: '/cli', icon: Terminal, label: 'CLI' },
   { to: '/create', icon: PlusCircle, label: 'Create entry' },
   { to: '/assistant', icon: MessageSquare, label: 'AI Assistant' },

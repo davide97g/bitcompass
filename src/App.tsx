@@ -18,6 +18,8 @@ import ProblemDetailPage from "./pages/ProblemDetailPage";
 import ProblemsPage from "./pages/ProblemsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
+import ActivityLogDetailPage from "./pages/ActivityLogDetailPage";
+import ActivityLogsPage from "./pages/ActivityLogsPage";
 import RuleDetailPage from "./pages/RuleDetailPage";
 import RulesPage from "./pages/RulesPage";
 import TopicDetailPage from "./pages/TopicDetailPage";
@@ -57,6 +59,8 @@ const App = () => (
             <Route path="/automations/:id" element={<AutomationDetailPage />} />
             <Route path="/rules" element={<RulesPage />} />
             <Route path="/rules/:id" element={<RuleDetailPage />} />
+            <Route path="/logs" element={<ActivityLogsPage />} />
+            <Route path="/logs/:id" element={<ActivityLogDetailPage />} />
             <Route path="/cli" element={<CLIPage />} />
             <Route path="/assistant" element={<AssistantPage />} />
             <Route path="/create" element={<CreateEntryPage />} />

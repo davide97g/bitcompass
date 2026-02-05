@@ -102,24 +102,6 @@ export default function CLIPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Configure</h2>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground mb-3">
-              Point the CLI at your Supabase project (same as this web app).
-            </p>
-            <pre className="rounded-lg border bg-muted/50 p-4 text-sm font-mono overflow-x-auto whitespace-pre">
-{`bitcompass config set supabaseUrl https://YOUR_PROJECT.supabase.co
-bitcompass config set supabaseAnonKey YOUR_ANON_KEY`}
-            </pre>
-            <p className="text-sm text-muted-foreground mt-2">
-              Or set env vars: <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">BITCOMPASS_SUPABASE_URL</code>, <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">BITCOMPASS_SUPABASE_ANON_KEY</code>.
-            </p>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="space-y-3">
         <h2 className="text-lg font-semibold">Login</h2>
         <Card>
           <CardContent className="pt-6">

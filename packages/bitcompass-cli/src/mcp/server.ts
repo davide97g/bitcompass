@@ -1,6 +1,8 @@
 import { AUTH_REQUIRED_MSG, insertRule, searchRules } from '../api/client.js';
+import { buildAndPushActivityLog } from '../commands/log.js';
 import { loadCredentials } from '../auth/config.js';
 import type { RuleInsert } from '../types.js';
+import type { TimeFrame } from '../lib/git-analysis.js';
 
 /** When token is missing, we fail initialize so Cursor shows "Needs authentication" (yellow) instead of success (green). */
 const NEEDS_AUTH_ERROR_MESSAGE = 'Needs authentication';
@@ -93,6 +95,18 @@ function createStdioServer(): {
                     technologies: { type: 'array', items: { type: 'string' } },
                   },
                   required: ['kind', 'title', 'body'],
+                },
+              },
+              {
+                name: 'create-activity-log',
+                description: "Collect a summary of the repository and git activity for the chosen period, then push the log to the user's private activity logs. Requires a git repository; if repo_path is not a git repo, returns an error. Ask the user which time frame they want: day, week, or month.",
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    time_frame: { type: 'string', enum: ['day', 'week', 'month'], description: 'Time period for the activity log' },
+                    repo_path: { type: 'string', description: 'Path to the git repo (e.g. workspace root). If omitted, uses current working directory.' },
+                  },
+                  required: ['time_frame'],
                 },
               },
             ],
@@ -241,6 +255,21 @@ function createStdioServer(): {
       return { id: created.id, title: created.title, success: true };
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to publish rule.';
+      return { error: msg };
+    }
+  });
+  handlers.set('create-activity-log', async (args: ToolArgs) => {
+    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
+    const timeFrame = (args.time_frame as TimeFrame) ?? 'day';
+    if (timeFrame !== 'day' && timeFrame !== 'week' && timeFrame !== 'month') {
+      return { error: 'time_frame must be day, week, or month.' };
+    }
+    const repoPath = typeof args.repo_path === 'string' ? args.repo_path : process.cwd();
+    try {
+      const result = await buildAndPushActivityLog(timeFrame, repoPath);
+      return { success: true, id: result.id };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to create activity log.';
       return { error: msg };
     }
   });

@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { loadConfig, loadCredentials } from '../auth/config.js';
 import { DEFAULT_SUPABASE_ANON_KEY, DEFAULT_SUPABASE_URL } from '../auth/defaults.js';
-import type { Rule, RuleInsert } from '../types.js';
+import type { ActivityLog, ActivityLogInsert, Rule, RuleInsert } from '../types.js';
 
 /** Shown when MCP is used before logging in; instructs user to login and restart MCP. */
 export const AUTH_REQUIRED_MSG =
@@ -128,4 +128,16 @@ export const deleteRule = async (id: string): Promise<void> => {
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   const { error } = await client.from('rules').delete().eq('id', id);
   if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
+};
+
+export const insertActivityLog = async (payload: ActivityLogInsert): Promise<ActivityLog> => {
+  const client = getSupabaseClient();
+  if (!client) throw new Error(NOT_CONFIGURED_MSG);
+  const { data, error } = await client
+    .from('activity_logs')
+    .insert(payload)
+    .select()
+    .single();
+  if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
+  return data as ActivityLog;
 };

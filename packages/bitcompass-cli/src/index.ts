@@ -8,6 +8,7 @@ import { runConfigGet, runConfigList, runConfigSet } from './commands/config-cmd
 import { runLogin } from './commands/login.js';
 import { runLogout } from './commands/logout.js';
 import { runMcpStart, runMcpStatus } from './commands/mcp.js';
+import { runLog } from './commands/log.js';
 import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './commands/rules.js';
 import { runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
 import { runWhoami } from './commands/whoami.js';
@@ -33,6 +34,11 @@ program
   .command('whoami')
   .description('Show current user (email)')
   .action(runWhoami);
+
+program
+  .command('log')
+  .description('Collect repo summary and git activity, then push to your activity logs')
+  .action(() => runLog().catch(handleErr));
 
 const configCmd = program.command('config').description('Show or set config');
 configCmd.action(runConfigList);

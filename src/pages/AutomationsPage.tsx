@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { automations } from '@/data/mockData';
+import { useEntries } from '@/hooks/use-entries';
 import { PageHeader } from '@/components/ui/page-header';
 import { AutomationCard } from '@/components/cards/AutomationCard';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ const categoryOptions: { value: CategoryFilter; label: string }[] = [
 ];
 
 export default function AutomationsPage() {
+  const { automations } = useEntries();
   const [filter, setFilter] = useState<CategoryFilter>('all');
 
   const filteredAutomations = automations.filter((automation) => {

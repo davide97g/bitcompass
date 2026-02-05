@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { TechTag, getTechColor } from '@/components/ui/tech-tag';
-import { getPersonById, getProjectsByIds, getProblemsByIds, getAutomationsByAuthor } from '@/data/mockData';
+import { getPersonById } from '@/data/mockData';
+import { useEntries } from '@/hooks/use-entries';
 import { ProjectCard } from '@/components/cards/ProjectCard';
 import { ProblemCard } from '@/components/cards/ProblemCard';
 import { AutomationCard } from '@/components/cards/AutomationCard';
@@ -12,6 +13,7 @@ import { AutomationCard } from '@/components/cards/AutomationCard';
 export default function PersonDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { getProjectsByIds, getProblemsByIds, getAutomationsByAuthor } = useEntries();
   const person = getPersonById(id || '');
 
   if (!person) {

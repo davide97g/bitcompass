@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { projects } from '@/data/mockData';
+import { useEntries } from '@/hooks/use-entries';
 import { PageHeader } from '@/components/ui/page-header';
 import { ProjectCard } from '@/components/cards/ProjectCard';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 type StatusFilter = 'all' | 'active' | 'completed' | 'planning' | 'on-hold';
 
 export default function ProjectsPage() {
+  const { projects } = useEntries();
   const [filter, setFilter] = useState<StatusFilter>('all');
 
   const filteredProjects = projects.filter((project) => {

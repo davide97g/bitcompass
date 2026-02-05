@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { problems } from '@/data/mockData';
+import { useEntries } from '@/hooks/use-entries';
 import { PageHeader } from '@/components/ui/page-header';
 import { ProblemCard } from '@/components/cards/ProblemCard';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 type StatusFilter = 'all' | 'open' | 'in-progress' | 'solved';
 
 export default function ProblemsPage() {
+  const { problems } = useEntries();
   const [filter, setFilter] = useState<StatusFilter>('all');
 
   const filteredProblems = problems.filter((problem) => {

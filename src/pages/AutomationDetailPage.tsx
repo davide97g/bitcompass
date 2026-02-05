@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { getAutomationById, getPersonsByIds } from '@/data/mockData';
+import { getPersonsByIds } from '@/data/mockData';
+import { useEntries } from '@/hooks/use-entries';
 import { cn } from '@/lib/utils';
 
 const categoryLabels: Record<string, string> = {
@@ -21,6 +22,7 @@ const categoryLabels: Record<string, string> = {
 export default function AutomationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { getAutomationById } = useEntries();
   const automation = getAutomationById(id || '');
 
   if (!automation) {

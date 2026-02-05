@@ -4,13 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TechTag, getTechColor } from '@/components/ui/tech-tag';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { getProblemById, getProjectsByIds, getPersonsByIds } from '@/data/mockData';
+import { getPersonsByIds } from '@/data/mockData';
+import { useEntries } from '@/hooks/use-entries';
 import { ProjectCard } from '@/components/cards/ProjectCard';
 import { PersonCard } from '@/components/cards/PersonCard';
 
 export default function ProblemDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { getProblemById, getProjectsByIds } = useEntries();
   const problem = getProblemById(id || '');
 
   if (!problem) {

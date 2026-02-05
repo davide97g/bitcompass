@@ -8,7 +8,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Workflow
+  Workflow,
+  PlusCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ const navItems = [
   { to: '/projects', icon: FolderKanban, label: 'Projects' },
   { to: '/people', icon: Users, label: 'People' },
   { to: '/automations', icon: Workflow, label: 'Automations' },
+  { to: '/create', icon: PlusCircle, label: 'Create entry' },
   { to: '/assistant', icon: MessageSquare, label: 'AI Assistant' },
 ];
 

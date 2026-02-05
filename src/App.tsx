@@ -17,6 +17,7 @@ import PersonDetailPage from "./pages/PersonDetailPage";
 import AutomationsPage from "./pages/AutomationsPage";
 import AutomationDetailPage from "./pages/AutomationDetailPage";
 import AssistantPage from "./pages/AssistantPage";
+import CreateEntryPage from "@/pages/CreateEntryPage";
 import NotFound from "./pages/NotFound";
 
 // Layout
@@ -50,6 +51,8 @@ const App = () => (
             <Route path="/automations" element={<AutomationsPage />} />
             <Route path="/automations/:id" element={<AutomationDetailPage />} />
             <Route path="/assistant" element={<AssistantPage />} />
+            <Route path="/create" element={<CreateEntryPage />} />
+            <Route path="/create/:type" element={<CreateEntryPage />} />
           </Route>
           
           {/* Catch-all */}

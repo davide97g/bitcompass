@@ -1,4 +1,4 @@
-import { insertRule, searchRules } from '../api/client.js';
+import { AUTH_REQUIRED_MSG, insertRule, searchRules } from '../api/client.js';
 import { loadCredentials } from '../auth/config.js';
 import type { RuleInsert } from '../types.js';
 
@@ -180,27 +180,33 @@ function createStdioServer(): {
 
   process.stdin.on('data', onData);
 
-  // Register tool implementations
+  // Register tool implementations (search is public; post requires login)
   handlers.set('search-rules', async (args: ToolArgs) => {
-    const creds = loadCredentials();
-    if (!creds?.access_token) return { error: 'Run bitcompass login first.' };
     const query = (args.query as string) ?? '';
     const kind = args.kind as 'rule' | 'solution' | undefined;
     const limit = (args.limit as number) ?? 20;
-    const list = await searchRules(query, { kind, limit });
-    return { rules: list.map((r) => ({ id: r.id, title: r.title, kind: r.kind, snippet: r.body.slice(0, 200) })) };
+    try {
+      const list = await searchRules(query, { kind, limit });
+      return { rules: list.map((r) => ({ id: r.id, title: r.title, kind: r.kind, author: r.author_display_name ?? null, snippet: r.body.slice(0, 200) })) };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Search failed.';
+      return { error: msg };
+    }
   });
   handlers.set('search-solutions', async (args: ToolArgs) => {
-    const creds = loadCredentials();
-    if (!creds?.access_token) return { error: 'Run bitcompass login first.' };
     const query = (args.query as string) ?? '';
     const limit = (args.limit as number) ?? 20;
-    const list = await searchRules(query, { kind: 'solution', limit });
-    return { solutions: list.map((r) => ({ id: r.id, title: r.title, snippet: r.body.slice(0, 200) })) };
+    try {
+      const list = await searchRules(query, { kind: 'solution', limit });
+      return { solutions: list.map((r) => ({ id: r.id, title: r.title, author: r.author_display_name ?? null, snippet: r.body.slice(0, 200) })) };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Search failed.';
+      return { error: msg };
+    }
   });
   handlers.set('post-rules', async (args: ToolArgs) => {
     const creds = loadCredentials();
-    if (!creds?.access_token) return { error: 'Run bitcompass login first.' };
+    if (!creds?.access_token) return { error: AUTH_REQUIRED_MSG };
     const payload: RuleInsert = {
       kind: (args.kind as 'rule' | 'solution') ?? 'rule',
       title: (args.title as string) ?? 'Untitled',
@@ -210,8 +216,13 @@ function createStdioServer(): {
       examples: Array.isArray(args.examples) ? (args.examples as string[]) : undefined,
       technologies: Array.isArray(args.technologies) ? (args.technologies as string[]) : undefined,
     };
-    const created = await insertRule(payload);
-    return { id: created.id, title: created.title, success: true };
+    try {
+      const created = await insertRule(payload);
+      return { id: created.id, title: created.title, success: true };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to publish rule.';
+      return { error: msg };
+    }
   });
 
   return {
@@ -225,5 +236,5 @@ export const startMcpServer = async (): Promise<void> => {
   const server = createStdioServer();
   await server.connect();
   // Do not exit when not logged in: Cursor needs the process alive to complete
-  // the MCP handshake. Tools will return "Run bitcompass login first" when called.
+  // the MCP handshake. Tools return an auth message (run bitcompass login, then restart MCP) when needed.
 };

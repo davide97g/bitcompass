@@ -10,17 +10,14 @@ const MCP_CONFIG = `{
     "bitcompass": {
       "type": "stdio",
       "command": "bitcompass",
-      "args": ["mcp", "start"],
-      "env": {
-        "BITCOMPASS_CONFIG_DIR": "~/.bitcompass"
-      }
+      "args": ["mcp", "start"]
     }
   }
 }`;
 
-/** Base64-encoded BitCompass stdio config for Cursor MCP install deeplink */
+/** Base64-encoded BitCompass stdio config for Cursor MCP install deeplink (no env) */
 const MCP_INSTALL_CONFIG_BASE64 =
-  'eyJ0eXBlIjoic3RkaW8iLCJjb21tYW5kIjoiYml0Y29tcGFzcyIsImFyZ3MiOlsibWNwIiwic3RhcnQiXSwiZW52Ijp7IkJJVENPTVBBU1NfQ09ORklHX0RJUiI6In4vLmJpdGNvbXBhc3MifX0=';
+  'eyJ0eXBlIjoic3RkaW8iLCJjb21tYW5kIjoiYml0Y29tcGFzcyIsImFyZ3MiOlsibWNwIiwic3RhcnQiXX0=';
 
 const ADD_TO_CURSOR_DEEPLINK = `cursor://anysphere.cursor-deeplink/mcp/install?name=bitcompass&config=${encodeURIComponent(MCP_INSTALL_CONFIG_BASE64)}`;
 
@@ -163,7 +160,7 @@ bitcompass config set supabaseAnonKey YOUR_ANON_KEY`}
               Add to Cursor
             </CardTitle>
             <p className="text-sm text-muted-foreground font-normal">
-              Use BitCompass in Cursor. Paste this into Cursor → Settings → Features → MCP → Edit config (or <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.cursor/mcp.json</code>). Run <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">bitcompass login</code> first. Replace <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~</code> with your home path if your environment doesn’t expand it.
+              Use BitCompass in Cursor. Paste this into Cursor → Settings → Features → MCP → Edit config (or <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.cursor/mcp.json</code>). Run <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">bitcompass login</code> first, then restart the MCP server in Cursor if you added it before logging in.
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Button

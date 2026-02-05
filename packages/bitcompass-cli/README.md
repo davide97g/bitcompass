@@ -54,16 +54,13 @@ Add the `bitcompass` entry under `mcpServers`:
     "bitcompass": {
       "type": "stdio",
       "command": "bitcompass",
-      "args": ["mcp", "start"],
-      "env": {
-        "BITCOMPASS_CONFIG_DIR": "~/.bitcompass"
-      }
+      "args": ["mcp", "start"]
     }
   }
 }
 ```
 
-Replace `~` with your full home path if your environment doesn’t expand it. Run `bitcompass login` before using MCP.
+Run `bitcompass login` before using MCP. If you added the MCP before logging in, restart the MCP server in Cursor after logging in.
 
 ### Development (this repo)
 
@@ -73,7 +70,7 @@ This repo includes **`.cursor/mcp.json`** so Cursor points at the local CLI when
 cd packages/bitcompass-cli && npm run build && bitcompass login
 ```
 
-**Manual (local path):** Settings → MCP → stdio, Command **node**, Args **path/to/packages/bitcompass-cli/dist/index.js** **mcp** **start**. Optionally set env or envFile to the CLI `.env`.
+**Manual (local path):** Settings → MCP → stdio, Command **node**, Args **path/to/packages/bitcompass-cli/dist/index.js** **mcp** **start**.
 
 Tools: `search-rules`, `search-solutions`, `post-rules`. Prompts: `share_new_rule`, `share_problem_solution`.
 

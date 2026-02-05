@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "bitcompass": {
-      "command": "bun",
-      "args": ["run", "packages/bitcompass-cli/src/index.ts", "mcp", "start"]
-    }
-  }
-}

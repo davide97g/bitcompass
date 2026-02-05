@@ -10,6 +10,7 @@ export interface Rule {
   examples?: string[];
   technologies?: string[];
   user_id: string;
+  author_display_name?: string | null;
   created_at: string;
   updated_at: string;
 }

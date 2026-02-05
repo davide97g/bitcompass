@@ -17,7 +17,7 @@ import { useRules, useInsertRule } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Rule, RuleInsert } from '@/types/bitcompass';
-import { BookMarked, FileDown, Plus, Search } from 'lucide-react';
+import { BookMarked, FileDown, Plus, Search, User } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
@@ -210,6 +210,12 @@ export default function RulesPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground line-clamp-2">{rule.description || rule.body}</p>
+                {(rule.author_display_name ?? rule.user_id) && (
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground" aria-label="Author">
+                    <User className="h-3.5 w-3.5 shrink-0" />
+                    <span>{rule.author_display_name ?? 'Unknown author'}</span>
+                  </p>
+                )}
                 <div className="mt-3 flex gap-2">
                   <Button variant="ghost" size="sm" asChild>
                     <Link to={`/rules/${rule.id}`}>View</Link>

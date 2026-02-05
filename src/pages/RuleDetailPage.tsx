@@ -17,7 +17,7 @@ import {
 import { useRule, useUpdateRule, useDeleteRule } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
 import type { Rule } from '@/types/bitcompass';
-import { ArrowLeft, FileDown, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileDown, Pencil, Trash2, User } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
@@ -114,6 +114,12 @@ export default function RuleDetailPage() {
         title={editing ? 'Edit rule' : rule.title}
         description={rule.kind === 'solution' ? 'Problem solution' : 'Rule'}
       />
+      {(rule.author_display_name ?? rule.user_id) && (
+        <p className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Author">
+          <User className="h-4 w-4 shrink-0" />
+          <span>{rule.author_display_name ?? 'Unknown author'}</span>
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
           <Link to="/rules">

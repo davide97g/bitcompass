@@ -2,6 +2,7 @@ import { CommandBlock } from '@/components/create/CommandBlock';
 import { DraftEntryCard } from '@/components/create/DraftEntryCard';
 import { JsonPreview } from '@/components/create/JsonPreview';
 import { Button } from '@/components/ui/button';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 import type { Automation, Problem, Project } from '@/data/mockData';
 import type { EntryType } from '@/lib/createEntryMappers';
 import { cn } from '@/lib/utils';
@@ -100,7 +101,7 @@ export function CreateFlowMessage({
     <div className={cn('space-y-3', className)}>
       {message.content && (
         <div className="chat-bubble chat-bubble-assistant">
-          <p className="text-sm whitespace-pre-line">{message.content}</p>
+          <MarkdownContent content={message.content} variant="compact" className="text-sm" />
         </div>
       )}
       {message.blocks?.map((block, index) => {
@@ -113,7 +114,7 @@ export function CreateFlowMessage({
           return (
             <div key={index} className="space-y-2">
               {block.content && (
-                <p className="text-sm text-muted-foreground">{block.content}</p>
+                <MarkdownContent content={block.content} variant="compact" className="text-sm text-muted-foreground" />
               )}
               <JsonPreview raw={block.raw} defaultOpen />
             </div>
@@ -123,7 +124,7 @@ export function CreateFlowMessage({
           return (
             <div key={index} className="space-y-2">
               {block.content && (
-                <p className="text-sm text-muted-foreground">{block.content}</p>
+                <MarkdownContent content={block.content} variant="compact" className="text-sm text-muted-foreground" />
               )}
               <DraftEntryCard type={block.entryType} entry={block.entry} />
             </div>

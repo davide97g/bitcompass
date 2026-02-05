@@ -5,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { TechTag, getTechColor } from '@/components/ui/tech-tag';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { type AIMessage } from '@/lib/aiResponses';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 import { ArrowRight } from 'lucide-react';
 
 interface AssistantMessageProps {
@@ -19,7 +20,7 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
     if (!message.entities || message.entities.length === 0) {
       return (
         <div className="chat-bubble chat-bubble-assistant">
-          <p className="text-sm whitespace-pre-line">{message.content}</p>
+          <MarkdownContent content={message.content} variant="compact" className="text-sm" />
         </div>
       );
     }
@@ -27,7 +28,7 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
     return (
       <div className="space-y-3">
         <div className="chat-bubble chat-bubble-assistant">
-          <p className="text-sm whitespace-pre-line">{message.content}</p>
+          <MarkdownContent content={message.content} variant="compact" className="text-sm" />
         </div>
         
         {/* Entity cards */}

@@ -2,6 +2,10 @@ import { AUTH_REQUIRED_MSG, insertRule, searchRules } from '../api/client.js';
 import { loadCredentials } from '../auth/config.js';
 import type { RuleInsert } from '../types.js';
 
+/** When token is missing, we fail initialize so Cursor shows "Needs authentication" (yellow) instead of success (green). */
+const NEEDS_AUTH_ERROR_MESSAGE = 'Needs authentication';
+const NEEDS_AUTH_ERROR_CODE = -32001; // Server error: auth required
+
 type ToolArgs = Record<string, unknown>;
 
 function createStdioServer(): {
@@ -23,6 +27,22 @@ function createStdioServer(): {
       }
       if (isNotification) return;
       if (msg.method === 'initialize') {
+        const hasToken = Boolean(loadCredentials()?.access_token);
+        if (!hasToken) {
+          send({
+            jsonrpc: '2.0',
+            id,
+            error: {
+              code: NEEDS_AUTH_ERROR_CODE,
+              message: NEEDS_AUTH_ERROR_MESSAGE,
+              data: {
+                action: 'Login',
+                instructions: "Run `bitcompass login` in a terminal, then restart the MCP server in Cursor.",
+              },
+            },
+          });
+          return;
+        }
         send({
           jsonrpc: '2.0',
           id,

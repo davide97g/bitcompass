@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Rule } from '@/types/bitcompass';
 import { ArrowLeft, FileDown, Pencil, Trash2, User } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
   if (format === 'json') {
@@ -185,9 +186,9 @@ export default function RuleDetailPage() {
               </div>
             </div>
           ) : (
-            <div className="prose dark:prose-invert max-w-none">
-              {rule.description && <p className="text-muted-foreground">{rule.description}</p>}
-              <div className="whitespace-pre-wrap">{rule.body}</div>
+            <div>
+              {rule.description && <p className="text-muted-foreground mb-4">{rule.description}</p>}
+              <MarkdownContent content={rule.body} />
             </div>
           )}
         </CardContent>

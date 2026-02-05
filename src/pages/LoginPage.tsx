@@ -1,19 +1,33 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { signInWithGoogle, session } = useAuth();
 
-  const handleGoogleLogin = () => {
+  useEffect(() => {
+    if (isSupabaseConfigured() && session) {
+      const from = (location.state as { from?: string })?.from ?? '/topics';
+      navigate(from, { replace: true });
+    }
+  }, [session, navigate, location.state]);
+
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
-    // Simulate login delay
-    setTimeout(() => {
-      navigate('/topics');
-    }, 800);
+    if (isSupabaseConfigured()) {
+      await signInWithGoogle();
+      // Supabase redirects to Google and back; onAuthStateChange will update session
+    } else {
+      setTimeout(() => navigate('/topics'), 800);
+    }
+    setIsLoading(false);
   };
 
   return (

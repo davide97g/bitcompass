@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
 import { CommandBlock } from '@/components/create/CommandBlock';
-import { JsonPreview } from '@/components/create/JsonPreview';
 import { DraftEntryCard } from '@/components/create/DraftEntryCard';
-import type { Problem, Project, Automation } from '@/data/mockData';
+import { JsonPreview } from '@/components/create/JsonPreview';
+import { Button } from '@/components/ui/button';
+import type { Automation, Problem, Project } from '@/data/mockData';
 import type { EntryType } from '@/lib/createEntryMappers';
 import { cn } from '@/lib/utils';
 

@@ -9,7 +9,9 @@ import {
   ChevronRight,
   Sparkles,
   Workflow,
-  PlusCircle
+  PlusCircle,
+  BookMarked,
+  Terminal
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -25,6 +27,8 @@ const navItems = [
   { to: '/projects', icon: FolderKanban, label: 'Projects' },
   { to: '/people', icon: Users, label: 'People' },
   { to: '/automations', icon: Workflow, label: 'Automations' },
+  { to: '/rules', icon: BookMarked, label: 'Rules & solutions' },
+  { to: '/cli', icon: Terminal, label: 'CLI' },
   { to: '/create', icon: PlusCircle, label: 'Create entry' },
   { to: '/assistant', icon: MessageSquare, label: 'AI Assistant' },
 ];

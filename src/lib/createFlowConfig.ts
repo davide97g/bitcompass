@@ -31,6 +31,6 @@ export const QUESTIONS_BY_TYPE: Record<EntryType, QuestionSpec[]> = {
 };
 
 export const DEFAULT_COMMANDS = [
-  'npx bitrock login',
-  'npx bitrock repo-recap --daily',
+  'npx bitcompass login',
+  'npx bitcompass rules list',
 ];

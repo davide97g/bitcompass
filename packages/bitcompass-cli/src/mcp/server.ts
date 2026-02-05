@@ -1,0 +1,232 @@
+import { insertRule, searchRules } from '../api/client.js';
+import { loadCredentials } from '../auth/config.js';
+import type { RuleInsert } from '../types.js';
+
+type ToolArgs = Record<string, unknown>;
+
+function createStdioServer(): {
+  connect: () => Promise<void>;
+} {
+  const handlers: Map<string, (params: ToolArgs) => Promise<unknown>> = new Map();
+  let requestId = 0;
+
+  const send = (msg: object): void => {
+    process.stdout.write(JSON.stringify(msg) + '\n');
+  };
+
+  const handleRequest = async (msg: { id?: number | string; method?: string; params?: unknown }): Promise<void> => {
+    const isNotification = msg.id === undefined || msg.id === null;
+    const id = isNotification ? undefined : msg.id;
+    try {
+      if (msg.method === 'notified' && (msg.params as { method?: string })?.method === 'notifications/initialized') {
+        return;
+      }
+      if (isNotification) return;
+      if (msg.method === 'initialize') {
+        send({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            protocolVersion: '2024-11-05',
+            capabilities: { tools: {}, prompts: {} },
+            serverInfo: { name: 'bitcompass', version: '0.1.0' },
+          },
+        });
+        return;
+      }
+      if (msg.method === 'tools/list') {
+        send({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            tools: [
+              {
+                name: 'search-rules',
+                description: 'Search BitCompass rules by query',
+                inputSchema: {
+                  type: 'object',
+                  properties: { query: { type: 'string' }, kind: { type: 'string', enum: ['rule', 'solution'] }, limit: { type: 'number' } },
+                  required: ['query'],
+                },
+              },
+              {
+                name: 'search-solutions',
+                description: 'Search BitCompass solutions by query',
+                inputSchema: {
+                  type: 'object',
+                  properties: { query: { type: 'string' }, limit: { type: 'number' } },
+                  required: ['query'],
+                },
+              },
+              {
+                name: 'post-rules',
+                description: 'Publish a new rule or solution to BitCompass',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    kind: { type: 'string', enum: ['rule', 'solution'] },
+                    title: { type: 'string' },
+                    description: { type: 'string' },
+                    body: { type: 'string' },
+                    context: { type: 'string' },
+                    examples: { type: 'array', items: { type: 'string' } },
+                    technologies: { type: 'array', items: { type: 'string' } },
+                  },
+                  required: ['kind', 'title', 'body'],
+                },
+              },
+            ],
+          },
+        });
+        return;
+      }
+      if (msg.method === 'tools/call') {
+        const params = msg.params as { name?: string; arguments?: ToolArgs };
+        const name = params?.name;
+        const args: ToolArgs = params?.arguments ?? {};
+        const handler = name ? handlers.get(name) : undefined;
+        if (!handler) {
+          send({ jsonrpc: '2.0', id, error: { code: -32601, message: `Unknown tool: ${name}` } });
+          return;
+        }
+        const result = await handler(args);
+        send({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text: JSON.stringify(result) }] } });
+        return;
+      }
+      if (msg.method === 'prompts/list') {
+        send({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            prompts: [
+              { name: 'share_new_rule', title: 'Share a new rule', description: 'Guide to collect and publish a reusable rule' },
+              { name: 'share_problem_solution', title: 'Share a problem solution', description: 'Guide to collect and publish a problem solution' },
+            ],
+          },
+        });
+        return;
+      }
+      if (msg.method === 'prompts/get') {
+        const params = msg.params as { name?: string };
+        const name = params?.name ?? '';
+        if (name === 'share_new_rule') {
+          send({
+            jsonrpc: '2.0',
+            id,
+            result: {
+              messages: [
+                { role: 'user', content: { type: 'text', text: 'You are helping formalize a reusable rule. Collect: title, description, rule body, and optionally technologies/tags. Ask one question at a time. Then call post-rules with kind: "rule".' } },
+              ],
+            },
+          });
+          return;
+        }
+        if (name === 'share_problem_solution') {
+          send({
+            jsonrpc: '2.0',
+            id,
+            result: {
+              messages: [
+                { role: 'user', content: { type: 'text', text: 'You are helping share a problem solution. Collect: problem title, description, and solution text. Ask one question at a time. Then call post-rules with kind: "solution".' } },
+              ],
+            },
+          });
+          return;
+        }
+        send({ jsonrpc: '2.0', id, error: { code: -32602, message: 'Unknown prompt' } });
+        return;
+      }
+      send({ jsonrpc: '2.0', id, error: { code: -32601, message: 'Method not found' } });
+    } catch (err) {
+      if (id !== undefined) {
+        send({
+          jsonrpc: '2.0',
+          id,
+          error: { code: -32603, message: err instanceof Error ? err.message : String(err) },
+        });
+      }
+    }
+  };
+
+  let buffer = '';
+  const queue: Array<{ id?: number | string; method?: string; params?: unknown }> = [];
+  let processing = false;
+
+  const processQueue = async (): Promise<void> => {
+    if (processing || queue.length === 0) return;
+    processing = true;
+    while (queue.length > 0) {
+      const msg = queue.shift()!;
+      await handleRequest(msg);
+    }
+    processing = false;
+  };
+
+  const onData = (chunk: Buffer | string): void => {
+    buffer += chunk.toString();
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        const msg = JSON.parse(line) as { id?: number | string; method?: string; params?: unknown };
+        queue.push(msg);
+        void processQueue();
+      } catch {
+        // ignore malformed
+      }
+    }
+  };
+
+  process.stdin.on('data', onData);
+
+  // Register tool implementations
+  handlers.set('search-rules', async (args: ToolArgs) => {
+    const creds = loadCredentials();
+    if (!creds?.access_token) return { error: 'Run bitcompass login first.' };
+    const query = (args.query as string) ?? '';
+    const kind = args.kind as 'rule' | 'solution' | undefined;
+    const limit = (args.limit as number) ?? 20;
+    const list = await searchRules(query, { kind, limit });
+    return { rules: list.map((r) => ({ id: r.id, title: r.title, kind: r.kind, snippet: r.body.slice(0, 200) })) };
+  });
+  handlers.set('search-solutions', async (args: ToolArgs) => {
+    const creds = loadCredentials();
+    if (!creds?.access_token) return { error: 'Run bitcompass login first.' };
+    const query = (args.query as string) ?? '';
+    const limit = (args.limit as number) ?? 20;
+    const list = await searchRules(query, { kind: 'solution', limit });
+    return { solutions: list.map((r) => ({ id: r.id, title: r.title, snippet: r.body.slice(0, 200) })) };
+  });
+  handlers.set('post-rules', async (args: ToolArgs) => {
+    const creds = loadCredentials();
+    if (!creds?.access_token) return { error: 'Run bitcompass login first.' };
+    const payload: RuleInsert = {
+      kind: (args.kind as 'rule' | 'solution') ?? 'rule',
+      title: (args.title as string) ?? 'Untitled',
+      description: (args.description as string) ?? '',
+      body: (args.body as string) ?? '',
+      context: (args.context as string) || undefined,
+      examples: Array.isArray(args.examples) ? (args.examples as string[]) : undefined,
+      technologies: Array.isArray(args.technologies) ? (args.technologies as string[]) : undefined,
+    };
+    const created = await insertRule(payload);
+    return { id: created.id, title: created.title, success: true };
+  });
+
+  return {
+    async connect() {
+      // Stdio listener already attached; keep process alive
+    },
+  };
+}
+
+export const startMcpServer = async (): Promise<void> => {
+  const creds = loadCredentials();
+  if (!creds?.access_token) {
+    process.stderr.write('Not logged in. Run bitcompass login first.\n');
+    process.exit(1);
+  }
+  const server = createStdioServer();
+  await server.connect();
+};

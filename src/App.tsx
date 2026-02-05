@@ -17,11 +17,15 @@ import ProblemDetailPage from "./pages/ProblemDetailPage";
 import ProblemsPage from "./pages/ProblemsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
+import CLIPage from "./pages/CLIPage";
+import RuleDetailPage from "./pages/RuleDetailPage";
+import RulesPage from "./pages/RulesPage";
 import TopicDetailPage from "./pages/TopicDetailPage";
 import TopicsPage from "./pages/TopicsPage";
 
 // Layout
 import { AppLayout } from "./components/layout/AppLayout";
+import { RequireAuth } from "./components/RequireAuth";
 
 const queryClient = new QueryClient();
 
@@ -38,8 +42,8 @@ const App = () => (
           {/* Redirect root to login or topics */}
           <Route path="/" element={<Navigate to="/topics" replace />} />
           
-          {/* App routes with layout */}
-          <Route element={<AppLayout />}>
+          {/* App routes with layout (auth required when Supabase configured) */}
+          <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
             <Route path="/topics" element={<TopicsPage />} />
             <Route path="/topics/:id" element={<TopicDetailPage />} />
             <Route path="/problems" element={<ProblemsPage />} />
@@ -50,6 +54,9 @@ const App = () => (
             <Route path="/people/:id" element={<PersonDetailPage />} />
             <Route path="/automations" element={<AutomationsPage />} />
             <Route path="/automations/:id" element={<AutomationDetailPage />} />
+            <Route path="/rules" element={<RulesPage />} />
+            <Route path="/rules/:id" element={<RuleDetailPage />} />
+            <Route path="/cli" element={<CLIPage />} />
             <Route path="/assistant" element={<AssistantPage />} />
             <Route path="/create" element={<CreateEntryPage />} />
             <Route path="/create/:type" element={<CreateEntryPage />} />

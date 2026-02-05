@@ -9,6 +9,163 @@ import type { StoredCredentials } from '../types.js';
 
 const CALLBACK_PORT = 38473;
 
+/** Design tokens matching src/index.css (light theme) */
+const STYLES = {
+  background: 'hsl(0, 0%, 98%)',
+  foreground: 'hsl(222, 47%, 11%)',
+  primary: 'hsl(221, 83%, 53%)',
+  primaryForeground: 'hsl(0, 0%, 100%)',
+  muted: 'hsl(220, 9%, 46%)',
+  card: 'hsl(0, 0%, 100%)',
+  border: 'hsl(220, 13%, 91%)',
+  radius: '0.625rem',
+  shadow: '0 10px 15px -3px hsl(220 13% 11% / 0.08), 0 4px 6px -4px hsl(220 13% 11% / 0.05)',
+};
+
+const CALLBACK_SUCCESS_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logged in — Bitcompass</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: ${STYLES.background};
+      color: ${STYLES.foreground};
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      padding: 1rem;
+    }
+    .card {
+      width: 100%;
+      max-width: 28rem;
+      background: ${STYLES.card};
+      border: 1px solid ${STYLES.border};
+      border-radius: ${STYLES.radius};
+      box-shadow: ${STYLES.shadow};
+      padding: 2rem;
+      text-align: center;
+      animation: fadeIn 0.35s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .icon-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 4rem;
+      height: 4rem;
+      border-radius: 1rem;
+      background: ${STYLES.primary};
+      color: ${STYLES.primaryForeground};
+      margin-bottom: 1.25rem;
+    }
+    .icon-wrap svg { width: 2rem; height: 2rem; }
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .muted {
+      color: ${STYLES.muted};
+      font-size: 0.875rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+    .hint {
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid ${STYLES.border};
+      font-size: 0.8125rem;
+      color: ${STYLES.muted};
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-wrap" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    </div>
+    <h1>You're all set</h1>
+    <p class="muted">You're logged in successfully. You can close this window safely—your credentials are saved and the CLI is ready to use.</p>
+    <p class="hint">Return to your terminal to continue.</p>
+  </div>
+</body>
+</html>`;
+
+const escapeHtml = (s: string) =>
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const callbackPage = (opts: { title: string; message: string; isError?: boolean }) => {
+  const iconColor = opts.isError ? 'hsl(0, 84%, 60%)' : STYLES.primary;
+  const safeMessage = escapeHtml(opts.message);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${opts.title} — Bitcompass</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: ${STYLES.background};
+      color: ${STYLES.foreground};
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      padding: 1rem;
+    }
+    .card {
+      width: 100%;
+      max-width: 28rem;
+      background: ${STYLES.card};
+      border: 1px solid ${STYLES.border};
+      border-radius: ${STYLES.radius};
+      box-shadow: ${STYLES.shadow};
+      padding: 2rem;
+      text-align: center;
+    }
+    .icon-wrap { display: inline-flex; align-items: center; justify-content: center; width: 4rem; height: 4rem; border-radius: 1rem; margin-bottom: 1.25rem; }
+    .icon-wrap svg { width: 2rem; height: 2rem; }
+    .icon-wrap { background: ${iconColor}; color: ${STYLES.primaryForeground}; }
+    h1 { margin: 0 0 0.5rem; font-size: 1.25rem; font-weight: 700; }
+    .muted { color: ${STYLES.muted}; font-size: 0.875rem; line-height: 1.5; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-wrap" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    </div>
+    <h1>${opts.title}</h1>
+    <p class="muted">${safeMessage}</p>
+  </div>
+</body>
+</html>`;
+};
+
 const createInMemoryStorage = (): { getItem: (key: string) => Promise<string | null>; setItem: (key: string, value: string) => Promise<void>; removeItem: (key: string) => Promise<void> } => {
   const store = new Map<string, string>();
   return {
@@ -62,7 +219,7 @@ export const runLogin = async (): Promise<void> => {
         const errorDesc = u.searchParams.get('error_description');
         if (errorDesc) {
           res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end(`<!DOCTYPE html><html><body><p>Login failed: ${errorDesc}</p></body></html>`);
+          res.end(callbackPage({ title: 'Login failed', message: errorDesc, isError: true }));
           spinner.fail(chalk.red('Login failed: ' + errorDesc));
           server.close();
           reject(new Error(errorDesc));
@@ -70,7 +227,7 @@ export const runLogin = async (): Promise<void> => {
         }
         if (!code) {
           res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end('<!DOCTYPE html><html><body><p>No authorization code in URL. Try again.</p></body></html>');
+          res.end(callbackPage({ title: 'No authorization code', message: 'No authorization code was received. Please try logging in again.', isError: true }));
           spinner.fail(chalk.red('No code received. Try again.'));
           server.close();
           reject(new Error('No code'));
@@ -80,7 +237,7 @@ export const runLogin = async (): Promise<void> => {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
             res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(`<!DOCTYPE html><html><body><p>Exchange failed: ${error.message}</p></body></html>`);
+            res.end(callbackPage({ title: 'Login failed', message: error.message, isError: true }));
             spinner.fail(chalk.red('Login failed: ' + error.message));
             server.close();
             reject(error);
@@ -89,7 +246,7 @@ export const runLogin = async (): Promise<void> => {
           const session = data?.session;
           if (!session?.access_token) {
             res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end('<!DOCTYPE html><html><body><p>No session received.</p></body></html>');
+            res.end(callbackPage({ title: 'No session', message: 'No session was received. Please try again.', isError: true }));
             spinner.fail(chalk.red('No session.'));
             server.close();
             reject(new Error('No session'));
@@ -103,14 +260,14 @@ export const runLogin = async (): Promise<void> => {
           const tokenPath = getTokenFilePath();
           saveCredentials(creds);
           res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end('<!DOCTYPE html><html><body><p>Logged in. You can close this window.</p></body></html>');
+          res.end(CALLBACK_SUCCESS_HTML);
           spinner.succeed(chalk.green('Logged in successfully.'));
           console.log(chalk.dim('Credentials saved to:'), tokenPath);
           server.close();
           resolve();
         } catch (e) {
           res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end(`<!DOCTYPE html><html><body><p>Error: ${e instanceof Error ? e.message : String(e)}</p></body></html>`);
+          res.end(callbackPage({ title: 'Error', message: e instanceof Error ? e.message : String(e), isError: true }));
           spinner.fail('Login failed.');
           console.error(chalk.red(e instanceof Error ? e.message : String(e)));
           server.close();

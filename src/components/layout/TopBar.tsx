@@ -1,11 +1,43 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Menu, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { searchAll } from '@/data/mockData';
+import { useAuth } from '@/hooks/use-auth';
+import { LogOut, Menu, Search } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SearchResults } from './SearchResults';
+
+const getUserAvatarUrl = (user: { user_metadata?: Record<string, unknown> } | null): string | undefined => {
+  if (!user?.user_metadata) return undefined;
+  const meta = user.user_metadata as Record<string, string | undefined>;
+  return meta.avatar_url ?? meta.picture;
+};
+
+const getUserInitials = (user: { user_metadata?: Record<string, unknown>; email?: string | null } | null): string => {
+  if (!user) return '?';
+  const meta = (user.user_metadata ?? {}) as Record<string, string | undefined>;
+  const fullName = meta.full_name ?? meta.name;
+  if (fullName && typeof fullName === 'string') {
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    if (parts[0]) return parts[0].slice(0, 2).toUpperCase();
+  }
+  const email = user.email;
+  if (email) {
+    const local = email.split('@')[0] ?? '';
+    return local.slice(0, 2).toUpperCase() || '?';
+  }
+  return '?';
+};
 
 interface TopBarProps {
   onMenuToggle: () => void;
@@ -16,6 +48,9 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
   const [showResults, setShowResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const avatarUrl = getUserAvatarUrl(user);
+  const initials = getUserInitials(user);
 
   const searchResults = searchQuery.length > 1 ? searchAll(searchQuery) : null;
 
@@ -73,12 +108,43 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
         )}
       </div>
 
-      {/* User avatar - pushed to top right */}
+      {/* User avatar with dropdown - pushed to top right */}
       <div className="flex items-center gap-3 ml-auto shrink-0">
-        <Avatar className="w-9 h-9 cursor-pointer ring-2 ring-transparent hover:ring-primary/20 transition-all">
-          <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" />
-          <AvatarFallback>JD</AvatarFallback>
-        </Avatar>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label="Open user menu"
+            >
+              <Avatar className="w-9 h-9 cursor-pointer ring-2 ring-transparent hover:ring-primary/20 transition-all">
+                <AvatarImage src={avatarUrl} alt={user?.user_metadata?.full_name as string ?? 'User'} />
+                <AvatarFallback className="text-sm font-medium">{initials}</AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col gap-0.5">
+                <p className="text-sm font-medium leading-none">
+                  {(user?.user_metadata?.full_name as string) ?? 'User'}
+                </p>
+                {user?.email && (
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                )}
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => void signOut()}
+              className="cursor-pointer text-destructive focus:text-destructive"
+              aria-label="Sign out"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

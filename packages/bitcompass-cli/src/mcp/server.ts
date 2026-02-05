@@ -222,11 +222,8 @@ function createStdioServer(): {
 }
 
 export const startMcpServer = async (): Promise<void> => {
-  const creds = loadCredentials();
-  if (!creds?.access_token) {
-    process.stderr.write('Not logged in. Run bitcompass login first.\n');
-    process.exit(1);
-  }
   const server = createStdioServer();
   await server.connect();
+  // Do not exit when not logged in: Cursor needs the process alive to complete
+  // the MCP handshake. Tools will return "Run bitcompass login first" when called.
 };

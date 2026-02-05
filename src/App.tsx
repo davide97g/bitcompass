@@ -2,13 +2,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 // Pages
 import CreateEntryPage from "@/pages/CreateEntryPage";
 import AssistantPage from "./pages/AssistantPage";
 import AutomationDetailPage from "./pages/AutomationDetailPage";
 import AutomationsPage from "./pages/AutomationsPage";
+import CLIPage from "./pages/CLIPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 import PeoplePage from "./pages/PeoplePage";
@@ -17,7 +18,6 @@ import ProblemDetailPage from "./pages/ProblemDetailPage";
 import ProblemsPage from "./pages/ProblemsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
-import CLIPage from "./pages/CLIPage";
 import RuleDetailPage from "./pages/RuleDetailPage";
 import RulesPage from "./pages/RulesPage";
 import TopicDetailPage from "./pages/TopicDetailPage";
@@ -26,6 +26,7 @@ import TopicsPage from "./pages/TopicsPage";
 // Layout
 import { AppLayout } from "./components/layout/AppLayout";
 import { RequireAuth } from "./components/RequireAuth";
+import { RootRedirect } from "./components/RootRedirect";
 
 const queryClient = new QueryClient();
 
@@ -39,8 +40,8 @@ const App = () => (
           {/* Public route */}
           <Route path="/login" element={<LoginPage />} />
           
-          {/* Redirect root to login or topics */}
-          <Route path="/" element={<Navigate to="/topics" replace />} />
+          {/* Root: recover OAuth hash before any redirect */}
+          <Route path="/" element={<RootRedirect />} />
           
           {/* App routes with layout (auth required when Supabase configured) */}
           <Route element={<RequireAuth><AppLayout /></RequireAuth>}>

@@ -180,22 +180,30 @@ export default function CreateEntryPage() {
     ]);
   };
 
-  const handleConfirmDraft = () => {
+  const handleConfirmDraft = async () => {
     if (!draftEntry || !entryType) return;
-    if (entryType === 'problem') {
-      addProblem(draftEntry as Problem);
-      toast({ title: 'Problem added', description: (draftEntry as Problem).title });
-      navigate(`/problems/${(draftEntry as Problem).id}`);
-    } else if (entryType === 'project') {
-      addProject(draftEntry as Project);
-      toast({ title: 'Project added', description: (draftEntry as Project).name });
-      navigate(`/projects/${(draftEntry as Project).id}`);
-    } else {
-      addAutomation(draftEntry as Automation);
-      toast({ title: 'Automation added', description: (draftEntry as Automation).title });
-      navigate(`/automations/${(draftEntry as Automation).id}`);
+    try {
+      if (entryType === 'problem') {
+        const created = await addProblem(draftEntry as Problem);
+        toast({ title: 'Problem added', description: (draftEntry as Problem).title });
+        navigate(`/problems/${created?.id ?? (draftEntry as Problem).id}`);
+      } else if (entryType === 'project') {
+        const created = await addProject(draftEntry as Project);
+        toast({ title: 'Project added', description: (draftEntry as Project).name });
+        navigate(`/projects/${created?.id ?? (draftEntry as Project).id}`);
+      } else {
+        const created = await addAutomation(draftEntry as Automation);
+        toast({ title: 'Automation added', description: (draftEntry as Automation).title });
+        navigate(`/automations/${created?.id ?? (draftEntry as Automation).id}`);
+      }
+      setStep('insert_done');
+    } catch (err) {
+      toast({
+        title: 'Failed to add entry',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive',
+      });
     }
-    setStep('insert_done');
   };
 
   const handleEditDraft = () => {

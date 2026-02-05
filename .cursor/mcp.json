@@ -1,17 +1,8 @@
 {
   "mcpServers": {
     "bitcompass": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
-        "${workspaceFolder}/packages/bitcompass-cli/dist/index.js",
-        "mcp",
-        "start"
-      ],
-      "env": {
-        "BITCOMPASS_CONFIG_DIR": "${userHome}/.bitcompass"
-      },
-      "envFile": "${workspaceFolder}/packages/bitcompass-cli/.env"
+      "command": "bun",
+      "args": ["run", "packages/bitcompass-cli/src/index.ts", "mcp", "start"]
     }
   }
 }

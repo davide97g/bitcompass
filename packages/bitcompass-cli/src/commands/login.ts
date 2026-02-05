@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import open from 'open';
 import ora from 'ora';
 import { getTokenFilePath, loadConfig, saveCredentials } from '../auth/config.js';
+import { DEFAULT_SUPABASE_ANON_KEY, DEFAULT_SUPABASE_URL } from '../auth/defaults.js';
 import type { StoredCredentials } from '../types.js';
 
 const CALLBACK_PORT = 38473;
@@ -23,8 +24,14 @@ const createInMemoryStorage = (): { getItem: (key: string) => Promise<string | n
 
 export const runLogin = async (): Promise<void> => {
   const config = loadConfig();
-  const url = config.supabaseUrl ?? process.env.BITCOMPASS_SUPABASE_URL;
-  const anonKey = config.supabaseAnonKey ?? process.env.BITCOMPASS_SUPABASE_ANON_KEY;
+  const url =
+    config.supabaseUrl ??
+    process.env.BITCOMPASS_SUPABASE_URL ??
+    DEFAULT_SUPABASE_URL;
+  const anonKey =
+    config.supabaseAnonKey ??
+    process.env.BITCOMPASS_SUPABASE_ANON_KEY ??
+    DEFAULT_SUPABASE_ANON_KEY;
 
   if (!url || !anonKey) {
     console.error(

@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Check, Terminal } from 'lucide-react';
+import { Check, Copy, ExternalLink, Plus, Terminal } from 'lucide-react';
+import { useState } from 'react';
 
 const MCP_CONFIG = `{
   "mcpServers": {
@@ -17,6 +17,14 @@ const MCP_CONFIG = `{
     }
   }
 }`;
+
+/** Base64-encoded BitCompass stdio config for Cursor MCP install deeplink */
+const MCP_INSTALL_CONFIG_BASE64 =
+  'eyJ0eXBlIjoic3RkaW8iLCJjb21tYW5kIjoiYml0Y29tcGFzcyIsImFyZ3MiOlsibWNwIiwic3RhcnQiXSwiZW52Ijp7IkJJVENPTVBBU1NfQ09ORklHX0RJUiI6In4vLmJpdGNvbXBhc3MifX0=';
+
+const ADD_TO_CURSOR_DEEPLINK = `cursor://anysphere.cursor-deeplink/mcp/install?name=bitcompass&config=${encodeURIComponent(MCP_INSTALL_CONFIG_BASE64)}`;
+
+const CURSOR_MCP_DOCS_URL = 'https://cursor.com/docs/context/mcp';
 
 const copyToClipboard = async (text: string): Promise<boolean> => {
   try {
@@ -49,12 +57,35 @@ export default function CLIPage() {
     }
   };
 
+  const handleAddToCursor = () => {
+    window.location.href = ADD_TO_CURSOR_DEEPLINK;
+  };
+
+  const handleAddToCursorKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleAddToCursor();
+    }
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
         title="CLI & MCP"
         description="Install and use the BitCompass CLI and add it to Cursor."
-      />
+      >
+        <button
+          type="button"
+          onClick={handleAddToCursor}
+          onKeyDown={handleAddToCursorKeyDown}
+          aria-label="Add BitCompass MCP to Cursor (opens Cursor)"
+          tabIndex={0}
+          className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background shadow-sm transition-colors hover:bg-foreground/90 focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <Plus className="w-4 h-4 shrink-0" />
+          Add to Cursor
+        </button>
+      </PageHeader>
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Install</h2>
@@ -134,6 +165,26 @@ bitcompass config set supabaseAnonKey YOUR_ANON_KEY`}
             <p className="text-sm text-muted-foreground font-normal">
               Use BitCompass in Cursor. Paste this into Cursor → Settings → Features → MCP → Edit config (or <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.cursor/mcp.json</code>). Run <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">bitcompass login</code> first. Replace <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~</code> with your home path if your environment doesn’t expand it.
             </p>
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <Button
+                type="button"
+                onClick={handleAddToCursor}
+                onKeyDown={handleAddToCursorKeyDown}
+                aria-label="Add BitCompass MCP to Cursor (opens Cursor)"
+                tabIndex={0}
+              >
+                Add to Cursor
+              </Button>
+              <a
+                href={CURSOR_MCP_DOCS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground underline underline-offset-2"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                MCP docs
+              </a>
+            </div>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="relative rounded-lg border bg-muted/50 overflow-hidden">

@@ -1,12 +1,19 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { loadConfig, loadCredentials } from '../auth/config.js';
+import { DEFAULT_SUPABASE_ANON_KEY, DEFAULT_SUPABASE_URL } from '../auth/defaults.js';
 import type { Rule, RuleInsert } from '../types.js';
 
 export const getSupabaseClient = (): SupabaseClient | null => {
   const config = loadConfig();
   const creds = loadCredentials();
-  const url = config.supabaseUrl ?? process.env.BITCOMPASS_SUPABASE_URL;
-  const key = config.supabaseAnonKey ?? process.env.BITCOMPASS_SUPABASE_ANON_KEY;
+  const url =
+    config.supabaseUrl ??
+    process.env.BITCOMPASS_SUPABASE_URL ??
+    DEFAULT_SUPABASE_URL;
+  const key =
+    config.supabaseAnonKey ??
+    process.env.BITCOMPASS_SUPABASE_ANON_KEY ??
+    DEFAULT_SUPABASE_ANON_KEY;
   if (!url || !key) {
     return null;
   }

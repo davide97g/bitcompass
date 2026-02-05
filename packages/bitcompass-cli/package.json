@@ -1,23 +1,35 @@
 {
   "name": "bitcompass",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "BitCompass CLI - rules, solutions, and MCP server",
   "type": "module",
-  "bin": { "bitcompass": "./dist/index.js" },
+  "bin": {
+    "bitcompass": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "postinstall": "node scripts/postinstall.js"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/company-compass/company-compass.git",
     "directory": "packages/bitcompass-cli"
   },
   "license": "MIT",
-  "keywords": ["mcp", "cursor", "rules", "bitcompass", "cli", "supabase"],
+  "keywords": [
+    "mcp",
+    "cursor",
+    "rules",
+    "bitcompass",
+    "cli",
+    "supabase"
+  ],
   "dependencies": {
     "dotenv": "^16.4.5",
     "@modelcontextprotocol/sdk": "^1.0.0",
@@ -35,5 +47,8 @@
     "@types/node": "^22.0.0",
     "typescript": "^5.8.0"
   },
-  "files": ["dist"]
+  "files": [
+    "dist",
+    "scripts"
+  ]
 }

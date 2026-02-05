@@ -1,24 +1,24 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 // Pages
+import CreateEntryPage from "@/pages/CreateEntryPage";
+import AssistantPage from "./pages/AssistantPage";
+import AutomationDetailPage from "./pages/AutomationDetailPage";
+import AutomationsPage from "./pages/AutomationsPage";
 import LoginPage from "./pages/LoginPage";
-import TopicsPage from "./pages/TopicsPage";
-import TopicDetailPage from "./pages/TopicDetailPage";
-import ProblemsPage from "./pages/ProblemsPage";
-import ProblemDetailPage from "./pages/ProblemDetailPage";
-import ProjectsPage from "./pages/ProjectsPage";
-import ProjectDetailPage from "./pages/ProjectDetailPage";
+import NotFound from "./pages/NotFound";
 import PeoplePage from "./pages/PeoplePage";
 import PersonDetailPage from "./pages/PersonDetailPage";
-import AutomationsPage from "./pages/AutomationsPage";
-import AutomationDetailPage from "./pages/AutomationDetailPage";
-import AssistantPage from "./pages/AssistantPage";
-import CreateEntryPage from "@/pages/CreateEntryPage";
-import NotFound from "./pages/NotFound";
+import ProblemDetailPage from "./pages/ProblemDetailPage";
+import ProblemsPage from "./pages/ProblemsPage";
+import ProjectDetailPage from "./pages/ProjectDetailPage";
+import ProjectsPage from "./pages/ProjectsPage";
+import TopicDetailPage from "./pages/TopicDetailPage";
+import TopicsPage from "./pages/TopicsPage";
 
 // Layout
 import { AppLayout } from "./components/layout/AppLayout";

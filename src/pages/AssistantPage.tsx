@@ -1,14 +1,14 @@
-import { useRef, useEffect, useState } from 'react';
-import { Send, Sparkles, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AssistantMessage } from '@/components/assistant/AssistantMessage';
-import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
+import { useChat } from '@ai-sdk/react';
 import type { UIMessage } from 'ai';
+import { DefaultChatTransport } from 'ai';
+import { Send, Sparkles, User } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 const initialMessage: UIMessage = {
   id: 'initial',
@@ -24,15 +24,19 @@ const initialMessage: UIMessage = {
 export default function AssistantPage() {
   const { session } = useAuth();
   const [chatId, setChatId] = useState<string | undefined>();
+  const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
 
-  const { messages, sendMessage, status, input, setInput, error } = useChat({
+  const { messages, sendMessage, status, error } = useChat({
     id: chatId,
-    initialMessages: [initialMessage],
+    messages: [initialMessage],
     transport: new DefaultChatTransport({
-      api: `${supabaseUrl}/functions/v1/chat`,
+      api: supabaseUrl ? `${supabaseUrl}/functions/v1/chat` : '/api/chat-placeholder',
       headers: async () => {
+        if (!supabaseUrl) {
+          throw new Error('Supabase URL not configured');
+        }
         if (!session?.access_token) {
           throw new Error('Not authenticated');
         }
@@ -65,9 +69,21 @@ export default function AssistantPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || status !== 'ready') return;
-    sendMessage({ text: input });
+    const inputValue = input.trim();
+    if (!inputValue || status !== 'ready') return;
+    sendMessage({ text: inputValue });
+    setInput(''); // Clear input after sending
   };
+
+  if (!supabaseUrl) {
+    return (
+      <div className="max-w-3xl mx-auto h-[calc(100vh-8rem)] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Supabase is not configured. Please set VITE_SUPABASE_URL in your environment variables.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
@@ -160,9 +176,9 @@ export default function AssistantPage() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about people, projects, or problems..."
               className="flex-1"
-              disabled={status !== 'ready'}
+              disabled={status !== 'ready' || !supabaseUrl}
             />
-            <Button type="submit" disabled={!input.trim() || status !== 'ready'}>
+            <Button type="submit" disabled={!input.trim() || status !== 'ready' || !supabaseUrl}>
               <Send className="w-4 h-4" />
             </Button>
           </div>

@@ -21,8 +21,10 @@ serve(async (req) => {
   }
 
   try {
-    // Get authorization header
+    // Get authorization header and apikey
     const authHeader = req.headers.get('Authorization');
+    const apikey = req.headers.get('apikey');
+    
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
         status: 401,
@@ -30,12 +32,28 @@ serve(async (req) => {
       });
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? supabaseAnonKey;
+    // Initialize Supabase clients
+    // Get URL from request or environment
+    const requestUrl = new URL(req.url);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 
+                       `https://${requestUrl.hostname.split('.')[0]}.supabase.co`;
     
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    // Get anon key from request header (sent by frontend) or environment
+    const supabaseAnonKey = apikey || Deno.env.get('SUPABASE_ANON_KEY') || '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || supabaseAnonKey;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return new Response(JSON.stringify({ 
+        error: 'Supabase configuration missing',
+        details: `URL: ${supabaseUrl ? 'set' : 'missing'}, AnonKey: ${supabaseAnonKey ? 'set' : 'missing'}`
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Use anon key client to validate user token
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -44,17 +62,26 @@ serve(async (req) => {
 
     // Get user from token
     const token = authHeader.replace('Bearer ', '');
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
 
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
+      console.error('Auth error:', userError?.message, userError);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid token', 
+        details: userError?.message || 'Unable to authenticate user' 
+      }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Use service role key client for database operations (bypasses RLS)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     // Parse request body
     const { messages, chatId }: ChatRequest = await req.json();

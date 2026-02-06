@@ -20,6 +20,7 @@ import type { Rule } from '@/types/bitcompass';
 import { ArrowLeft, FileDown, Pencil, Trash2, User } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { MarkdownContent } from '@/components/ui/markdown-content';
+import { CommandBlock } from '@/components/create/CommandBlock';
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
   if (format === 'json') {
@@ -157,6 +158,11 @@ export default function RuleDetailPage() {
           </>
         )}
       </div>
+
+      <CommandBlock
+        commands={[`bitcompass rules pull ${id}`]}
+        className="mb-6"
+      />
 
       <Card>
         <CardContent className="pt-6">

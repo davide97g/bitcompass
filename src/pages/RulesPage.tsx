@@ -17,8 +17,12 @@ import { useRules, useInsertRule } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Rule, RuleInsert } from '@/types/bitcompass';
-import { BookMarked, FileDown, Plus, Search, User } from 'lucide-react';
+import { BookMarked, Copy, FileDown, Plus, Search, User } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+
+const PULL_COMMAND_PREFIX = 'bitcompass rules pull ';
+
+const getPullCommand = (ruleId: string): string => `${PULL_COMMAND_PREFIX}${ruleId}`;
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
   if (format === 'json') {
@@ -45,6 +49,7 @@ export default function RulesPage() {
   const [kindFilter, setKindFilter] = useState<'rule' | 'solution' | 'all'>('all');
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [newRule, setNewRule] = useState<RuleInsert>({
     kind: 'rule',
     title: '',
@@ -66,6 +71,18 @@ export default function RulesPage() {
           r.body.toLowerCase().includes(search.toLowerCase())
       )
     : rules;
+
+  const handleCopyPullCommand = async (rule: Rule) => {
+    const cmd = getPullCommand(rule.id);
+    try {
+      await navigator.clipboard.writeText(cmd);
+      setCopiedId(rule.id);
+      setTimeout(() => setCopiedId(null), 2000);
+      toast({ title: 'Command copied to clipboard' });
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
+  };
 
   const handleCreate = async () => {
     if (!newRule.title.trim() || !newRule.body.trim()) {
@@ -216,9 +233,26 @@ export default function RulesPage() {
                     <span>{rule.author_display_name ?? 'Unknown author'}</span>
                   </p>
                 )}
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Button variant="ghost" size="sm" asChild>
                     <Link to={`/rules/${rule.id}`}>View</Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void handleCopyPullCommand(rule)}
+                    aria-label={`Add this ${rule.kind}: copy pull command`}
+                  >
+                    Add this {rule.kind}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void handleCopyPullCommand(rule)}
+                    aria-label={copiedId === rule.id ? 'Copied' : 'Copy pull command'}
+                    title={getPullCommand(rule.id)}
+                  >
+                    <Copy className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"

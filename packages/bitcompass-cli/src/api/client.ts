@@ -141,3 +141,29 @@ export const insertActivityLog = async (payload: ActivityLogInsert): Promise<Act
   if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
   return data as ActivityLog;
 };
+
+export const fetchActivityLogs = async (options?: { limit?: number; time_frame?: 'day' | 'week' | 'month' }): Promise<ActivityLog[]> => {
+  const client = getSupabaseClient();
+  if (!client) throw new Error(NOT_CONFIGURED_MSG);
+  let query = client.from('activity_logs').select('*').order('created_at', { ascending: false });
+  if (options?.time_frame) {
+    query = query.eq('time_frame', options.time_frame);
+  }
+  if (options?.limit) {
+    query = query.limit(options.limit);
+  }
+  const { data, error } = await query;
+  if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
+  return (data ?? []) as ActivityLog[];
+};
+
+export const getActivityLogById = async (id: string): Promise<ActivityLog | null> => {
+  const client = getSupabaseClient();
+  if (!client) throw new Error(NOT_CONFIGURED_MSG);
+  const { data, error } = await client.from('activity_logs').select('*').eq('id', id).single();
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
+  }
+  return data as ActivityLog;
+};

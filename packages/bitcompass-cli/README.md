@@ -72,7 +72,26 @@ cd packages/bitcompass-cli && npm run build && bitcompass login
 
 **Manual (local path):** Settings → MCP → stdio, Command **node**, Args **path/to/packages/bitcompass-cli/dist/index.js** **mcp** **start**.
 
-Tools: `search-rules`, `search-solutions`, `post-rules`. Prompts: `share_new_rule`, `share_problem_solution`.
+### MCP Tools
+
+**Rules & Solutions:**
+- `search-rules` - Search rules by query (with optional kind filter)
+- `search-solutions` - Search solutions by query
+- `get-rule` - Get full rule/solution details by ID
+- `list-rules` - List all rules/solutions (with optional kind filter and limit)
+- `post-rules` - Create/publish a new rule or solution
+- `update-rule` - Update an existing rule or solution
+- `delete-rule` - Delete a rule or solution by ID
+- `pull-rule` - Pull a rule/solution to a file in the project rules directory
+
+**Activity Logs:**
+- `create-activity-log` - Create activity log from git repo (day/week/month)
+- `list-activity-logs` - List user's activity logs (with optional filters)
+- `get-activity-log` - Get activity log details by ID
+
+**Prompts:**
+- `share_new_rule` - Guide to collect and publish a reusable rule
+- `share_problem_solution` - Guide to collect and publish a problem solution
 
 ## Publish (maintainers)
 

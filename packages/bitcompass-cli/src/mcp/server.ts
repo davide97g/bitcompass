@@ -1,7 +1,18 @@
-import { AUTH_REQUIRED_MSG, insertRule, searchRules } from '../api/client.js';
+import {
+  AUTH_REQUIRED_MSG,
+  insertRule,
+  searchRules,
+  getRuleById,
+  fetchRules,
+  updateRule,
+  deleteRule,
+  fetchActivityLogs,
+  getActivityLogById,
+} from '../api/client.js';
 import { buildAndPushActivityLog } from '../commands/log.js';
 import { loadCredentials } from '../auth/config.js';
 import { getProjectConfig } from '../auth/project-config.js';
+import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import type { RuleInsert } from '../types.js';
 import type { TimeFrame } from '../lib/git-analysis.js';
 
@@ -108,6 +119,92 @@ function createStdioServer(): {
                     repo_path: { type: 'string', description: 'Path to the git repo (e.g. workspace root). If omitted, uses current working directory.' },
                   },
                   required: ['time_frame'],
+                },
+              },
+              {
+                name: 'get-rule',
+                description: 'Get full details of a rule or solution by ID',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', description: 'Rule/solution ID' },
+                    kind: { type: 'string', enum: ['rule', 'solution'], description: 'Optional: filter by kind' },
+                  },
+                  required: ['id'],
+                },
+              },
+              {
+                name: 'list-rules',
+                description: 'List all rules and solutions (with optional filtering by kind)',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    kind: { type: 'string', enum: ['rule', 'solution'], description: 'Optional: filter by kind' },
+                    limit: { type: 'number', description: 'Optional: maximum number of results (default: 50)' },
+                  },
+                },
+              },
+              {
+                name: 'update-rule',
+                description: 'Update an existing rule or solution',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', description: 'Rule/solution ID to update' },
+                    title: { type: 'string', description: 'Updated title' },
+                    description: { type: 'string', description: 'Updated description' },
+                    body: { type: 'string', description: 'Updated body content' },
+                    context: { type: 'string', description: 'Updated context' },
+                    examples: { type: 'array', items: { type: 'string' }, description: 'Updated examples array' },
+                    technologies: { type: 'array', items: { type: 'string' }, description: 'Updated technologies array' },
+                  },
+                  required: ['id'],
+                },
+              },
+              {
+                name: 'delete-rule',
+                description: 'Delete a rule or solution by ID',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', description: 'Rule/solution ID to delete' },
+                  },
+                  required: ['id'],
+                },
+              },
+              {
+                name: 'pull-rule',
+                description: 'Pull a rule or solution to a file in the project rules directory',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', description: 'Rule/solution ID to pull' },
+                    output_path: { type: 'string', description: 'Optional: custom output path' },
+                    global: { type: 'boolean', description: 'Install globally to ~/.cursor/rules/' },
+                  },
+                  required: ['id'],
+                },
+              },
+              {
+                name: 'list-activity-logs',
+                description: "List user's activity logs",
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    limit: { type: 'number', description: 'Optional: maximum number of results (default: 20)' },
+                    time_frame: { type: 'string', enum: ['day', 'week', 'month'], description: 'Optional: filter by time frame' },
+                  },
+                },
+              },
+              {
+                name: 'get-activity-log',
+                description: 'Get activity log details by ID',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', description: 'Activity log ID' },
+                  },
+                  required: ['id'],
                 },
               },
             ],
@@ -271,6 +368,154 @@ function createStdioServer(): {
       return { success: true, id: result.id };
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to create activity log.';
+      return { error: msg };
+    }
+  });
+  handlers.set('get-rule', async (args: ToolArgs) => {
+    const id = args.id as string;
+    if (!id) return { error: 'id is required' };
+    const kind = args.kind as 'rule' | 'solution' | undefined;
+    try {
+      const rule = await getRuleById(id);
+      if (!rule) {
+        return { error: `Rule or solution with ID ${id} not found.` };
+      }
+      if (kind && rule.kind !== kind) {
+        return { error: `Rule with ID ${id} is a ${rule.kind}, not a ${kind}.` };
+      }
+      return {
+        id: rule.id,
+        kind: rule.kind,
+        title: rule.title,
+        description: rule.description,
+        body: rule.body,
+        context: rule.context ?? null,
+        examples: rule.examples ?? [],
+        technologies: rule.technologies ?? [],
+        author: rule.author_display_name ?? null,
+        created_at: rule.created_at,
+        updated_at: rule.updated_at,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to get rule.';
+      return { error: msg };
+    }
+  });
+  handlers.set('list-rules', async (args: ToolArgs) => {
+    const kind = args.kind as 'rule' | 'solution' | undefined;
+    const limit = (args.limit as number) ?? 50;
+    try {
+      const list = await fetchRules(kind);
+      const limited = list.slice(0, limit);
+      return {
+        rules: limited.map((r) => ({
+          id: r.id,
+          title: r.title,
+          kind: r.kind,
+          description: r.description,
+          author: r.author_display_name ?? null,
+          snippet: r.body.slice(0, 200),
+          created_at: r.created_at,
+        })),
+        total: list.length,
+        returned: limited.length,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to list rules.';
+      return { error: msg };
+    }
+  });
+  handlers.set('update-rule', async (args: ToolArgs) => {
+    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
+    const id = args.id as string;
+    if (!id) return { error: 'id is required' };
+    const updates: Partial<RuleInsert> = {};
+    if (args.title !== undefined) updates.title = args.title as string;
+    if (args.description !== undefined) updates.description = args.description as string;
+    if (args.body !== undefined) updates.body = args.body as string;
+    if (args.context !== undefined) updates.context = (args.context as string) || undefined;
+    if (Array.isArray(args.examples)) updates.examples = args.examples as string[];
+    if (Array.isArray(args.technologies)) updates.technologies = args.technologies as string[];
+    try {
+      const updated = await updateRule(id, updates);
+      return {
+        id: updated.id,
+        title: updated.title,
+        kind: updated.kind,
+        success: true,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to update rule.';
+      return { error: msg };
+    }
+  });
+  handlers.set('delete-rule', async (args: ToolArgs) => {
+    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
+    const id = args.id as string;
+    if (!id) return { error: 'id is required' };
+    try {
+      await deleteRule(id);
+      return { success: true, id };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to delete rule.';
+      return { error: msg };
+    }
+  });
+  handlers.set('pull-rule', async (args: ToolArgs) => {
+    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
+    const id = args.id as string;
+    if (!id) return { error: 'id is required' };
+    const global = Boolean(args.global);
+    const outputPath = typeof args.output_path === 'string' ? args.output_path : undefined;
+    try {
+      const filePath = await pullRuleToFile(id, { global, outputPath });
+      return { success: true, file_path: filePath, id };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to pull rule.';
+      return { error: msg };
+    }
+  });
+  handlers.set('list-activity-logs', async (args: ToolArgs) => {
+    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
+    const limit = (args.limit as number) ?? 20;
+    const timeFrame = args.time_frame as 'day' | 'week' | 'month' | undefined;
+    try {
+      const logs = await fetchActivityLogs({ limit, time_frame: timeFrame });
+      return {
+        logs: logs.map((log) => ({
+          id: log.id,
+          time_frame: log.time_frame,
+          period_start: log.period_start,
+          period_end: log.period_end,
+          created_at: log.created_at,
+        })),
+        total: logs.length,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to list activity logs.';
+      return { error: msg };
+    }
+  });
+  handlers.set('get-activity-log', async (args: ToolArgs) => {
+    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
+    const id = args.id as string;
+    if (!id) return { error: 'id is required' };
+    try {
+      const log = await getActivityLogById(id);
+      if (!log) {
+        return { error: `Activity log with ID ${id} not found.` };
+      }
+      return {
+        id: log.id,
+        time_frame: log.time_frame,
+        period_start: log.period_start,
+        period_end: log.period_end,
+        repo_summary: log.repo_summary,
+        git_analysis: log.git_analysis,
+        created_at: log.created_at,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to get activity log.';
       return { error: msg };
     }
   });

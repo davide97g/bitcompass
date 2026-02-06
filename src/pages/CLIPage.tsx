@@ -183,9 +183,32 @@ export default function CLIPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              MCP tools: <strong>search-rules</strong>, <strong>search-solutions</strong>, <strong>post-rules</strong> (publish rule/solution), <strong>create-activity-log</strong> (push git activity for day/week/month).
-            </p>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground font-medium">MCP Tools:</p>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <div>
+                  <strong className="text-foreground">Rules & Solutions:</strong>
+                  <ul className="ml-4 mt-1 space-y-1 list-disc">
+                    <li><code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">search-rules</code> - Search rules by query</li>
+                    <li><code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">search-solutions</code> - Search solutions by query</li>
+                    <li><code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">get-rule</code> - Get full rule/solution by ID</li>
+                    <li><code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">list-rules</code> - List all rules/solutions</li>
+                    <li><code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">post-rules</code> - Create/publish rule or solution</li>
+                    <li><code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">update-rule</code> - Update existing rule/solution</li>
+                    <li><code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">delete-rule</code> - Delete rule/solution by ID</li>
+                    <li><code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">pull-rule</code> - Pull rule/solution to file</li>
+                  </ul>
+                </div>
+                <div>
+                  <strong className="text-foreground">Activity Logs:</strong>
+                  <ul className="ml-4 mt-1 space-y-1 list-disc">
+                    <li><code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">create-activity-log</code> - Create from git repo</li>
+                    <li><code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">list-activity-logs</code> - List user's activity logs</li>
+                    <li><code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">get-activity-log</code> - Get activity log by ID</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
             <div className="relative rounded-lg border bg-muted/50 overflow-hidden">
               <pre className="p-4 text-sm font-mono overflow-x-auto whitespace-pre">
                 {MCP_CONFIG}

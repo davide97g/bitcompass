@@ -2,13 +2,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
+import { ActivityLogListSkeleton } from '@/components/skeletons';
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useActivityLogs } from '@/hooks/use-activity-logs';
+import { useActivityLogsInfinite } from '@/hooks/use-activity-logs';
 import { useToast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import type { ActivityLog } from '@/types/entities';
@@ -281,7 +282,17 @@ function SearchPreview({ hits, getRepoDisplayName }: SearchPreviewProps) {
 }
 
 export default function ActivityLogsPage() {
-  const { data: logs = [], isLoading } = useActivityLogs();
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useActivityLogsInfinite(20);
+  const logs = useMemo(
+    () => (data?.pages ?? []).flatMap((p) => p.data),
+    [data?.pages]
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedDay, setCopiedDay] = useState<string | null>(null);
   const { toast } = useToast();
@@ -366,12 +377,7 @@ export default function ActivityLogsPage() {
       />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div
-            className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
-            aria-hidden
-          />
-        </div>
+        <ActivityLogListSkeleton />
       ) : logs.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -412,22 +418,36 @@ export default function ActivityLogsPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-8">
-              {Array.from(logsByRepo.entries()).map(([repoKey, repoLogs]) => {
-                const firstLog = repoLogs[0];
-                const repoName = getRepoDisplayName(firstLog);
-                return (
-                  <RepoSection
-                    key={repoKey}
-                    repoName={repoName}
-                    repoLogs={repoLogs}
-                    onCopyInstruction={handleCopyInstruction}
-                    copiedDay={copiedDay}
-                    repoKey={repoKey}
-                  />
-                );
-              })}
-            </div>
+            <>
+              <div className="space-y-8">
+                {Array.from(logsByRepo.entries()).map(([repoKey, repoLogs]) => {
+                  const firstLog = repoLogs[0];
+                  const repoName = getRepoDisplayName(firstLog);
+                  return (
+                    <RepoSection
+                      key={repoKey}
+                      repoName={repoName}
+                      repoLogs={repoLogs}
+                      onCopyInstruction={handleCopyInstruction}
+                      copiedDay={copiedDay}
+                      repoKey={repoKey}
+                    />
+                  );
+                })}
+              </div>
+              {hasNextPage && (
+                <div className="flex justify-center pt-6">
+                  <Button
+                    variant="outline"
+                    onClick={() => void fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    aria-busy={isFetchingNextPage}
+                  >
+                    {isFetchingNextPage ? 'Loading…' : 'Load more'}
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

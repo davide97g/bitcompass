@@ -30,6 +30,17 @@ const ENTRY_TYPES: { value: EntryType; label: string }[] = [
   { value: 'automation', label: 'Automation' },
 ];
 
+const STEP_LABELS = ['Choose type & answer questions', 'Run commands & paste JSON', 'Preview & confirm'] as const;
+
+/** Map internal step to user-visible step index (1-based). */
+const getStepperStep = (step: CreateStep, hasEntryType: boolean): number => {
+  if (!hasEntryType || step === 'type_selection') return 1;
+  if (step === 'guided_questions') return 1;
+  if (step === 'await_command_confirmation' || step === 'collect_json') return 2;
+  if (step === 'confirm_or_edit' || step === 'show_preview') return 3;
+  return 3;
+};
+
 export default function CreateEntryPage() {
   const { type: typeParam } = useParams<{ type?: string }>();
   const navigate = useNavigate();
@@ -49,7 +60,11 @@ export default function CreateEntryPage() {
   const [draftEntry, setDraftEntry] = useState<Problem | Project | Automation | null>(null);
   const [messages, setMessages] = useState<CreateFlowMessageData[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [questionError, setQuestionError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const currentStepperStep = getStepperStep(step, Boolean(entryType));
+  const showStepper = entryType != null && step !== 'insert_done';
 
   const questions = entryType ? QUESTIONS_BY_TYPE[entryType] : [];
   const currentQuestion = questions[currentQuestionIndex];
@@ -118,11 +133,16 @@ export default function CreateEntryPage() {
 
   const handleAnswerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentQuestion || !inputValue.trim()) return;
-
+    if (!currentQuestion) return;
+    const trimmed = inputValue.trim();
+    if (currentQuestion.required && !trimmed) {
+      setQuestionError(`${currentQuestion.label} is required.`);
+      return;
+    }
+    setQuestionError(null);
     const key = currentQuestion.id;
-    setAnswers((prev) => ({ ...prev, [key]: inputValue.trim() }));
-    appendUser(inputValue.trim());
+    setAnswers((prev) => ({ ...prev, [key]: trimmed }));
+    appendUser(trimmed);
     setInputValue('');
 
     if (currentQuestionIndex + 1 < questions.length) {
@@ -135,6 +155,14 @@ export default function CreateEntryPage() {
         "Thanks. Next, run these commands in your terminal and paste the JSON output when done.",
         [{ kind: 'commands', content: '', commands: DEFAULT_COMMANDS }, { kind: 'confirmation_buttons', content: '' }]
       );
+    }
+  };
+
+  const handleAnswerBlur = () => {
+    if (currentQuestion?.required && !inputValue.trim()) {
+      setQuestionError(`${currentQuestion.label} is required.`);
+    } else {
+      setQuestionError(null);
     }
   };
 
@@ -180,8 +208,33 @@ export default function CreateEntryPage() {
     ]);
   };
 
+  const validateDraft = (): string | null => {
+    if (!draftEntry || !entryType) return 'No draft to submit.';
+    if (entryType === 'problem') {
+      const p = draftEntry as Problem;
+      if (!p.title?.trim()) return 'Problem title is required.';
+      if (!p.description?.trim()) return 'Description is required.';
+    }
+    if (entryType === 'project') {
+      const p = draftEntry as Project;
+      if (!p.name?.trim()) return 'Project name is required.';
+      if (!p.description?.trim()) return 'Description is required.';
+    }
+    if (entryType === 'automation') {
+      const a = draftEntry as Automation;
+      if (!a.title?.trim()) return 'Automation title is required.';
+      if (!a.description?.trim()) return 'Description is required.';
+    }
+    return null;
+  };
+
   const handleConfirmDraft = async () => {
     if (!draftEntry || !entryType) return;
+    const validationError = validateDraft();
+    if (validationError) {
+      toast({ title: 'Validation failed', description: validationError, variant: 'destructive' });
+      return;
+    }
     try {
       if (entryType === 'problem') {
         const created = await addProblem(draftEntry as Problem);
@@ -222,13 +275,36 @@ export default function CreateEntryPage() {
         <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
           <Sparkles className="w-5 h-5 text-primary-foreground" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-lg font-semibold">Create entry</h1>
           <p className="text-sm text-muted-foreground">
             {entryType ? `New ${entryType}` : 'Choose problem, project, or automation'}
           </p>
         </div>
+        {showStepper && (
+          <div
+            className="shrink-0 text-sm text-muted-foreground"
+            aria-live="polite"
+            aria-label={`Step ${currentStepperStep} of 3`}
+          >
+            <span className="font-medium text-foreground">Step {currentStepperStep} of 3</span>
+            <span className="hidden sm:inline ml-1">· {STEP_LABELS[currentStepperStep - 1]}</span>
+          </div>
+        )}
       </div>
+
+      {showStepper && (
+        <div className="flex gap-2 mb-4" role="progressbar" aria-valuenow={currentStepperStep} aria-valuemin={1} aria-valuemax={3} aria-label="Create entry progress">
+          {[1, 2, 3].map((n) => (
+            <div
+              key={n}
+              className={`h-1.5 flex-1 rounded-full transition-colors ${
+                n <= currentStepperStep ? 'bg-primary' : 'bg-muted'
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       <Card className="flex-1 overflow-hidden flex flex-col border">
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -296,18 +372,35 @@ export default function CreateEntryPage() {
                 <Textarea
                   id="create-answer"
                   value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
+                  onChange={(e) => {
+                    setInputValue(e.target.value);
+                    setQuestionError(null);
+                  }}
+                  onBlur={handleAnswerBlur}
                   placeholder={currentQuestion.placeholder}
                   rows={3}
                   className="resize-none"
+                  aria-invalid={Boolean(questionError)}
+                  aria-describedby={questionError ? 'create-answer-error' : undefined}
                 />
               ) : (
                 <Input
                   id="create-answer"
                   value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
+                  onChange={(e) => {
+                    setInputValue(e.target.value);
+                    setQuestionError(null);
+                  }}
+                  onBlur={handleAnswerBlur}
                   placeholder={currentQuestion.placeholder}
+                  aria-invalid={Boolean(questionError)}
+                  aria-describedby={questionError ? 'create-answer-error' : undefined}
                 />
+              )}
+              {questionError && (
+                <p id="create-answer-error" className="text-sm text-destructive" role="alert">
+                  {questionError}
+                </p>
               )}
               <Button type="submit" disabled={currentQuestion.required && !inputValue.trim()}>
                 Next

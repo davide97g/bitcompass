@@ -24,6 +24,7 @@ import { MarkdownContent } from '@/components/ui/markdown-content';
 import { CommandBlock } from '@/components/create/CommandBlock';
 import { ruleDownloadBasename } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { RuleDetailSkeleton } from '@/components/skeletons';
 
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
@@ -123,8 +124,8 @@ export default function RuleDetailPage() {
 
   if (isLoading || !id) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="space-y-6">
+        <RuleDetailSkeleton />
       </div>
     );
   }

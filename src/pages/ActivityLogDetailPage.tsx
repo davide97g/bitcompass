@@ -6,6 +6,7 @@ import { useActivityLog } from '@/hooks/use-activity-logs';
 import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState } from 'react';
+import { ActivityLogDetailSkeleton } from '@/components/skeletons';
 
 export default function ActivityLogDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -15,14 +16,7 @@ export default function ActivityLogDetailPage() {
   const [gitOpen, setGitOpen] = useState(true);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
-          aria-hidden
-        />
-      </div>
-    );
+    return <ActivityLogDetailSkeleton />;
   }
 
   if (!log) {

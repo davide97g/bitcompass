@@ -7,6 +7,7 @@ import { ArrowLeft, GitBranch, GitCommit } from 'lucide-react';
 import { useMemo } from 'react';
 import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ActivityLogDayDetailSkeleton } from '@/components/skeletons';
 
 /** Whether a commit date falls on the given day (YYYY-MM-DD). */
 const commitFallsOnDay = (commitDate: string | undefined, dayStr: string): boolean => {
@@ -98,14 +99,7 @@ export default function ActivityLogDayDetailPage() {
   }, [logs, date, repoKey]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
-          aria-hidden
-        />
-      </div>
-    );
+    return <ActivityLogDayDetailSkeleton />;
   }
 
   if (!date || !repoKey) {

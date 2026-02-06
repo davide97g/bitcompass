@@ -7,7 +7,10 @@ import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import { formatList, shouldUseTable } from '../lib/list-format.js';
 import type { RuleInsert } from '../types.js';
 
-export const runSkillsSearch = async (query?: string): Promise<void> => {
+export const runSkillsSearch = async (
+  query?: string,
+  options?: { listOnly?: boolean }
+): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
     process.exit(1);
@@ -18,6 +21,13 @@ export const runSkillsSearch = async (query?: string): Promise<void> => {
   spinner.stop();
   if (list.length === 0) {
     console.log(chalk.yellow('No skills found.'));
+    return;
+  }
+  if (options?.listOnly) {
+    formatList(
+      list.map((r) => ({ id: r.id, title: r.title, kind: r.kind })),
+      { useTable: shouldUseTable(), showKind: true }
+    );
     return;
   }
   const choice = await inquirer.prompt<{ id: string }>([

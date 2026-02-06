@@ -342,7 +342,11 @@ function createStdioServer(): {
     const limit = (args.limit as number) ?? 20;
     try {
       const list = await searchRules(query, { kind, limit });
-      return { rules: list.map((r) => ({ id: r.id, title: r.title, kind: r.kind, author: r.author_display_name ?? null, snippet: r.body.slice(0, 200) })) };
+      const summary = list.length === 0 ? 'No rules found.' : `Found ${list.length} rule(s).`;
+      return {
+        rules: list.map((r) => ({ id: r.id, title: r.title, kind: r.kind, author: r.author_display_name ?? null, snippet: r.body.slice(0, 200) })),
+        summary,
+      };
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Search failed.';
       return { error: msg };
@@ -353,7 +357,11 @@ function createStdioServer(): {
     const limit = (args.limit as number) ?? 20;
     try {
       const list = await searchRules(query, { kind: 'solution', limit });
-      return { solutions: list.map((r) => ({ id: r.id, title: r.title, author: r.author_display_name ?? null, snippet: r.body.slice(0, 200) })) };
+      const summary = list.length === 0 ? 'No solutions found.' : `Found ${list.length} solution(s).`;
+      return {
+        solutions: list.map((r) => ({ id: r.id, title: r.title, author: r.author_display_name ?? null, snippet: r.body.slice(0, 200) })),
+        summary,
+      };
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Search failed.';
       return { error: msg };
@@ -430,6 +438,12 @@ function createStdioServer(): {
     try {
       const list = await fetchRules(kind);
       const limited = list.slice(0, limit);
+      const summary =
+        list.length === 0
+          ? 'No rules found.'
+          : limited.length < list.length
+            ? `Listed ${limited.length} of ${list.length} rule(s).`
+            : `Found ${list.length} rule(s).`;
       return {
         rules: limited.map((r) => ({
           id: r.id,
@@ -442,6 +456,7 @@ function createStdioServer(): {
         })),
         total: list.length,
         returned: limited.length,
+        summary,
       };
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to list rules.';
@@ -504,6 +519,8 @@ function createStdioServer(): {
     const timeFrame = args.time_frame as 'day' | 'week' | 'month' | undefined;
     try {
       const logs = await fetchActivityLogs({ limit, time_frame: timeFrame });
+      const summary =
+        logs.length === 0 ? 'No activity logs found.' : `Found ${logs.length} activity log(s).`;
       return {
         logs: logs.map((log) => ({
           id: log.id,
@@ -513,6 +530,7 @@ function createStdioServer(): {
           created_at: log.created_at,
         })),
         total: logs.length,
+        summary,
       };
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to list activity logs.';

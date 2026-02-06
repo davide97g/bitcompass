@@ -90,7 +90,13 @@ configCmd.command('get <key>').description('Get a config value').action((key: st
 
 // rules
 const rules = program.command('rules').description('Manage rules');
-rules.command('search [query]').description('Search rules').action((query?: string) => runRulesSearch(query).catch(handleErr));
+rules
+  .command('search [query]')
+  .description('Search rules')
+  .option('-l, --list', 'List results only; do not prompt to select')
+  .action((query?: string, cmd?: { opts(): { list?: boolean } }) =>
+    runRulesSearch(query, { listOnly: cmd?.opts()?.list }).catch(handleErr)
+  );
 rules
   .command('list')
   .description('List rules')
@@ -111,7 +117,13 @@ rules.command('push [file]').description('Push a rule (file or interactive)').ac
 
 // solutions
 const solutions = program.command('solutions').description('Manage solutions');
-solutions.command('search [query]').description('Search solutions').action((query?: string) => runSolutionsSearch(query).catch(handleErr));
+solutions
+  .command('search [query]')
+  .description('Search solutions')
+  .option('-l, --list', 'List results only; do not prompt to select')
+  .action((query?: string, cmd?: { opts(): { list?: boolean } }) =>
+    runSolutionsSearch(query, { listOnly: cmd?.opts()?.list }).catch(handleErr)
+  );
 solutions
   .command('list')
   .description('List solutions')
@@ -132,7 +144,13 @@ solutions.command('push [file]').description('Push a solution (file or interacti
 
 // skills
 const skills = program.command('skills').description('Manage skills');
-skills.command('search [query]').description('Search skills').action((query?: string) => runSkillsSearch(query).catch(handleErr));
+skills
+  .command('search [query]')
+  .description('Search skills')
+  .option('-l, --list', 'List results only; do not prompt to select')
+  .action((query?: string, cmd?: { opts(): { list?: boolean } }) =>
+    runSkillsSearch(query, { listOnly: cmd?.opts()?.list }).catch(handleErr)
+  );
 skills
   .command('list')
   .description('List skills')
@@ -153,7 +171,13 @@ skills.command('push [file]').description('Push a skill (file or interactive)').
 
 // commands
 const commands = program.command('commands').description('Manage commands');
-commands.command('search [query]').description('Search commands').action((query?: string) => runCommandsSearch(query).catch(handleErr));
+commands
+  .command('search [query]')
+  .description('Search commands')
+  .option('-l, --list', 'List results only; do not prompt to select')
+  .action((query?: string, cmd?: { opts(): { list?: boolean } }) =>
+    runCommandsSearch(query, { listOnly: cmd?.opts()?.list }).catch(handleErr)
+  );
 commands
   .command('list')
   .description('List commands')

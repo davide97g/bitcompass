@@ -13,6 +13,32 @@ const fetchRules = async (kind?: RuleKind): Promise<Rule[]> => {
   return (data ?? []) as Rule[];
 };
 
+export interface FetchRulesPaginatedOptions {
+  kind?: RuleKind | 'all';
+  limit: number;
+  offset: number;
+  search?: string;
+}
+
+const fetchRulesPaginated = async (
+  options: FetchRulesPaginatedOptions
+): Promise<{ data: Rule[]; total: number }> => {
+  if (!supabase) return { data: [], total: 0 };
+  const { kind, limit, offset, search } = options;
+  let query = supabase
+    .from(TABLE)
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false });
+  if (kind && kind !== 'all') query = query.eq('kind', kind);
+  if (search?.trim()) {
+    const q = search.trim();
+    query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,body.ilike.%${q}%`);
+  }
+  const { data, error, count } = await query.range(offset, offset + limit - 1);
+  if (error) throw error;
+  return { data: (data ?? []) as Rule[], total: count ?? 0 };
+};
+
 const fetchRuleById = async (id: string): Promise<Rule | null> => {
   if (!supabase) return null;
   const { data, error } = await supabase.from(TABLE).select('*').eq('id', id).single();
@@ -27,6 +53,35 @@ export const useRules = (kind?: RuleKind) => {
   return useQuery({
     queryKey: ['rules', kind],
     queryFn: () => fetchRules(kind),
+    enabled: Boolean(supabase),
+  });
+};
+
+const RULES_PAGE_SIZE = 20;
+
+export interface UseRulesPaginatedParams {
+  kind: RuleKind | 'all';
+  page: number;
+  search?: string;
+  pageSize?: number;
+}
+
+export const useRulesPaginated = ({
+  kind,
+  page,
+  search = '',
+  pageSize = RULES_PAGE_SIZE,
+}: UseRulesPaginatedParams) => {
+  const offset = (page - 1) * pageSize;
+  return useQuery({
+    queryKey: ['rules-paginated', kind, page, search.trim(), pageSize],
+    queryFn: () =>
+      fetchRulesPaginated({
+        kind,
+        limit: pageSize,
+        offset,
+        search: search.trim() || undefined,
+      }),
     enabled: Boolean(supabase),
   });
 };
@@ -58,7 +113,10 @@ export const useInsertRule = () => {
       if (error) throw error;
       return data as Rule;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['rules'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rules'] });
+      qc.invalidateQueries({ queryKey: ['rules-paginated'] });
+    },
   });
 };
 
@@ -73,6 +131,7 @@ export const useUpdateRule = () => {
     },
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ['rules'] });
+      qc.invalidateQueries({ queryKey: ['rules-paginated'] });
       qc.invalidateQueries({ queryKey: ['rule', id] });
     },
   });
@@ -86,6 +145,9 @@ export const useDeleteRule = () => {
       const { error } = await supabase.from(TABLE).delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['rules'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rules'] });
+      qc.invalidateQueries({ queryKey: ['rules-paginated'] });
+    },
   });
 };

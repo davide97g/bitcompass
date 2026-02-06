@@ -14,7 +14,16 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useRules, useInsertRule } from '@/hooks/use-rules';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
+import { useRulesPaginated, useInsertRule } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Rule, RuleInsert, RuleKind } from '@/types/bitcompass';
@@ -22,6 +31,7 @@ import { BookMarked, Copy, FileDown, Plus, Search, User, Link2, Tag, GitFork } f
 import { PageHeader } from '@/components/ui/page-header';
 import { ruleDownloadBasename } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { RulesPageSkeleton } from '@/components/skeletons';
 
 /** Highlight all occurrences of query in text. Returns JSX with <mark> tags. */
 const highlightText = (text: string, query: string): React.ReactNode => {
@@ -102,17 +112,21 @@ const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
 
 const KIND_PARAM = 'kind';
 const Q_PARAM = 'q';
+const PAGE_PARAM = 'page';
 
 const VALID_KINDS: Array<RuleKind | 'all'> = ['all', 'rule', 'solution', 'skill', 'command'];
+const RULES_PAGE_SIZE = 20;
 
 export default function RulesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const kindFromUrl = searchParams.get(KIND_PARAM);
   const qFromUrl = searchParams.get(Q_PARAM) ?? '';
+  const pageFromUrl = searchParams.get(PAGE_PARAM);
   const [kindFilter, setKindFilter] = useState<RuleKind | 'all'>(() =>
     kindFromUrl && VALID_KINDS.includes(kindFromUrl as RuleKind | 'all') ? (kindFromUrl as RuleKind | 'all') : 'all'
   );
   const [search, setSearch] = useState(() => qFromUrl);
+  const page = Math.max(1, parseInt(pageFromUrl ?? '1', 10) || 1);
   const [createOpen, setCreateOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [newRule, setNewRule] = useState<RuleInsert>({
@@ -123,10 +137,16 @@ export default function RulesPage() {
     version: '1.0.0',
     technologies: [],
   });
-  const { data: rulesRule = [], isLoading: loadingRules } = useRules('rule');
-  const { data: rulesSolution = [], isLoading: loadingSolutions } = useRules('solution');
-  const { data: rulesSkill = [], isLoading: loadingSkills } = useRules('skill');
-  const { data: rulesCommand = [], isLoading: loadingCommands } = useRules('command');
+
+  const { data: paginatedResult, isLoading: loadingPaginated } = useRulesPaginated({
+    kind: kindFilter,
+    page,
+    search,
+    pageSize: RULES_PAGE_SIZE,
+  });
+  const rules = paginatedResult?.data ?? [];
+  const total = paginatedResult?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / RULES_PAGE_SIZE));
   const insertRule = useInsertRule();
   const { toast } = useToast();
 
@@ -134,53 +154,38 @@ export default function RulesPage() {
   useEffect(() => {
     const k = searchParams.get(KIND_PARAM);
     const q = searchParams.get(Q_PARAM) ?? '';
+    const p = searchParams.get(PAGE_PARAM);
     if (k && VALID_KINDS.includes(k as RuleKind | 'all')) setKindFilter(k as RuleKind | 'all');
     setSearch(q);
   }, [searchParams]);
 
-  const updateUrl = (kind: RuleKind | 'all', q: string) => {
+  const updateUrl = (kind: RuleKind | 'all', q: string, pageNum: number = 1) => {
     const next = new URLSearchParams(searchParams);
     if (kind === 'all') next.delete(KIND_PARAM);
     else next.set(KIND_PARAM, kind);
     if (q.trim() === '') next.delete(Q_PARAM);
     else next.set(Q_PARAM, q.trim());
+    if (pageNum <= 1) next.delete(PAGE_PARAM);
+    else next.set(PAGE_PARAM, String(pageNum));
     setSearchParams(next, { replace: true });
   };
 
   const handleKindChange = (v: string) => {
     const value = v as RuleKind | 'all';
     setKindFilter(value);
-    updateUrl(value, search);
+    updateUrl(value, search, 1);
   };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    updateUrl(kindFilter, value);
+    updateUrl(kindFilter, value, 1);
   };
 
-  const rules =
-    kindFilter === 'rule'
-      ? rulesRule
-      : kindFilter === 'solution'
-        ? rulesSolution
-        : kindFilter === 'skill'
-          ? rulesSkill
-          : kindFilter === 'command'
-            ? rulesCommand
-            : [...rulesRule, ...rulesSolution, ...rulesSkill, ...rulesCommand];
-  const filtered = search.trim()
-    ? rules.filter(
-        (r) => {
-          const q = search.toLowerCase();
-          return (
-            r.title.toLowerCase().includes(q) ||
-            r.description.toLowerCase().includes(q) ||
-            r.body.toLowerCase().includes(q) ||
-            (r.technologies && r.technologies.some((tech) => tech.toLowerCase().includes(q)))
-          );
-        }
-      )
-    : rules;
+  const handlePageChange = (pageNum: number) => {
+    updateUrl(kindFilter, search, pageNum);
+  };
+
+  const filtered = rules;
 
   const handleCopyPullCommand = async (rule: Rule, useCopy = false) => {
     const cmd = getPullCommand(rule.id, rule.kind, useCopy);
@@ -333,15 +338,13 @@ export default function RulesPage() {
         </Dialog>
       </div>
 
-      {(loadingRules || loadingSolutions || loadingSkills || loadingCommands) && kindFilter !== 'all' ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
+      {loadingPaginated ? (
+        <RulesPageSkeleton />
       ) : filtered.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <BookMarked className="h-12 w-12 text-muted-foreground mb-4" />
-            {rules.length === 0 ? (
+            {total === 0 ? (
               <>
                 <h3 className="font-semibold mb-1">No rules yet</h3>
                 <p className="text-sm text-muted-foreground max-w-sm mb-4">
@@ -467,6 +470,60 @@ export default function RulesPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {!loadingPaginated && filtered.length > 0 && totalPages > 1 && (
+        <Pagination aria-label="Rules pagination">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (page > 1) handlePageChange(page - 1);
+                }}
+                aria-disabled={page <= 1}
+                className={page <= 1 ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+            {(() => {
+              const pages: number[] = [1];
+              if (page - 1 > 1) pages.push(page - 1);
+              if (page > 1 && page !== totalPages) pages.push(page);
+              if (page + 1 < totalPages) pages.push(page + 1);
+              if (totalPages > 1) pages.push(totalPages);
+              const unique = [...new Set(pages)].sort((a, b) => a - b);
+              return unique.map((n, idx) => (
+                <PaginationItem key={n}>
+                  {idx > 0 && unique[idx - 1] !== n - 1 && (
+                    <PaginationEllipsis aria-hidden />
+                  )}
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(n);
+                    }}
+                    isActive={n === page}
+                  >
+                    {n}
+                  </PaginationLink>
+                </PaginationItem>
+              ));
+            })()}
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (page < totalPages) handlePageChange(page + 1);
+                }}
+                aria-disabled={page >= totalPages}
+                className={page >= totalPages ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
     </div>
   );

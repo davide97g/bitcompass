@@ -1,4 +1,5 @@
 import inquirer from 'inquirer';
+import ora from 'ora';
 import chalk from 'chalk';
 import { insertActivityLog } from '../api/client.js';
 import { loadCredentials } from '../auth/config.js';
@@ -13,19 +14,24 @@ import {
   parseDate,
 } from '../lib/git-analysis.js';
 
+export type LogProgressStep = 'analyzing' | 'pushing';
+
 /**
  * Shared logic: resolve repo, compute period, gather summary + git analysis, insert log.
  * Used by both CLI and MCP. Returns the created log id or throws.
+ * Optional onProgress callback for CLI to show step-wise spinner (e.g. analyzing → pushing).
  */
 export const buildAndPushActivityLog = async (
   timeFrame: TimeFrame,
-  cwd: string
+  cwd: string,
+  onProgress?: (step: LogProgressStep) => void
 ): Promise<{ id: string }> => {
   const repoRoot = getRepoRoot(cwd);
   if (!repoRoot) {
     throw new Error('Not a git repository. Run from a project with git or pass a valid repo path.');
   }
   const period = getPeriodForTimeFrame(timeFrame);
+  onProgress?.('analyzing');
   const repo_summary = getRepoSummary(repoRoot);
   const git_analysis = getGitAnalysis(repoRoot, period.since);
   const payload: ActivityLogInsert = {
@@ -35,6 +41,7 @@ export const buildAndPushActivityLog = async (
     repo_summary: repo_summary as unknown as Record<string, unknown>,
     git_analysis: git_analysis as unknown as Record<string, unknown>,
   };
+  onProgress?.('pushing');
   const created = await insertActivityLog(payload);
   return { id: created.id };
 };
@@ -45,12 +52,14 @@ export const buildAndPushActivityLog = async (
 export const buildAndPushActivityLogWithPeriod = async (
   period: { period_start: string; period_end: string; since: string },
   timeFrame: TimeFrame,
-  cwd: string
+  cwd: string,
+  onProgress?: (step: LogProgressStep) => void
 ): Promise<{ id: string }> => {
   const repoRoot = getRepoRoot(cwd);
   if (!repoRoot) {
     throw new Error('Not a git repository. Run from a project with git or pass a valid repo path.');
   }
+  onProgress?.('analyzing');
   const repo_summary = getRepoSummary(repoRoot);
   const git_analysis = getGitAnalysis(repoRoot, period.since, period.period_end);
   const payload: ActivityLogInsert = {
@@ -60,6 +69,7 @@ export const buildAndPushActivityLogWithPeriod = async (
     repo_summary: repo_summary as unknown as Record<string, unknown>,
     git_analysis: git_analysis as unknown as Record<string, unknown>,
   };
+  onProgress?.('pushing');
   const created = await insertActivityLog(payload);
   return { id: created.id };
 };
@@ -114,20 +124,34 @@ export const runLog = async (args: string[] = []): Promise<void> => {
   }
 
   const parsed = parseLogArgs(args);
+  const spinner = ora('Analyzing repository…').start();
+  const onProgress = (step: LogProgressStep) => {
+    spinner.text = step === 'analyzing' ? 'Analyzing repository…' : 'Pushing activity log…';
+  };
+
   if (parsed) {
     if (!parseDate(parsed.start)) {
+      spinner.stop();
       throw new ValidationError(`Invalid date "${parsed.start}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
     }
     if (parsed.end !== undefined && !parseDate(parsed.end)) {
+      spinner.stop();
       throw new ValidationError(`Invalid date "${parsed.end}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
     }
     const period = getPeriodForCustomDates(parsed.start, parsed.end);
     const timeFrame = parsed.end ? timeFrameForRange(parsed.start, parsed.end) : 'day';
-    const result = await buildAndPushActivityLogWithPeriod(period, timeFrame, cwd);
-    console.log(chalk.green('Log saved.'), chalk.dim(result.id));
+    try {
+      const result = await buildAndPushActivityLogWithPeriod(period, timeFrame, cwd, onProgress);
+      spinner.succeed(chalk.green('Log saved.'));
+      console.log(chalk.dim(result.id));
+    } catch (err) {
+      spinner.fail(chalk.red(err instanceof Error ? err.message : 'Failed'));
+      throw err;
+    }
     return;
   }
 
+  spinner.stop();
   const choice = await inquirer.prompt<{ time_frame: TimeFrame }>([
     {
       name: 'time_frame',
@@ -141,6 +165,13 @@ export const runLog = async (args: string[] = []): Promise<void> => {
     },
   ]);
   const timeFrame = choice.time_frame;
-  const result = await buildAndPushActivityLog(timeFrame, cwd);
-  console.log(chalk.green('Log saved.'), chalk.dim(result.id));
+  spinner.start('Analyzing repository…');
+  try {
+    const result = await buildAndPushActivityLog(timeFrame, cwd, onProgress);
+    spinner.succeed(chalk.green('Log saved.'));
+    console.log(chalk.dim(result.id));
+  } catch (err) {
+    spinner.fail(chalk.red(err instanceof Error ? err.message : 'Failed'));
+    throw err;
+  }
 };

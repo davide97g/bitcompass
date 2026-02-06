@@ -12,12 +12,17 @@ import { runInit } from './commands/init.js';
 import { runLogin } from './commands/login.js';
 import { runLogout } from './commands/logout.js';
 import { runMcpStart, runMcpStatus } from './commands/mcp.js';
-import { runLog } from './commands/log.js';
+import { runLog, ValidationError } from './commands/log.js';
 import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './commands/rules.js';
 import { runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
 import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
 import { runCommandsList, runCommandsPull, runCommandsPush, runCommandsSearch } from './commands/commands.js';
 import { runWhoami } from './commands/whoami.js';
+
+// Disable chalk colors when NO_COLOR is set or --no-color is passed (must run before any command)
+if (process.env.NO_COLOR !== undefined || process.argv.includes('--no-color')) {
+  chalk.level = 0;
+}
 
 // Read version from package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -30,7 +35,8 @@ const program = new Command();
 program
   .name('bitcompass')
   .description('BitCompass CLI - rules, solutions, and MCP server')
-  .version(version, '-v, -V, --version', 'display version number');
+  .version(version, '-v, -V, --version', 'display version number')
+  .option('--no-color', 'Disable colored output');
 
 program
   .command('login')
@@ -57,7 +63,15 @@ program
   .description(
     'Collect repo summary and git activity, then push to your activity logs. Optional: bitcompass log YYYY-MM-DD or bitcompass log YYYY-MM-DD YYYY-MM-DD'
   )
-  .action((dates: string[]) => runLog(dates ?? []).catch(handleErr));
+  .action((dates: string[]) =>
+    runLog(dates ?? []).catch((err) => {
+      if (err instanceof ValidationError) {
+        console.error(chalk.red(err.message));
+        process.exit(2);
+      }
+      handleErr(err);
+    })
+  );
 
 const configCmd = program.command('config').description('Show or set config');
 configCmd.action(runConfigList);

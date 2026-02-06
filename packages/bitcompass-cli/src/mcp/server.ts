@@ -1,3 +1,6 @@
+import { readFileSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import {
   AUTH_REQUIRED_MSG,
   insertRule,
@@ -15,6 +18,11 @@ import { getProjectConfig } from '../auth/project-config.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import type { RuleInsert, RuleKind } from '../types.js';
 import type { TimeFrame } from '../lib/git-analysis.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const packageJsonPath = join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as { version?: string };
+const VERSION = packageJson.version ?? '0.0.0';
 
 /** When token is missing, we fail initialize so Cursor shows "Needs authentication" (yellow) instead of success (green). */
 const NEEDS_AUTH_ERROR_MESSAGE = 'Needs authentication';
@@ -63,7 +71,7 @@ function createStdioServer(): {
           result: {
             protocolVersion: '2024-11-05',
             capabilities: { tools: {}, prompts: {} },
-            serverInfo: { name: 'bitcompass', version: '0.1.0' },
+            serverInfo: { name: 'bitcompass', version: VERSION },
           },
         });
         return;

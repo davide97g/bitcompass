@@ -19,7 +19,7 @@ export const runConfigSet = (key: string, value: string): void => {
   const config = loadConfig();
   if (!CONFIG_KEYS.includes(key as (typeof CONFIG_KEYS)[number])) {
     console.error(chalk.red('Unknown key. Use one of:'), CONFIG_KEYS.join(', '));
-    process.exit(1);
+    process.exit(2);
   }
   (config as Record<string, string>)[key] = value;
   saveConfig(config);
@@ -30,7 +30,7 @@ export const runConfigGet = (key: string): void => {
   const config = loadConfig();
   if (!CONFIG_KEYS.includes(key as (typeof CONFIG_KEYS)[number])) {
     console.error(chalk.red('Unknown key.'));
-    process.exit(1);
+    process.exit(2);
   }
   const val = config[key as keyof typeof config] ?? process.env[`BITCOMPASS_${key.toUpperCase()}`];
   console.log(val ?? '');

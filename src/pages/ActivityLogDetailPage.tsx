@@ -3,6 +3,7 @@ import { ArrowLeft, Calendar, GitBranch, GitCommit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useActivityLog } from '@/hooks/use-activity-logs';
+import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState } from 'react';
 
@@ -48,6 +49,7 @@ export default function ActivityLogDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      <PageBreadcrumb items={[{ label: 'Activity logs', href: '/logs' }, { label: formatPeriod() }]} />
       <Button
         variant="ghost"
         size="sm"

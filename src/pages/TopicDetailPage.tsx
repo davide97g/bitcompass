@@ -6,6 +6,7 @@ import { TechTag, getTechColor } from '@/components/ui/tech-tag';
 import { getTopicById, getProjectsByIds, getProblemsByIds, getPersonsByIds } from '@/data/mockData';
 import { ProjectCard } from '@/components/cards/ProjectCard';
 import { ProblemCard } from '@/components/cards/ProblemCard';
+import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { PersonCard } from '@/components/cards/PersonCard';
 import { Monitor, Server, Brain, Shield, Database } from 'lucide-react';
 
@@ -40,6 +41,7 @@ export default function TopicDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
+      <PageBreadcrumb items={[{ label: 'Topics', href: '/topics' }, { label: topic.name }]} />
       {/* Back button */}
       <Button 
         variant="ghost" 

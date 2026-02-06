@@ -18,6 +18,7 @@ import { useRule, useUpdateRule, useDeleteRule } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
 import type { Rule, RuleKind } from '@/types/bitcompass';
 import { ArrowLeft, FileDown, Pencil, Trash2, User, Link2, GitFork } from 'lucide-react';
+import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { PageHeader } from '@/components/ui/page-header';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { CommandBlock } from '@/components/create/CommandBlock';
@@ -148,6 +149,7 @@ export default function RuleDetailPage() {
 
   return (
     <div className="space-y-6">
+      <PageBreadcrumb items={[{ label: 'Rules', href: '/rules' }, { label: rule.title }]} />
       <PageHeader
         title={editing ? `Edit ${rule.kind}` : rule.title}
         description={getKindDescription(rule.kind)}

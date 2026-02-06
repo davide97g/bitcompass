@@ -7,6 +7,7 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getPersonsByIds } from '@/data/mockData';
 import { useEntries } from '@/hooks/use-entries';
+import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { cn } from '@/lib/utils';
 
 const categoryLabels: Record<string, string> = {
@@ -40,6 +41,7 @@ export default function AutomationDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
+      <PageBreadcrumb items={[{ label: 'Automations', href: '/automations' }, { label: automation.title }]} />
       <Button
         variant="ghost"
         size="sm"

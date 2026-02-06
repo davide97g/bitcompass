@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { getPersonsByIds } from '@/data/mockData';
 import { useEntries } from '@/hooks/use-entries';
 import { ProjectCard } from '@/components/cards/ProjectCard';
+import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { PersonCard } from '@/components/cards/PersonCard';
 
 export default function ProblemDetailPage() {
@@ -31,6 +32,7 @@ export default function ProblemDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
+      <PageBreadcrumb items={[{ label: 'Problems', href: '/problems' }, { label: problem.title }]} />
       {/* Back button */}
       <Button 
         variant="ghost" 

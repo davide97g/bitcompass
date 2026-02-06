@@ -82,10 +82,11 @@ export const runRulesPull = async (id?: string, options?: { global?: boolean; co
     if (options?.global) {
       console.log(chalk.dim('Installed globally for all projects'));
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     spinner.fail(chalk.red('Failed to pull rule'));
-    console.error(chalk.red(error.message));
-    process.exit(1);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(chalk.red(message));
+    process.exit(message.includes('not found') ? 2 : 1);
   }
 };
 

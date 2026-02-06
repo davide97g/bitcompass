@@ -5,6 +5,7 @@ import { getRepoKey } from '@/pages/ActivityLogsPage';
 import type { ActivityLog } from '@/types/entities';
 import { ArrowLeft, GitBranch, GitCommit } from 'lucide-react';
 import { useMemo } from 'react';
+import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 /** Whether a commit date falls on the given day (YYYY-MM-DD). */
@@ -138,6 +139,7 @@ export default function ActivityLogDayDetailPage() {
 
   return (
     <div className="max-w-full mx-auto space-y-6">
+      <PageBreadcrumb items={[{ label: 'Activity logs', href: '/logs' }, { label: `Day ${formattedDate}` }]} />
       <Button
         variant="ghost"
         size="sm"

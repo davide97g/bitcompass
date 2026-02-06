@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -100,9 +100,19 @@ const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
   }
 };
 
+const KIND_PARAM = 'kind';
+const Q_PARAM = 'q';
+
+const VALID_KINDS: Array<RuleKind | 'all'> = ['all', 'rule', 'solution', 'skill', 'command'];
+
 export default function RulesPage() {
-  const [kindFilter, setKindFilter] = useState<RuleKind | 'all'>('all');
-  const [search, setSearch] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const kindFromUrl = searchParams.get(KIND_PARAM);
+  const qFromUrl = searchParams.get(Q_PARAM) ?? '';
+  const [kindFilter, setKindFilter] = useState<RuleKind | 'all'>(() =>
+    kindFromUrl && VALID_KINDS.includes(kindFromUrl as RuleKind | 'all') ? (kindFromUrl as RuleKind | 'all') : 'all'
+  );
+  const [search, setSearch] = useState(() => qFromUrl);
   const [createOpen, setCreateOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [newRule, setNewRule] = useState<RuleInsert>({
@@ -119,6 +129,34 @@ export default function RulesPage() {
   const { data: rulesCommand = [], isLoading: loadingCommands } = useRules('command');
   const insertRule = useInsertRule();
   const { toast } = useToast();
+
+  // Sync URL -> state when user navigates (e.g. back/forward)
+  useEffect(() => {
+    const k = searchParams.get(KIND_PARAM);
+    const q = searchParams.get(Q_PARAM) ?? '';
+    if (k && VALID_KINDS.includes(k as RuleKind | 'all')) setKindFilter(k as RuleKind | 'all');
+    setSearch(q);
+  }, [searchParams]);
+
+  const updateUrl = (kind: RuleKind | 'all', q: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (kind === 'all') next.delete(KIND_PARAM);
+    else next.set(KIND_PARAM, kind);
+    if (q.trim() === '') next.delete(Q_PARAM);
+    else next.set(Q_PARAM, q.trim());
+    setSearchParams(next, { replace: true });
+  };
+
+  const handleKindChange = (v: string) => {
+    const value = v as RuleKind | 'all';
+    setKindFilter(value);
+    updateUrl(value, search);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    updateUrl(kindFilter, value);
+  };
 
   const rules =
     kindFilter === 'rule'
@@ -198,11 +236,11 @@ export default function RulesPage() {
           <Input
             placeholder="Search…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-9"
           />
         </div>
-        <Tabs value={kindFilter} onValueChange={(v) => setKindFilter(v as RuleKind | 'all')}>
+        <Tabs value={kindFilter} onValueChange={handleKindChange}>
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="rule">Rules</TabsTrigger>
@@ -303,11 +341,33 @@ export default function RulesPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <BookMarked className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No shared entities yet.</p>
-            <Button className="mt-4" onClick={() => setCreateOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add one
-            </Button>
+            {rules.length === 0 ? (
+              <>
+                <h3 className="font-semibold mb-1">No rules yet</h3>
+                <p className="text-sm text-muted-foreground max-w-sm mb-4">
+                  Publish your first rule from this app, or from the CLI or MCP in your editor.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <Button onClick={() => setCreateOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add one
+                  </Button>
+                  <span className="text-sm text-muted-foreground">or</span>
+                  <Link to="/cli" className="text-sm text-primary underline underline-offset-2 hover:no-underline">
+                    CLI docs
+                  </Link>
+                  <span className="text-muted-foreground">·</span>
+                  <Link to="/mcp" className="text-sm text-primary underline underline-offset-2 hover:no-underline">
+                    MCP docs
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground">No matches for this filter or search.</p>
+                <p className="text-sm text-muted-foreground mt-1">Try a different search term or clear the filter.</p>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (

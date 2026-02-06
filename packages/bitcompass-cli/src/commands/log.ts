@@ -83,6 +83,14 @@ export const parseLogArgs = (args: string[]): { start: string; end?: string } | 
   );
 };
 
+/** Thrown for invalid date args; CLI should exit with code 2. */
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
 /** Choose time_frame for a custom range by span (day ≤ 1, week ≤ 7, else month). */
 const timeFrameForRange = (start: string, end: string): TimeFrame => {
   const a = new Date(start);
@@ -108,10 +116,10 @@ export const runLog = async (args: string[] = []): Promise<void> => {
   const parsed = parseLogArgs(args);
   if (parsed) {
     if (!parseDate(parsed.start)) {
-      throw new Error(`Invalid date "${parsed.start}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
+      throw new ValidationError(`Invalid date "${parsed.start}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
     }
     if (parsed.end !== undefined && !parseDate(parsed.end)) {
-      throw new Error(`Invalid date "${parsed.end}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
+      throw new ValidationError(`Invalid date "${parsed.end}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
     }
     const period = getPeriodForCustomDates(parsed.start, parsed.end);
     const timeFrame = parsed.end ? timeFrameForRange(parsed.start, parsed.end) : 'day';

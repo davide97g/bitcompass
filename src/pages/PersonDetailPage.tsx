@@ -8,6 +8,7 @@ import { getPersonById } from '@/data/mockData';
 import { useEntries } from '@/hooks/use-entries';
 import { ProjectCard } from '@/components/cards/ProjectCard';
 import { ProblemCard } from '@/components/cards/ProblemCard';
+import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { AutomationCard } from '@/components/cards/AutomationCard';
 
 export default function PersonDetailPage() {
@@ -33,6 +34,7 @@ export default function PersonDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
+      <PageBreadcrumb items={[{ label: 'People', href: '/people' }, { label: person.name }]} />
       {/* Back button */}
       <Button 
         variant="ghost" 

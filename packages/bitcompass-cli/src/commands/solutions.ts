@@ -1,8 +1,10 @@
 import inquirer from 'inquirer';
 import ora from 'ora';
 import chalk from 'chalk';
-import { writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { loadCredentials } from '../auth/config.js';
+import { getProjectConfig } from '../auth/project-config.js';
 import { searchRules, fetchRules, getRuleById, insertRule } from '../api/client.js';
 import type { RuleInsert } from '../types.js';
 
@@ -58,7 +60,10 @@ export const runSolutionsPull = async (id?: string): Promise<void> => {
     console.error(chalk.red('Solution not found.'));
     process.exit(1);
   }
-  const filename = `solution-${rule.id}.md`;
+  const { outputPath } = getProjectConfig({ warnIfMissing: true });
+  const outDir = join(process.cwd(), outputPath);
+  mkdirSync(outDir, { recursive: true });
+  const filename = join(outDir, `solution-${rule.id}.md`);
   const content = `# ${rule.title}\n\n${rule.description}\n\n## Solution\n\n${rule.body}\n`;
   writeFileSync(filename, content);
   console.log(chalk.green('Wrote'), filename);

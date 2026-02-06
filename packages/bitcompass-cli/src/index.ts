@@ -5,6 +5,7 @@ import 'dotenv/config';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { runConfigGet, runConfigList, runConfigSet } from './commands/config-cmd.js';
+import { runInit } from './commands/init.js';
 import { runLogin } from './commands/login.js';
 import { runLogout } from './commands/logout.js';
 import { runMcpStart, runMcpStatus } from './commands/mcp.js';
@@ -34,6 +35,11 @@ program
   .command('whoami')
   .description('Show current user (email)')
   .action(runWhoami);
+
+program
+  .command('init')
+  .description('Configure project: editor/AI provider and output folder for rules/docs/commands')
+  .action(() => runInit().catch(handleErr));
 
 program
   .command('log [dates...]')

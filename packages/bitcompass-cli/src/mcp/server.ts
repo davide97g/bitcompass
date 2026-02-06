@@ -1,6 +1,7 @@
 import { AUTH_REQUIRED_MSG, insertRule, searchRules } from '../api/client.js';
 import { buildAndPushActivityLog } from '../commands/log.js';
 import { loadCredentials } from '../auth/config.js';
+import { getProjectConfig } from '../auth/project-config.js';
 import type { RuleInsert } from '../types.js';
 import type { TimeFrame } from '../lib/git-analysis.js';
 
@@ -282,6 +283,7 @@ function createStdioServer(): {
 }
 
 export const startMcpServer = async (): Promise<void> => {
+  getProjectConfig({ warnIfMissing: true });
   const server = createStdioServer();
   await server.connect();
   // Do not exit when not logged in: Cursor needs the process alive to complete

@@ -32,6 +32,14 @@ export interface StoredCredentials {
   user?: { email?: string };
 }
 
+export type EditorProvider = 'vscode' | 'cursor' | 'antigrativity' | 'claudecode';
+
+export interface ProjectConfig {
+  editor: EditorProvider;
+  /** Folder for rules/docs/commands output (e.g. .cursor/rules/) */
+  outputPath: string;
+}
+
 export interface BitcompassConfig {
   apiUrl?: string;
   supabaseUrl?: string;

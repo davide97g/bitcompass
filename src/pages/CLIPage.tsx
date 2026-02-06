@@ -69,7 +69,7 @@ export default function CLIPage() {
     <div className="space-y-8">
       <PageHeader
         title="CLI & MCP"
-        description="Install and use the BitCompass CLI and add it to Cursor."
+        description="Install the BitCompass CLI, run init to set editor and output folder, then use rules, solutions, and activity logs from the terminal or Cursor MCP."
       >
         <button
           type="button"
@@ -102,6 +102,20 @@ export default function CLIPage() {
       </section>
 
       <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Initialize project (recommended)</h2>
+        <Card>
+          <CardContent className="pt-6">
+            <pre className="rounded-lg border bg-muted/50 p-4 text-sm font-mono">
+              bitcompass init
+            </pre>
+            <p className="text-sm text-muted-foreground mt-2">
+              Run once per project. You choose your <strong>editor / AI provider</strong> (VSCode, Cursor, Antigrativity, Claude Code) and the <strong>output folder</strong> for rules, docs, and commands. Defaults by editor (e.g. Cursor → <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.cursor/rules</code>). Config is saved in <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.bitcompass/config.json</code> and <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.bitcompass</code> is added to <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.gitignore</code>. If you skip this, the CLI and MCP show a small warning and use defaults (Cursor / <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.cursor/rules</code>).
+            </p>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="space-y-3">
         <h2 className="text-lg font-semibold">Login</h2>
         <Card>
           <CardContent className="pt-6">
@@ -120,14 +134,17 @@ export default function CLIPage() {
         <Card>
           <CardContent className="pt-6">
             <ul className="space-y-2 text-sm font-mono text-muted-foreground">
+              <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass init</code> — Configure project (editor + output folder for rules/docs)</li>
+              <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass login</code> / <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">logout</code> / <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">whoami</code> — Auth</li>
               <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass rules search [query]</code> — Search rules</li>
               <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass rules list</code> — List rules</li>
-              <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass rules pull [id]</code> — Pull rule to file</li>
+              <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass rules pull [id]</code> — Pull rule into project output folder</li>
               <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass rules push [file]</code> — Push rule</li>
-              <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass solutions search|pull|push</code> — Same for solutions</li>
+              <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass solutions search</code> / <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">list</code> / <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">pull</code> / <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">push</code> — Same for solutions</li>
+              <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass log [day|start end]</code> — Push activity log (day, week, or month)</li>
               <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass mcp start</code> — Start MCP server (stdio)</li>
               <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass mcp status</code> — Show MCP login status</li>
-              <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass config list|set|get</code> — Config</li>
+              <li><code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass config list</code> / <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">set</code> / <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">get</code> — API config</li>
             </ul>
           </CardContent>
         </Card>
@@ -142,7 +159,7 @@ export default function CLIPage() {
               Add to Cursor
             </CardTitle>
             <p className="text-sm text-muted-foreground font-normal">
-              Use BitCompass in Cursor. Paste this into Cursor → Settings → Features → MCP → Edit config (or <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.cursor/mcp.json</code>). Run <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">bitcompass login</code> first, then restart the MCP server in Cursor if you added it before logging in.
+              Use BitCompass in Cursor. Paste this into Cursor → Settings → Features → MCP → Edit config (or <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.cursor/mcp.json</code>). Run <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">bitcompass login</code> first, then restart the MCP server in Cursor if you added it before logging in. The MCP reads the same project config as the CLI (<code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.bitcompass/config.json</code>). If the project is not initialized, a one-line warning is shown and defaults are used (Cursor / <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.cursor/rules</code>).
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Button
@@ -165,7 +182,10 @@ export default function CLIPage() {
               </a>
             </div>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent className="pt-0 space-y-4">
+            <p className="text-sm text-muted-foreground">
+              MCP tools: <strong>search-rules</strong>, <strong>search-solutions</strong>, <strong>post-rules</strong> (publish rule/solution), <strong>create-activity-log</strong> (push git activity for day/week/month).
+            </p>
             <div className="relative rounded-lg border bg-muted/50 overflow-hidden">
               <pre className="p-4 text-sm font-mono overflow-x-auto whitespace-pre">
                 {MCP_CONFIG}

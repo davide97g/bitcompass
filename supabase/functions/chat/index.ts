@@ -81,7 +81,12 @@ serve(async (req) => {
         .single();
       
       if (sessionError) {
-        return new Response(JSON.stringify({ error: 'Failed to create chat session' }), {
+        console.error('Session creation error:', sessionError);
+        return new Response(JSON.stringify({ 
+          error: 'Failed to create chat session',
+          details: sessionError.message,
+          hint: 'Make sure the userId exists in auth.users table'
+        }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

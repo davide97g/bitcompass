@@ -5,15 +5,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark mode: apply high-contrast code block theme (Bright and vibrant) */
+/* Dark mode: apply high-contrast code block theme (Improved readability) */
 .dark .prose pre,
 :root.dark .prose pre {
-  background: #0f1419;
+  background: #1a1f2e;
 }
 .dark .prose pre code.hljs,
 :root.dark .prose pre code.hljs {
-  background: #0f1419;
-  color: #ffffff;
+  background: #1a1f2e !important;
+  color: #e5e7eb !important;
 }
 .dark .prose pre code .hljs-doctag,
 .dark .prose pre code .hljs-keyword,
@@ -22,12 +22,12 @@
 .dark .prose pre code .hljs-template-variable,
 .dark .prose pre code .hljs-type,
 .dark .prose pre code .hljs-variable.language_ {
-  color: #ff6b9d;
+  color: #c792ea !important;
 }
 .dark .prose pre code .hljs-title,
 .dark .prose pre code .hljs-title.class_,
 .dark .prose pre code .hljs-title.function_ {
-  color: #d19fff;
+  color: #82aaff !important;
 }
 .dark .prose pre code .hljs-attr,
 .dark .prose pre code .hljs-attribute,
@@ -39,49 +39,49 @@
 .dark .prose pre code .hljs-selector-attr,
 .dark .prose pre code .hljs-selector-class,
 .dark .prose pre code .hljs-selector-id {
-  color: #5dd8ff;
+  color: #7fdbca !important;
 }
 .dark .prose pre code .hljs-regexp,
 .dark .prose pre code .hljs-string,
 .dark .prose pre code .hljs-meta .hljs-string {
-  color: #c3ff88;
+  color: #c3e88d !important;
 }
 .dark .prose pre code .hljs-built_in,
 .dark .prose pre code .hljs-symbol {
-  color: #ffd93d;
+  color: #ffcb6b !important;
 }
 .dark .prose pre code .hljs-comment,
 .dark .prose pre code .hljs-code,
 .dark .prose pre code .hljs-formula {
-  color: #00d9ff;
+  color: #7c8a8f !important;
 }
 .dark .prose pre code .hljs-name,
 .dark .prose pre code .hljs-quote,
 .dark .prose pre code .hljs-selector-tag,
 .dark .prose pre code .hljs-selector-pseudo {
-  color: #c3ff88;
+  color: #c3e88d !important;
 }
 .dark .prose pre code .hljs-subst {
-  color: #ffffff;
+  color: #e5e7eb !important;
 }
 .dark .prose pre code .hljs-section {
-  color: #5dd8ff;
+  color: #82aaff !important;
   font-weight: bold;
 }
 .dark .prose pre code .hljs-bullet {
-  color: #ffd93d;
+  color: #ffcb6b !important;
 }
 .dark .prose pre code .hljs-params,
 .dark .prose pre code .hljs-punctuation,
 .dark .prose pre code .hljs-tag {
-  color: #ffffff;
+  color: #e5e7eb !important;
 }
 .dark .prose pre code .hljs-literal,
 .dark .prose pre code .hljs-boolean {
-  color: #ff6b9d;
+  color: #f78c6c !important;
 }
 .dark .prose pre code .hljs-undefined {
-  color: #ffd93d;
+  color: #ffcb6b !important;
 }
 
 /* Improved markdown text contrast */
@@ -127,6 +127,84 @@
 
 .dark .prose hr {
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Light mode: apply high-contrast code block theme (Improved readability) */
+.prose pre {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+.prose pre code.hljs {
+  background: #f8f9fa !important;
+  color: #24292e !important;
+}
+.prose pre code .hljs-doctag,
+.prose pre code .hljs-keyword,
+.prose pre code .hljs-meta .hljs-keyword,
+.prose pre code .hljs-template-tag,
+.prose pre code .hljs-template-variable,
+.prose pre code .hljs-type,
+.prose pre code .hljs-variable.language_ {
+  color: #d73a49 !important;
+}
+.prose pre code .hljs-title,
+.prose pre code .hljs-title.class_,
+.prose pre code .hljs-title.function_ {
+  color: #6f42c1 !important;
+}
+.prose pre code .hljs-attr,
+.prose pre code .hljs-attribute,
+.prose pre code .hljs-literal,
+.prose pre code .hljs-meta,
+.prose pre code .hljs-number,
+.prose pre code .hljs-operator,
+.prose pre code .hljs-variable,
+.prose pre code .hljs-selector-attr,
+.prose pre code .hljs-selector-class,
+.prose pre code .hljs-selector-id {
+  color: #005cc5 !important;
+}
+.prose pre code .hljs-regexp,
+.prose pre code .hljs-string,
+.prose pre code .hljs-meta .hljs-string {
+  color: #032f62 !important;
+}
+.prose pre code .hljs-built_in,
+.prose pre code .hljs-symbol {
+  color: #e36209 !important;
+}
+.prose pre code .hljs-comment,
+.prose pre code .hljs-code,
+.prose pre code .hljs-formula {
+  color: #6a737d !important;
+}
+.prose pre code .hljs-name,
+.prose pre code .hljs-quote,
+.prose pre code .hljs-selector-tag,
+.prose pre code .hljs-selector-pseudo {
+  color: #22863a !important;
+}
+.prose pre code .hljs-subst {
+  color: #24292e !important;
+}
+.prose pre code .hljs-section {
+  color: #005cc5 !important;
+  font-weight: bold;
+}
+.prose pre code .hljs-bullet {
+  color: #e36209 !important;
+}
+.prose pre code .hljs-params,
+.prose pre code .hljs-punctuation,
+.prose pre code .hljs-tag {
+  color: #24292e !important;
+}
+.prose pre code .hljs-literal,
+.prose pre code .hljs-boolean {
+  color: #d73a49 !important;
+}
+.prose pre code .hljs-undefined {
+  color: #e36209 !important;
 }
 
 /* Light mode markdown improvements */

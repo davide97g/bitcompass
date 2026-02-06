@@ -104,8 +104,9 @@ export const getPeriodForTimeFrame = (timeFrame: TimeFrame): PeriodBounds => {
 
 /**
  * Parse an ISO date string (YYYY-MM-DD) to Date at start of day (UTC).
+ * Returns null for invalid or non-calendar dates (e.g. 2025-02-30).
  */
-const parseDate = (s: string): Date | null => {
+export const parseDate = (s: string): Date | null => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s.trim());
   if (!match) return null;
   const y = parseInt(match[1], 10);
@@ -126,12 +127,12 @@ export const getPeriodForCustomDates = (
 ): PeriodBounds => {
   const startDate = parseDate(startDateStr);
   if (!startDate) {
-    throw new Error(`Invalid start date: ${startDateStr}. Use YYYY-MM-DD.`);
+    throw new Error(`Invalid start date: ${startDateStr}. Use YYYY-MM-DD (e.g. 2025-02-06).`);
   }
   let periodEnd: Date;
   if (endDateStr !== undefined && endDateStr.trim() !== '') {
     const endDate = parseDate(endDateStr);
-    if (!endDate) throw new Error(`Invalid end date: ${endDateStr}. Use YYYY-MM-DD.`);
+    if (!endDate) throw new Error(`Invalid end date: ${endDateStr}. Use YYYY-MM-DD (e.g. 2025-02-06).`);
     if (endDate < startDate) throw new Error('End date must be on or after start date.');
     periodEnd = new Date(endDate);
     periodEnd.setUTCHours(23, 59, 59, 999);

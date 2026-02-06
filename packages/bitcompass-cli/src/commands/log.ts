@@ -10,6 +10,7 @@ import {
   getGitAnalysis,
   getPeriodForTimeFrame,
   getPeriodForCustomDates,
+  parseDate,
 } from '../lib/git-analysis.js';
 
 /**
@@ -106,6 +107,12 @@ export const runLog = async (args: string[] = []): Promise<void> => {
 
   const parsed = parseLogArgs(args);
   if (parsed) {
+    if (!parseDate(parsed.start)) {
+      throw new Error(`Invalid date "${parsed.start}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
+    }
+    if (parsed.end !== undefined && !parseDate(parsed.end)) {
+      throw new Error(`Invalid date "${parsed.end}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
+    }
     const period = getPeriodForCustomDates(parsed.start, parsed.end);
     const timeFrame = parsed.end ? timeFrameForRange(parsed.start, parsed.end) : 'day';
     const result = await buildAndPushActivityLogWithPeriod(period, timeFrame, cwd);

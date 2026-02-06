@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { CodeBlockWithCopy } from '@/components/ui/code-block-with-copy';
 import { PageHeader } from '@/components/ui/page-header';
 
 export default function CLIPage() {
@@ -16,9 +17,7 @@ export default function CLIPage() {
             <p className="text-muted-foreground mb-3">
               Install globally from npm (or use <code className="rounded bg-muted px-1.5 py-0.5 text-sm font-mono">npx bitcompass</code> to run without installing).
             </p>
-            <pre className="rounded-lg border bg-muted/50 p-4 text-sm font-mono overflow-x-auto">
-              npm install -g bitcompass
-            </pre>
+            <CodeBlockWithCopy code="npm install -g bitcompass" ariaLabel="Copy install command" />
             <p className="text-sm text-muted-foreground mt-2">
               Package: <a href="https://www.npmjs.com/package/bitcompass" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">npmjs.com/package/bitcompass</a>
             </p>
@@ -30,9 +29,7 @@ export default function CLIPage() {
         <h2 className="text-lg font-semibold">Initialize project (recommended)</h2>
         <Card>
           <CardContent className="pt-6">
-            <pre className="rounded-lg border bg-muted/50 p-4 text-sm font-mono">
-              bitcompass init
-            </pre>
+            <CodeBlockWithCopy code="bitcompass init" ariaLabel="Copy init command" />
             <p className="text-sm text-muted-foreground mt-2">
               Run once per project. You choose your <strong>editor / AI provider</strong> (VSCode, Cursor, Antigrativity, Claude Code) and the <strong>output folder</strong> for rules, docs, and commands. Defaults by editor (e.g. Cursor → <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.cursor/rules</code>). Config is saved in <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.bitcompass/config.json</code> and <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.bitcompass</code> is added to <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.gitignore</code>. If you skip this, the CLI and MCP show a small warning and use defaults (Cursor / <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.cursor/rules</code>).
             </p>
@@ -44,9 +41,7 @@ export default function CLIPage() {
         <h2 className="text-lg font-semibold">Login</h2>
         <Card>
           <CardContent className="pt-6">
-            <pre className="rounded-lg border bg-muted/50 p-4 text-sm font-mono">
-              bitcompass login
-            </pre>
+            <CodeBlockWithCopy code="bitcompass login" ariaLabel="Copy login command" />
             <p className="text-sm text-muted-foreground mt-2">
               Opens the browser for Google sign-in. Then run <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm">bitcompass whoami</code> to confirm.
             </p>
@@ -211,7 +206,11 @@ export default function CLIPage() {
             <p className="text-sm text-muted-foreground mb-3">
               BitCompass also provides an MCP server for use in AI editors like Cursor. See the <a href="/mcp" className="text-primary underline hover:no-underline">MCP documentation</a> for setup instructions.
             </p>
-            <ul className="space-y-2 text-sm font-mono text-muted-foreground">
+            <CodeBlockWithCopy
+              code={`bitcompass mcp start\nbitcompass mcp status`}
+              ariaLabel="Copy MCP commands"
+            />
+            <ul className="space-y-2 text-sm font-mono text-muted-foreground mt-3">
               <li>
                 <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass mcp start</code>
                 <span className="ml-2 text-sm font-normal">Start MCP server (stdio mode for AI editors)</span>

@@ -122,4 +122,14 @@ function handleErr(err: unknown): void {
   process.exit(1);
 }
 
+if (process.argv.slice(2).length === 0) {
+  console.log(
+    chalk.cyan('BitCompass') +
+      chalk.dim(' – rules, solutions, and MCP server. Run ') +
+      chalk.cyan('bitcompass --help') +
+      chalk.dim(' for commands.')
+  );
+  process.exit(0);
+}
+
 program.parse();

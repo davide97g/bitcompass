@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CodeBlockWithCopy } from '@/components/ui/code-block-with-copy';
 import { PageHeader } from '@/components/ui/page-header';
 import { useToast } from '@/hooks/use-toast';
-import { Check, Copy, ExternalLink, Plus, Terminal } from 'lucide-react';
-import { useState } from 'react';
+import { ExternalLink, Plus, Terminal } from 'lucide-react';
 
 const MCP_CONFIG = `{
   "mcpServers": {
@@ -33,26 +33,7 @@ const copyToClipboard = async (text: string): Promise<boolean> => {
 };
 
 export default function MCPPage() {
-  const [mcpCopied, setMcpCopied] = useState(false);
   const { toast } = useToast();
-
-  const handleCopyMcp = async () => {
-    const ok = await copyToClipboard(MCP_CONFIG);
-    if (ok) {
-      setMcpCopied(true);
-      setTimeout(() => setMcpCopied(false), 2000);
-      toast({ title: 'Copied to clipboard' });
-    } else {
-      toast({ title: 'Copy failed', variant: 'destructive' });
-    }
-  };
-
-  const handleCopyMcpKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      void handleCopyMcp();
-    }
-  };
 
   const handleAddToCursor = () => {
     window.location.href = ADD_TO_CURSOR_DEEPLINK;
@@ -181,28 +162,7 @@ export default function MCPPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 space-y-4">
-            <div className="relative rounded-lg border bg-muted/50 overflow-hidden">
-              <pre className="p-4 text-sm font-mono overflow-x-auto whitespace-pre">
-                {MCP_CONFIG}
-              </pre>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="absolute top-2 right-2"
-                onClick={() => void handleCopyMcp()}
-                onKeyDown={handleCopyMcpKeyDown}
-                aria-label={mcpCopied ? 'Copied' : 'Copy MCP config'}
-                tabIndex={0}
-              >
-                {mcpCopied ? (
-                  <Check className="w-4 h-4 text-green-600 mr-2" />
-                ) : (
-                  <Copy className="w-4 h-4 mr-2" />
-                )}
-                {mcpCopied ? 'Copied' : 'Copy'}
-              </Button>
-            </div>
+            <CodeBlockWithCopy code={MCP_CONFIG} ariaLabel="Copy MCP config" />
           </CardContent>
         </Card>
       </section>

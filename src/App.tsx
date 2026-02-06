@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,11 +7,9 @@ import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 // Pages
-import CreateEntryPage from "@/pages/CreateEntryPage";
 import ActivityLogDayDetailPage from "./pages/ActivityLogDayDetailPage";
 import ActivityLogDetailPage from "./pages/ActivityLogDetailPage";
 import ActivityLogsPage from "./pages/ActivityLogsPage";
-import AssistantPage from "./pages/AssistantPage";
 import AutomationDetailPage from "./pages/AutomationDetailPage";
 import AutomationsPage from "./pages/AutomationsPage";
 import CLIPage from "./pages/CLIPage";
@@ -23,10 +22,15 @@ import ProblemDetailPage from "./pages/ProblemDetailPage";
 import ProblemsPage from "./pages/ProblemsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
+import GlossaryPage from "./pages/GlossaryPage";
 import RuleDetailPage from "./pages/RuleDetailPage";
 import RulesPage from "./pages/RulesPage";
 import TopicDetailPage from "./pages/TopicDetailPage";
 import TopicsPage from "./pages/TopicsPage";
+
+// Heavy routes: lazy-loaded for smaller initial bundle
+const AssistantPage = lazy(() => import("./pages/AssistantPage"));
+const CreateEntryPage = lazy(() => import("./pages/CreateEntryPage"));
 
 // Layout
 import { AppLayout } from "./components/layout/AppLayout";
@@ -68,6 +72,7 @@ const App = () => (
             <Route path="/logs/:id" element={<ActivityLogDetailPage />} />
             <Route path="/cli" element={<CLIPage />} />
             <Route path="/mcp" element={<MCPPage />} />
+            <Route path="/glossary" element={<GlossaryPage />} />
             <Route path="/assistant" element={<AssistantPage />} />
             <Route path="/create" element={<CreateEntryPage />} />
             <Route path="/create/:type" element={<CreateEntryPage />} />

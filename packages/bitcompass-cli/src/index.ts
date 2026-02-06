@@ -17,6 +17,7 @@ import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './comm
 import { runSolutionsList, runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
 import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
 import { runCommandsList, runCommandsPull, runCommandsPush, runCommandsSearch } from './commands/commands.js';
+import { runGlossary } from './commands/glossary.js';
 import { runWhoami } from './commands/whoami.js';
 
 // Disable chalk colors when NO_COLOR is set or --no-color is passed (must run before any command)
@@ -52,6 +53,11 @@ program
   .command('whoami')
   .description('Show current user (email)')
   .action(runWhoami);
+
+program
+  .command('glossary')
+  .description('Show glossary (rules, solutions, skills, commands)')
+  .action(runGlossary);
 
 program
   .command('init')

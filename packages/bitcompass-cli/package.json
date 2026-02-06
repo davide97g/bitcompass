@@ -49,6 +49,7 @@
   },
   "files": [
     "dist",
-    "scripts"
+    "scripts",
+    "glossary.md"
   ]
 }

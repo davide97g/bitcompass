@@ -87,6 +87,42 @@ const CALLBACK_SUCCESS_HTML = `<!DOCTYPE html>
       font-size: 0.8125rem;
       color: ${STYLES.muted};
     }
+    .verify-block {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid ${STYLES.border};
+      font-size: 0.8125rem;
+      color: ${STYLES.muted};
+    }
+    .cmd-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .cmd {
+      font-family: ui-monospace, monospace;
+      font-size: 0.8125rem;
+      padding: 0.375rem 0.75rem;
+      background: ${STYLES.background};
+      border: 1px solid ${STYLES.border};
+      border-radius: 0.375rem;
+      color: ${STYLES.foreground};
+    }
+    .copy-btn {
+      font-size: 0.8125rem;
+      padding: 0.375rem 0.75rem;
+      background: ${STYLES.primary};
+      color: ${STYLES.primaryForeground};
+      border: none;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .copy-btn:hover { opacity: 0.9; }
+    .copy-btn.copied { background: ${STYLES.muted}; cursor: default; }
   </style>
 </head>
 <body>
@@ -100,7 +136,31 @@ const CALLBACK_SUCCESS_HTML = `<!DOCTYPE html>
     <h1>You're all set</h1>
     <p class="muted">You're logged in successfully. You can close this window safely—your credentials are saved and the CLI is ready to use.</p>
     <p class="hint">Return to your terminal to continue.</p>
+    <div class="verify-block">
+      <p class="muted" style="margin:0">Verify in terminal:</p>
+      <div class="cmd-row">
+        <code class="cmd" id="whoami-cmd">bitcompass whoami</code>
+        <button type="button" class="copy-btn" id="copy-btn" aria-label="Copy command">Copy</button>
+      </div>
+    </div>
   </div>
+  <script>
+    (function() {
+      var btn = document.getElementById('copy-btn');
+      var cmd = document.getElementById('whoami-cmd');
+      if (!btn || !cmd) return;
+      btn.addEventListener('click', function() {
+        navigator.clipboard.writeText('bitcompass whoami').then(function() {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(function() {
+            btn.textContent = 'Copy';
+            btn.classList.remove('copied');
+          }, 2000);
+        });
+      });
+    })();
+  </script>
 </body>
 </html>`;
 

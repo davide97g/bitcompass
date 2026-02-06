@@ -3,6 +3,7 @@ import ora from 'ora';
 import chalk from 'chalk';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { homedir } from 'os';
 import { loadCredentials } from '../auth/config.js';
 import { getProjectConfig } from '../auth/project-config.js';
 import { searchRules, fetchRules, getRuleById, insertRule } from '../api/client.js';
@@ -37,7 +38,7 @@ export const runSolutionsSearch = async (query?: string): Promise<void> => {
   }
 };
 
-export const runSolutionsPull = async (id?: string): Promise<void> => {
+export const runSolutionsPull = async (id?: string, options?: { global?: boolean }): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
     process.exit(1);
@@ -61,13 +62,25 @@ export const runSolutionsPull = async (id?: string): Promise<void> => {
     console.error(chalk.red('Solution not found.'));
     process.exit(1);
   }
-  const { outputPath } = getProjectConfig({ warnIfMissing: true });
-  const outDir = join(process.cwd(), outputPath);
+  
+  let outDir: string;
+  if (options?.global) {
+    // Use global location: ~/.cursor/rules/
+    outDir = join(homedir(), '.cursor', 'rules');
+  } else {
+    // Use project config (default behavior)
+    const { outputPath } = getProjectConfig({ warnIfMissing: true });
+    outDir = join(process.cwd(), outputPath);
+  }
+  
   mkdirSync(outDir, { recursive: true });
   const filename = join(outDir, solutionFilename(rule.title, rule.id));
   const content = `# ${rule.title}\n\n${rule.description}\n\n## Solution\n\n${rule.body}\n`;
   writeFileSync(filename, content);
   console.log(chalk.green('Wrote'), filename);
+  if (options?.global) {
+    console.log(chalk.dim('Installed globally for all projects'));
+  }
 };
 
 export const runSolutionsPush = async (file?: string): Promise<void> => {

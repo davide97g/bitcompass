@@ -58,13 +58,21 @@ configCmd.command('get <key>').description('Get a config value').action((key: st
 const rules = program.command('rules').description('Manage rules');
 rules.command('search [query]').description('Search rules').action((query?: string) => runRulesSearch(query).catch(handleErr));
 rules.command('list').description('List rules').action(() => runRulesList().catch(handleErr));
-rules.command('pull [id]').description('Pull a rule by ID or choose from list').action((id?: string) => runRulesPull(id).catch(handleErr));
+rules
+  .command('pull [id]')
+  .description('Pull a rule by ID or choose from list')
+  .option('-g, --global', 'Install globally to ~/.cursor/rules/ for all projects')
+  .action((id?: string, options?: { global?: boolean }) => runRulesPull(id, options).catch(handleErr));
 rules.command('push [file]').description('Push a rule (file or interactive)').action((file?: string) => runRulesPush(file).catch(handleErr));
 
 // solutions
 const solutions = program.command('solutions').description('Manage solutions');
 solutions.command('search [query]').description('Search solutions').action((query?: string) => runSolutionsSearch(query).catch(handleErr));
-solutions.command('pull [id]').description('Pull a solution by ID or choose from list').action((id?: string) => runSolutionsPull(id).catch(handleErr));
+solutions
+  .command('pull [id]')
+  .description('Pull a solution by ID or choose from list')
+  .option('-g, --global', 'Install globally to ~/.cursor/rules/ for all projects')
+  .action((id?: string, options?: { global?: boolean }) => runSolutionsPull(id, options).catch(handleErr));
 solutions.command('push [file]').description('Push a solution (file or interactive)').action((file?: string) => runSolutionsPush(file).catch(handleErr));
 
 // mcp

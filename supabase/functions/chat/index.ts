@@ -1,12 +1,14 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { openai } from 'https://esm.sh/@ai-sdk/openai@1.0.0';
+import { openai } from 'https://esm.sh/@ai-sdk/openai@3.0.25';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import { convertToModelMessages, streamText, tool, type UIMessage } from 'https://esm.sh/ai@6.0.0';
+import { streamText, tool, type UIMessage } from 'https://esm.sh/ai@6.0.0';
 import { z } from 'https://esm.sh/zod@3.25.76';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
 interface ChatRequest {
@@ -59,6 +61,17 @@ serve(async (req) => {
 
     // Parse request body
     const { messages, chatId, userId }: ChatRequest = await req.json();
+    
+    // Debug: Log incoming messages structure
+    console.log('Incoming messages count:', messages?.length || 0);
+    if (messages && messages.length > 0) {
+      console.log('First message structure:', JSON.stringify({
+        id: messages[0].id,
+        role: messages[0].role,
+        partsCount: messages[0].parts?.length || 0,
+        partsTypes: messages[0].parts?.map(p => p.type) || [],
+      }, null, 2));
+    }
 
     // Validate userId is provided
     if (!userId) {
@@ -95,7 +108,56 @@ serve(async (req) => {
     }
 
     // Convert UI messages to model messages
-    const modelMessages = await convertToModelMessages(messages);
+    // Manually convert to ensure proper ModelMessage format: {role: 'user'|'assistant', content: string}
+    const modelMessagesToUse = messages
+      .filter((msg) => {
+        // Only include user and assistant messages with valid text parts
+        if (msg.role !== 'user' && msg.role !== 'assistant') return false;
+        const textParts = msg.parts?.filter((p) => p.type === 'text') || [];
+        return textParts.length > 0;
+      })
+      .map((msg) => {
+        // Extract text content from parts
+        const textParts = msg.parts?.filter((p) => p.type === 'text') || [];
+        const textContent = textParts
+          .map((p) => {
+            if ('text' in p && typeof p.text === 'string') {
+              return p.text;
+            }
+            return '';
+          })
+          .join('')
+          .trim();
+        
+        // Return in ModelMessage format: {role, content}
+        // Content must be a non-empty string
+        if (!textContent || textContent.length === 0) {
+          return null;
+        }
+        
+        return {
+          role: msg.role as 'user' | 'assistant',
+          content: textContent,
+        };
+      })
+      .filter((msg): msg is { role: 'user' | 'assistant'; content: string } => 
+        msg !== null && msg.content && msg.content.length > 0
+      );
+    
+    // Ensure we have at least one message
+    if (modelMessagesToUse.length === 0) {
+      console.error('No valid messages after conversion. Input messages:', JSON.stringify(messages, null, 2));
+      return new Response(JSON.stringify({ 
+        error: 'No valid messages provided',
+        hint: 'Messages must have role "user" or "assistant" with text content'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    console.log('Converted messages count:', modelMessagesToUse.length);
+    console.log('First message:', JSON.stringify(modelMessagesToUse[0], null, 2));
 
     // Define tools for database queries
     const tools = {
@@ -230,21 +292,24 @@ serve(async (req) => {
     const apiKey = Deno.env.get('OPENAI_API_KEY') || Deno.env.get('AI_API_KEY');
     const gatewayUrl = Deno.env.get('VERCEL_AI_GATEWAY_URL');
     
-    let model;
-    if (gatewayUrl && apiKey) {
-      // Use Vercel AI Gateway
-      model = openai(gatewayUrl, {
-        apiKey,
-      });
-    } else if (apiKey) {
-      // Use direct OpenAI
-      model = openai('gpt-4o-mini', {
-        apiKey,
-      });
-    } else {
+    if (!apiKey) {
       return new Response(JSON.stringify({ error: 'AI API key not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    let model;
+    if (gatewayUrl) {
+      // Use Vercel AI Gateway
+      model = openai('gpt-4o-mini', {
+        baseURL: gatewayUrl,
+        apiKey,
+      });
+    } else {
+      // Use direct OpenAI
+      model = openai('gpt-4o-mini', {
+        apiKey,
       });
     }
 
@@ -260,10 +325,34 @@ Format your responses clearly and include relevant details from the search resul
 When presenting results, mention the key technologies, status, or other relevant attributes.`;
 
     // Stream the response
+    // Ensure messages are in the correct format for the AI SDK
+    // Create plain objects with only the required fields
+    const validatedMessages = modelMessagesToUse.map((msg) => {
+      // Ensure role is exactly 'user' or 'assistant'
+      const role = msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'assistant' : null;
+      if (!role) {
+        throw new Error(`Invalid role: ${msg.role}`);
+      }
+      
+      // Ensure content is a non-empty string
+      const content = String(msg.content || '').trim();
+      if (!content) {
+        throw new Error('Message content cannot be empty');
+      }
+      
+      // Return plain object with only role and content
+      return {
+        role,
+        content,
+      };
+    });
+    
+    console.log('Validated messages for streamText:', JSON.stringify(validatedMessages.map(m => ({ role: m.role, contentLength: m.content.length })), null, 2));
+    
     const result = streamText({
       model,
       system: systemPrompt,
-      messages: modelMessages,
+      messages: validatedMessages,
       tools,
       maxSteps: 5,
     });
@@ -271,8 +360,8 @@ When presenting results, mention the key technologies, status, or other relevant
     // Consume stream to ensure completion even if client disconnects
     result.consumeStream();
 
-    // Return streaming response
-    return result.toUIMessageStreamResponse({
+    // Return streaming response with CORS headers
+    const streamResponse = result.toUIMessageStreamResponse({
       originalMessages: messages,
       onFinish: async ({ messages: finishedMessages }) => {
         // Save messages to database
@@ -303,6 +392,18 @@ When presenting results, mention the key technologies, status, or other relevant
           console.error('Error saving messages:', error);
         }
       },
+    });
+    
+    // Add CORS headers to the streaming response
+    const headers = new Headers(streamResponse.headers);
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      headers.set(key, value);
+    });
+    
+    return new Response(streamResponse.body, {
+      status: streamResponse.status,
+      statusText: streamResponse.statusText,
+      headers: headers,
     });
   } catch (error) {
     console.error('Error:', error);

@@ -1,12 +1,11 @@
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, GitBranch, GitCommit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useActivityLogs } from '@/hooks/use-activity-logs';
 import { getRepoKey } from '@/pages/ActivityLogsPage';
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import type { ActivityLog } from '@/types/entities';
+import { ArrowLeft, GitBranch, GitCommit } from 'lucide-react';
+import { useMemo } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 /** Whether a commit date falls on the given day (YYYY-MM-DD). */
 const commitFallsOnDay = (commitDate: string | undefined, dayStr: string): boolean => {
@@ -138,7 +137,7 @@ export default function ActivityLogDayDetailPage() {
   });
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-full mx-auto space-y-6">
       <Button
         variant="ghost"
         size="sm"
@@ -158,88 +157,90 @@ export default function ActivityLogDayDetailPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <GitBranch className="h-4 w-4" aria-hidden />
-            Repository summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid gap-2 text-sm">
-            {dayData.repoSummary.branch != null && (
-              <>
-                <dt className="font-medium text-muted-foreground">Branch</dt>
-                <dd className="font-mono">{dayData.repoSummary.branch}</dd>
-              </>
-            )}
-            {dayData.repoSummary.remote_url != null && (
-              <>
-                <dt className="font-medium text-muted-foreground">Remote</dt>
-                <dd className="font-mono break-all">{dayData.repoSummary.remote_url}</dd>
-              </>
-            )}
-            {dayData.repoSummary.repo_path != null && (
-              <>
-                <dt className="font-medium text-muted-foreground">Path</dt>
-                <dd className="font-mono text-muted-foreground break-all">{dayData.repoSummary.repo_path}</dd>
-              </>
-            )}
-          </dl>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <GitCommit className="h-4 w-4" aria-hidden />
-            Commits ({dayData.commits.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {dayData.commits.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">
-              No commits found for this day.
-            </p>
-          ) : (
-            <div className="max-h-[600px] overflow-y-auto pr-2">
-              <ul className="space-y-3">
-                {dayData.commits.map((commit, index) => (
-                  <li
-                    key={`${commit.logId}-${commit.hash}-${index}`}
-                    className="flex flex-col gap-1.5 rounded-lg border bg-card p-3"
-                  >
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                      {commit.hash && (
-                        <code className="text-xs bg-muted rounded px-1.5 py-0.5 font-mono text-muted-foreground">
-                          {commit.hash}
-                        </code>
-                      )}
-                      {commit.date && (
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(commit.date).toLocaleString(undefined, {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      )}
-                    </div>
-                    {commit.subject && (
-                      <p className="text-sm font-mono break-words">{commit.subject}</p>
-                    )}
-                    <Link
-                      to={`/logs/${commit.logId}`}
-                      className="text-xs text-primary hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring rounded"
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="flex flex-col">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <GitCommit className="h-4 w-4" aria-hidden />
+              Commits ({dayData.commits.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden flex flex-col min-h-0">
+            {dayData.commits.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">
+                No commits found for this day.
+              </p>
+            ) : (
+              <div className="flex-1 overflow-y-auto pr-2 min-h-0 max-h-[600px]">
+                <ul className="space-y-3">
+                  {dayData.commits.map((commit, index) => (
+                    <li
+                      key={`${commit.logId}-${commit.hash}-${index}`}
+                      className="flex flex-col gap-1.5 rounded-lg border bg-card p-3"
                     >
-                      View log: {commit.logPeriod}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
+                        {commit.hash && (
+                          <code className="text-xs bg-muted rounded px-1.5 py-0.5 font-mono text-muted-foreground">
+                            {commit.hash}
+                          </code>
+                        )}
+                        {commit.date && (
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(commit.date).toLocaleString(undefined, {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        )}
+                      </div>
+                      {commit.subject && (
+                        <p className="text-sm font-mono break-words">{commit.subject}</p>
+                      )}
+                      <Link
+                        to={`/logs/${commit.logId}`}
+                        className="text-xs text-primary hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring rounded"
+                      >
+                        View log: {commit.logPeriod}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <GitBranch className="h-4 w-4" aria-hidden />
+              Repository summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid gap-2 text-sm">
+              {dayData.repoSummary.branch != null && (
+                <>
+                  <dt className="font-medium text-muted-foreground">Branch</dt>
+                  <dd className="font-mono">{dayData.repoSummary.branch}</dd>
+                </>
+              )}
+              {dayData.repoSummary.remote_url != null && (
+                <>
+                  <dt className="font-medium text-muted-foreground">Remote</dt>
+                  <dd className="font-mono break-all">{dayData.repoSummary.remote_url}</dd>
+                </>
+              )}
+              {dayData.repoSummary.repo_path != null && (
+                <>
+                  <dt className="font-medium text-muted-foreground">Path</dt>
+                  <dd className="font-mono text-muted-foreground break-all">{dayData.repoSummary.repo_path}</dd>
+                </>
+              )}
+            </dl>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

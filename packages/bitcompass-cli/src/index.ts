@@ -4,6 +4,9 @@ import 'dotenv/config';
 
 import chalk from 'chalk';
 import { Command } from 'commander';
+import { readFileSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import { runConfigGet, runConfigList, runConfigSet } from './commands/config-cmd.js';
 import { runInit } from './commands/init.js';
 import { runLogin } from './commands/login.js';
@@ -14,12 +17,18 @@ import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './comm
 import { runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
 import { runWhoami } from './commands/whoami.js';
 
+// Read version from package.json
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const packageJsonPath = join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+const version = packageJson.version;
+
 const program = new Command();
 
 program
   .name('bitcompass')
   .description('BitCompass CLI - rules, solutions, and MCP server')
-  .version('0.1.0');
+  .version(version, '-v, -V, --version', 'display version number');
 
 program
   .command('login')

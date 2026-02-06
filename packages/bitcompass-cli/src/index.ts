@@ -69,9 +69,10 @@ rules.command('search [query]').description('Search rules').action((query?: stri
 rules.command('list').description('List rules').action(() => runRulesList().catch(handleErr));
 rules
   .command('pull [id]')
-  .description('Pull a rule by ID or choose from list')
+  .description('Pull a rule by ID or choose from list (creates symbolic link by default)')
   .option('-g, --global', 'Install globally to ~/.cursor/rules/ for all projects')
-  .action((id?: string, options?: { global?: boolean }) => runRulesPull(id, options).catch(handleErr));
+  .option('--copy', 'Copy file instead of creating symbolic link')
+  .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runRulesPull(id, options).catch(handleErr));
 rules.command('push [file]').description('Push a rule (file or interactive)').action((file?: string) => runRulesPush(file).catch(handleErr));
 
 // solutions
@@ -79,9 +80,10 @@ const solutions = program.command('solutions').description('Manage solutions');
 solutions.command('search [query]').description('Search solutions').action((query?: string) => runSolutionsSearch(query).catch(handleErr));
 solutions
   .command('pull [id]')
-  .description('Pull a solution by ID or choose from list')
+  .description('Pull a solution by ID or choose from list (creates symbolic link by default)')
   .option('-g, --global', 'Install globally to ~/.cursor/rules/ for all projects')
-  .action((id?: string, options?: { global?: boolean }) => runSolutionsPull(id, options).catch(handleErr));
+  .option('--copy', 'Copy file instead of creating symbolic link')
+  .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runSolutionsPull(id, options).catch(handleErr));
 solutions.command('push [file]').description('Push a solution (file or interactive)').action((file?: string) => runSolutionsPush(file).catch(handleErr));
 
 // mcp

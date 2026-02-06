@@ -17,20 +17,22 @@ import {
 import { useRule, useUpdateRule, useDeleteRule } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
 import type { Rule, RuleKind } from '@/types/bitcompass';
-import { ArrowLeft, FileDown, Pencil, Trash2, User } from 'lucide-react';
+import { ArrowLeft, FileDown, Pencil, Trash2, User, Link2, GitFork } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { CommandBlock } from '@/components/create/CommandBlock';
 import { ruleDownloadBasename } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
-const getPullCommand = (ruleId: string, kind: RuleKind): string => {
+const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
     rule: 'bitcompass rules pull ',
     solution: 'bitcompass solutions pull ',
     skill: 'bitcompass skills pull ',
     command: 'bitcompass commands pull ',
   };
-  return `${prefixMap[kind]}${ruleId}`;
+  const copyFlag = useCopy ? ' --copy' : '';
+  return `${prefixMap[kind]}${ruleId}${copyFlag}`;
 };
 
 const getKindDescription = (kind: RuleKind): string => {
@@ -73,12 +75,24 @@ export default function RuleDetailPage() {
   const deleteRule = useDeleteRule();
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ title: '', description: '', body: '' });
+  const [editForm, setEditForm] = useState({ 
+    title: '', 
+    description: '', 
+    body: '', 
+    version: '1.0.0',
+    technologies: [] as string[],
+  });
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const handleStartEdit = () => {
     if (rule) {
-      setEditForm({ title: rule.title, description: rule.description, body: rule.body });
+      setEditForm({ 
+        title: rule.title, 
+        description: rule.description, 
+        body: rule.body,
+        version: rule.version || '1.0.0',
+        technologies: rule.technologies || [],
+      });
       setEditing(true);
     }
   };
@@ -138,12 +152,28 @@ export default function RuleDetailPage() {
         title={editing ? `Edit ${rule.kind}` : rule.title}
         description={getKindDescription(rule.kind)}
       />
-      {(rule.author_display_name ?? rule.user_id) && (
-        <p className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Author">
-          <User className="h-4 w-4 shrink-0" />
-          <span>{rule.author_display_name ?? 'Unknown author'}</span>
-        </p>
-      )}
+      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+        {(rule.author_display_name ?? rule.user_id) && (
+          <div className="flex items-center gap-2" aria-label="Author">
+            <User className="h-4 w-4 shrink-0" />
+            <span>{rule.author_display_name ?? 'Unknown author'}</span>
+          </div>
+        )}
+        {rule.version && (
+          <div className="flex items-center gap-2">
+            <span className="font-medium">Version: v{rule.version}</span>
+          </div>
+        )}
+        {rule.technologies && rule.technologies.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {rule.technologies.map((tech) => (
+              <Badge key={tech} variant="secondary" className="text-xs">
+                {tech}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
           <Link to="/rules">
@@ -181,10 +211,22 @@ export default function RuleDetailPage() {
         )}
       </div>
 
-      <CommandBlock
-        commands={rule ? [getPullCommand(id!, rule.kind)] : []}
-        className="mb-6"
-      />
+      <div className="space-y-3 mb-6">
+        <div>
+          <p className="text-sm font-medium mb-2 flex items-center gap-2">
+            <Link2 className="h-4 w-4" />
+            Use this rule
+          </p>
+          <CommandBlock commands={rule ? [getPullCommand(id!, rule.kind, false)] : []} />
+        </div>
+        <div>
+          <p className="text-sm font-medium mb-2 flex items-center gap-2">
+            <GitFork className="h-4 w-4" />
+            Clone this rule
+          </p>
+          <CommandBlock commands={rule ? [getPullCommand(id!, rule.kind, true)] : []} />
+        </div>
+      </div>
 
       <Card>
         <CardContent className="pt-6">
@@ -202,6 +244,27 @@ export default function RuleDetailPage() {
                 <Input
                   value={editForm.description}
                   onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Version</Label>
+                <Input
+                  value={editForm.version}
+                  onChange={(e) => setEditForm((p) => ({ ...p, version: e.target.value }))}
+                  placeholder="1.0.0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Technologies (comma-separated)</Label>
+                <Input
+                  value={editForm.technologies.join(', ')}
+                  onChange={(e) =>
+                    setEditForm((p) => ({
+                      ...p,
+                      technologies: e.target.value.split(',').map((t) => t.trim()).filter(Boolean),
+                    }))
+                  }
+                  placeholder="React, TypeScript, Tailwind"
                 />
               </div>
               <div className="space-y-2">

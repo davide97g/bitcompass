@@ -5,15 +5,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark mode: apply high-contrast code block theme (GitHub Dark with brighter strings/comments) */
+/* Dark mode: apply high-contrast code block theme (Bright and vibrant) */
 .dark .prose pre,
 :root.dark .prose pre {
-  background: #0d1117;
+  background: #0f1419;
 }
 .dark .prose pre code.hljs,
 :root.dark .prose pre code.hljs {
-  background: #0d1117;
-  color: #c9d1d9;
+  background: #0f1419;
+  color: #ffffff;
 }
 .dark .prose pre code .hljs-doctag,
 .dark .prose pre code .hljs-keyword,
@@ -22,12 +22,12 @@
 .dark .prose pre code .hljs-template-variable,
 .dark .prose pre code .hljs-type,
 .dark .prose pre code .hljs-variable.language_ {
-  color: #ff7b72;
+  color: #ff6b9d;
 }
 .dark .prose pre code .hljs-title,
 .dark .prose pre code .hljs-title.class_,
 .dark .prose pre code .hljs-title.function_ {
-  color: #d2a8ff;
+  color: #d19fff;
 }
 .dark .prose pre code .hljs-attr,
 .dark .prose pre code .hljs-attribute,
@@ -39,42 +39,116 @@
 .dark .prose pre code .hljs-selector-attr,
 .dark .prose pre code .hljs-selector-class,
 .dark .prose pre code .hljs-selector-id {
-  color: #79c0ff;
+  color: #5dd8ff;
 }
 .dark .prose pre code .hljs-regexp,
 .dark .prose pre code .hljs-string,
 .dark .prose pre code .hljs-meta .hljs-string {
-  color: #b8e0ff;
+  color: #c3ff88;
 }
 .dark .prose pre code .hljs-built_in,
 .dark .prose pre code .hljs-symbol {
-  color: #ffa657;
+  color: #ffd93d;
 }
 .dark .prose pre code .hljs-comment,
 .dark .prose pre code .hljs-code,
 .dark .prose pre code .hljs-formula {
-  color: #9ca3af;
+  color: #00d9ff;
 }
 .dark .prose pre code .hljs-name,
 .dark .prose pre code .hljs-quote,
 .dark .prose pre code .hljs-selector-tag,
 .dark .prose pre code .hljs-selector-pseudo {
-  color: #7ee787;
+  color: #c3ff88;
 }
 .dark .prose pre code .hljs-subst {
-  color: #c9d1d9;
+  color: #ffffff;
 }
 .dark .prose pre code .hljs-section {
-  color: #58a6ff;
+  color: #5dd8ff;
   font-weight: bold;
 }
 .dark .prose pre code .hljs-bullet {
-  color: #f2cc60;
+  color: #ffd93d;
 }
 .dark .prose pre code .hljs-params,
 .dark .prose pre code .hljs-punctuation,
 .dark .prose pre code .hljs-tag {
-  color: #c9d1d9;
+  color: #ffffff;
+}
+.dark .prose pre code .hljs-literal,
+.dark .prose pre code .hljs-boolean {
+  color: #ff6b9d;
+}
+.dark .prose pre code .hljs-undefined {
+  color: #ffd93d;
+}
+
+/* Improved markdown text contrast */
+.dark .prose {
+  color: #ffffff;
+}
+
+.dark .prose code {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-weight: 500;
+}
+
+.dark .prose a {
+  color: #82aaff;
+}
+
+.dark .prose a:hover {
+  color: #a5c4ff;
+}
+
+.dark .prose strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4,
+.dark .prose h5,
+.dark .prose h6 {
+  color: #ffffff;
+}
+
+.dark .prose blockquote {
+  border-left-color: #82aaff;
+  color: #cbd5e1;
+}
+
+.dark .prose hr {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Light mode markdown improvements */
+.prose code {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #1e293b;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.prose a {
+  color: #2563eb;
+}
+
+.prose a:hover {
+  color: #1d4ed8;
+}
+
+.prose strong {
+  color: #0f172a;
+  font-weight: 600;
 }
 
 /* Modern Internal Tool Design System - Clean, Polished, "Sexy Internal Tool" */

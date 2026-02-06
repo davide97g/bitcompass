@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,18 +18,54 @@ import { useRules, useInsertRule } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Rule, RuleInsert, RuleKind } from '@/types/bitcompass';
-import { BookMarked, Copy, FileDown, Plus, Search, User } from 'lucide-react';
+import { BookMarked, Copy, FileDown, Plus, Search, User, Link2, Tag, GitFork } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { ruleDownloadBasename } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
-const getPullCommand = (ruleId: string, kind: RuleKind): string => {
+/** Highlight all occurrences of query in text. Returns JSX with <mark> tags. */
+const highlightText = (text: string, query: string): React.ReactNode => {
+  const q = query.trim();
+  if (!q || !text) return text;
+  
+  const lowerText = text.toLowerCase();
+  const lowerQuery = q.toLowerCase();
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let index = lowerText.indexOf(lowerQuery, lastIndex);
+  
+  while (index !== -1) {
+    // Add text before match
+    if (index > lastIndex) {
+      parts.push(text.slice(lastIndex, index));
+    }
+    // Add highlighted match
+    parts.push(
+      <mark key={index} className="bg-primary/20 text-foreground rounded px-0.5 font-medium">
+        {text.slice(index, index + q.length)}
+      </mark>
+    );
+    lastIndex = index + q.length;
+    index = lowerText.indexOf(lowerQuery, lastIndex);
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+  
+  return parts.length > 0 ? parts : text;
+};
+
+const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
     rule: 'bitcompass rules pull ',
     solution: 'bitcompass solutions pull ',
     skill: 'bitcompass skills pull ',
     command: 'bitcompass commands pull ',
   };
-  return `${prefixMap[kind]}${ruleId}`;
+  const copyFlag = useCopy ? ' --copy' : '';
+  return `${prefixMap[kind]}${ruleId}${copyFlag}`;
 };
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
@@ -63,6 +100,8 @@ export default function RulesPage() {
     title: '',
     description: '',
     body: '',
+    version: '1.0.0',
+    technologies: [],
   });
   const { data: rulesRule = [], isLoading: loadingRules } = useRules('rule');
   const { data: rulesSolution = [], isLoading: loadingSolutions } = useRules('solution');
@@ -83,15 +122,20 @@ export default function RulesPage() {
             : [...rulesRule, ...rulesSolution, ...rulesSkill, ...rulesCommand];
   const filtered = search.trim()
     ? rules.filter(
-        (r) =>
-          r.title.toLowerCase().includes(search.toLowerCase()) ||
-          r.description.toLowerCase().includes(search.toLowerCase()) ||
-          r.body.toLowerCase().includes(search.toLowerCase())
+        (r) => {
+          const q = search.toLowerCase();
+          return (
+            r.title.toLowerCase().includes(q) ||
+            r.description.toLowerCase().includes(q) ||
+            r.body.toLowerCase().includes(q) ||
+            (r.technologies && r.technologies.some((tech) => tech.toLowerCase().includes(q)))
+          );
+        }
       )
     : rules;
 
-  const handleCopyPullCommand = async (rule: Rule) => {
-    const cmd = getPullCommand(rule.id, rule.kind);
+  const handleCopyPullCommand = async (rule: Rule, useCopy = false) => {
+    const cmd = getPullCommand(rule.id, rule.kind, useCopy);
     try {
       await navigator.clipboard.writeText(cmd);
       setCopiedId(rule.id);
@@ -111,7 +155,7 @@ export default function RulesPage() {
       await insertRule.mutateAsync(newRule);
       toast({ title: 'Created' });
       setCreateOpen(false);
-      setNewRule({ kind: 'rule', title: '', description: '', body: '' });
+      setNewRule({ kind: 'rule', title: '', description: '', body: '', version: '1.0.0', technologies: [] });
     } catch (e) {
       toast({ title: e instanceof Error ? e.message : 'Failed', variant: 'destructive' });
     }
@@ -199,6 +243,27 @@ export default function RulesPage() {
                 />
               </div>
               <div className="space-y-2">
+                <Label>Version</Label>
+                <Input
+                  value={newRule.version || '1.0.0'}
+                  onChange={(e) => setNewRule((p) => ({ ...p, version: e.target.value }))}
+                  placeholder="1.0.0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Technologies (comma-separated)</Label>
+                <Input
+                  value={newRule.technologies?.join(', ') || ''}
+                  onChange={(e) =>
+                    setNewRule((p) => ({
+                      ...p,
+                      technologies: e.target.value.split(',').map((t) => t.trim()).filter(Boolean),
+                    }))
+                  }
+                  placeholder="React, TypeScript, Tailwind"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label>Content</Label>
                 <textarea
                   className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
@@ -242,40 +307,83 @@ export default function RulesPage() {
               <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                 <CardTitle className="text-base">
                   <Link to={`/rules/${rule.id}`} className="hover:underline">
-                    {rule.title}
+                    {search.trim() ? highlightText(rule.title, search) : rule.title}
                   </Link>
                 </CardTitle>
                 <span className="text-xs text-muted-foreground capitalize">{rule.kind}</span>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground line-clamp-2">{rule.description || rule.body}</p>
-                {(rule.author_display_name ?? rule.user_id) && (
-                  <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground" aria-label="Author">
-                    <User className="h-3.5 w-3.5 shrink-0" />
-                    <span>{rule.author_display_name ?? 'Unknown author'}</span>
-                  </p>
-                )}
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {search.trim()
+                    ? highlightText(rule.description || rule.body, search)
+                    : rule.description || rule.body}
+                </p>
+                
+                {/* Metadata section */}
+                <div className="mt-3 space-y-2">
+                  {/* Author and Version */}
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                    {(rule.author_display_name ?? rule.user_id) && (
+                      <div className="flex items-center gap-1.5" aria-label="Author">
+                        <User className="h-3.5 w-3.5 shrink-0" />
+                        <span>{rule.author_display_name ?? 'Unknown author'}</span>
+                      </div>
+                    )}
+                    {rule.version && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium">v{rule.version}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Technologies and Tags */}
+                  {(rule.technologies && rule.technologies.length > 0) && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {rule.technologies.slice(0, 5).map((tech) => (
+                        <Badge key={tech} variant="secondary" className="text-xs">
+                          {search.trim() ? highlightText(tech, search) : tech}
+                        </Badge>
+                      ))}
+                      {rule.technologies.length > 5 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{rule.technologies.length - 5}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="mt-4 flex flex-wrap items-center gap-2">
                   <Button variant="ghost" size="sm" asChild>
                     <Link to={`/rules/${rule.id}`}>View</Link>
                   </Button>
+                  
+                  {/* Main action: Use this rule (symlink) */}
                   <Button
-                    variant="ghost"
+                    variant="default"
                     size="sm"
-                    onClick={() => void handleCopyPullCommand(rule)}
-                    aria-label={`Add this ${rule.kind}: copy pull command`}
+                    onClick={() => void handleCopyPullCommand(rule, false)}
+                    aria-label={`Use this ${rule.kind} (symlink)`}
+                    title={getPullCommand(rule.id, rule.kind, false)}
+                    className="gap-1.5"
                   >
-                    Add this {rule.kind}
+                    <Link2 className="h-4 w-4" />
+                    Use this rule
                   </Button>
+                  
+                  {/* Secondary action: Clone with --copy flag */}
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={() => void handleCopyPullCommand(rule)}
-                    aria-label={copiedId === rule.id ? 'Copied' : 'Copy pull command'}
-                    title={getPullCommand(rule.id, rule.kind)}
+                    onClick={() => void handleCopyPullCommand(rule, true)}
+                    aria-label={`Clone this ${rule.kind} (--copy flag)`}
+                    title={getPullCommand(rule.id, rule.kind, true)}
+                    className={copiedId === rule.id ? 'bg-muted' : ''}
                   >
-                    <Copy className="h-4 w-4" />
+                    <GitFork className="h-4 w-4" />
                   </Button>
+                  
                   <Button
                     variant="ghost"
                     size="sm"

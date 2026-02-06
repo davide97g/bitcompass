@@ -1,13 +1,9 @@
 import inquirer from 'inquirer';
 import ora from 'ora';
 import chalk from 'chalk';
-import { mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { homedir } from 'os';
 import { loadCredentials } from '../auth/config.js';
-import { getProjectConfig } from '../auth/project-config.js';
 import { searchRules, fetchRules, getRuleById, insertRule } from '../api/client.js';
-import { solutionFilename } from '../lib/slug.js';
+import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import type { RuleInsert } from '../types.js';
 
 export const runSolutionsSearch = async (query?: string): Promise<void> => {
@@ -38,7 +34,7 @@ export const runSolutionsSearch = async (query?: string): Promise<void> => {
   }
 };
 
-export const runSolutionsPull = async (id?: string, options?: { global?: boolean }): Promise<void> => {
+export const runSolutionsPull = async (id?: string, options?: { global?: boolean; copy?: boolean }): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
     process.exit(1);
@@ -57,29 +53,27 @@ export const runSolutionsPull = async (id?: string, options?: { global?: boolean
     ]);
     targetId = choice.id;
   }
-  const rule = await getRuleById(targetId!);
-  if (!rule) {
-    console.error(chalk.red('Solution not found.'));
+  
+  const spinner = ora('Pulling solution…').start();
+  try {
+    const filename = await pullRuleToFile(targetId, {
+      global: options?.global,
+      useSymlink: !options?.copy, // Use symlink unless --copy flag is set
+    });
+    spinner.succeed(chalk.green('Pulled solution'));
+    console.log(chalk.dim(filename));
+    if (options?.copy) {
+      console.log(chalk.dim('Copied as file (not a symlink)'));
+    } else {
+      console.log(chalk.dim('Created symbolic link to cached solution'));
+    }
+    if (options?.global) {
+      console.log(chalk.dim('Installed globally for all projects'));
+    }
+  } catch (error: any) {
+    spinner.fail(chalk.red('Failed to pull solution'));
+    console.error(chalk.red(error.message));
     process.exit(1);
-  }
-  
-  let outDir: string;
-  if (options?.global) {
-    // Use global location: ~/.cursor/rules/
-    outDir = join(homedir(), '.cursor', 'rules');
-  } else {
-    // Use project config (default behavior)
-    const { outputPath } = getProjectConfig({ warnIfMissing: true });
-    outDir = join(process.cwd(), outputPath);
-  }
-  
-  mkdirSync(outDir, { recursive: true });
-  const filename = join(outDir, solutionFilename(rule.title, rule.id));
-  const content = `# ${rule.title}\n\n${rule.description}\n\n## Solution\n\n${rule.body}\n`;
-  writeFileSync(filename, content);
-  console.log(chalk.green('Wrote'), filename);
-  if (options?.global) {
-    console.log(chalk.dim('Installed globally for all projects'));
   }
 };
 

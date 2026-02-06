@@ -7,6 +7,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 // Pages
 import CreateEntryPage from "@/pages/CreateEntryPage";
 import ActivityLogDetailPage from "./pages/ActivityLogDetailPage";
+import ActivityLogDayDetailPage from "./pages/ActivityLogDayDetailPage";
 import ActivityLogsPage from "./pages/ActivityLogsPage";
 import AssistantPage from "./pages/AssistantPage";
 import AutomationDetailPage from "./pages/AutomationDetailPage";
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/rules" element={<RulesPage />} />
             <Route path="/rules/:id" element={<RuleDetailPage />} />
             <Route path="/logs" element={<ActivityLogsPage />} />
+            <Route path="/logs/day/:date" element={<ActivityLogDayDetailPage />} />
             <Route path="/logs/:id" element={<ActivityLogDetailPage />} />
             <Route path="/cli" element={<CLIPage />} />
             <Route path="/mcp" element={<MCPPage />} />

@@ -13,7 +13,7 @@ import { buildAndPushActivityLog } from '../commands/log.js';
 import { loadCredentials } from '../auth/config.js';
 import { getProjectConfig } from '../auth/project-config.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
-import type { RuleInsert } from '../types.js';
+import type { RuleInsert, RuleKind } from '../types.js';
 import type { TimeFrame } from '../lib/git-analysis.js';
 
 /** When token is missing, we fail initialize so Cursor shows "Needs authentication" (yellow) instead of success (green). */
@@ -79,7 +79,7 @@ function createStdioServer(): {
                 description: 'Search BitCompass rules by query',
                 inputSchema: {
                   type: 'object',
-                  properties: { query: { type: 'string' }, kind: { type: 'string', enum: ['rule', 'solution'] }, limit: { type: 'number' } },
+                  properties: { query: { type: 'string' }, kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'] }, limit: { type: 'number' } },
                   required: ['query'],
                 },
               },
@@ -98,7 +98,7 @@ function createStdioServer(): {
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    kind: { type: 'string', enum: ['rule', 'solution'] },
+                    kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'] },
                     title: { type: 'string' },
                     description: { type: 'string' },
                     body: { type: 'string' },
@@ -315,7 +315,7 @@ function createStdioServer(): {
   // Register tool implementations (search is public; post requires login)
   handlers.set('search-rules', async (args: ToolArgs) => {
     const query = (args.query as string) ?? '';
-    const kind = args.kind as 'rule' | 'solution' | undefined;
+    const kind = args.kind as RuleKind | undefined;
     const limit = (args.limit as number) ?? 20;
     try {
       const list = await searchRules(query, { kind, limit });
@@ -340,7 +340,7 @@ function createStdioServer(): {
     const creds = loadCredentials();
     if (!creds?.access_token) return { error: AUTH_REQUIRED_MSG };
     const payload: RuleInsert = {
-      kind: (args.kind as 'rule' | 'solution') ?? 'rule',
+      kind: (args.kind as RuleKind) ?? 'rule',
       title: (args.title as string) ?? 'Untitled',
       description: (args.description as string) ?? '',
       body: (args.body as string) ?? '',
@@ -374,7 +374,7 @@ function createStdioServer(): {
   handlers.set('get-rule', async (args: ToolArgs) => {
     const id = args.id as string;
     if (!id) return { error: 'id is required' };
-    const kind = args.kind as 'rule' | 'solution' | undefined;
+    const kind = args.kind as RuleKind | undefined;
     try {
       const rule = await getRuleById(id);
       if (!rule) {
@@ -402,7 +402,7 @@ function createStdioServer(): {
     }
   });
   handlers.set('list-rules', async (args: ToolArgs) => {
-    const kind = args.kind as 'rule' | 'solution' | undefined;
+    const kind = args.kind as RuleKind | undefined;
     const limit = (args.limit as number) ?? 50;
     try {
       const list = await fetchRules(kind);

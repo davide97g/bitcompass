@@ -14,7 +14,7 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 import type { ActivityLog } from '@/types/entities';
 import { Calendar, Check, Copy, FileText, GitBranch, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const formatPeriod = (log: ActivityLog): string => {
   const start = new Date(log.periodStart);
@@ -46,7 +46,7 @@ const repoSnippet = (log: ActivityLog): string => {
 };
 
 /** Stable key for grouping logs by repository. */
-const getRepoKey = (log: ActivityLog): string => {
+export const getRepoKey = (log: ActivityLog): string => {
   const r = log.repoSummary;
   if (r.remote_url) {
     return r.remote_url.replace(/^https?:\/\//, '').replace(/\.git$/, '').toLowerCase();
@@ -426,6 +426,7 @@ export default function ActivityLogsPage() {
                     repoLogs={repoLogs}
                     onCopyInstruction={handleCopyInstruction}
                     copiedDay={copiedDay}
+                    repoKey={repoKey}
                   />
                 );
               })}
@@ -449,7 +450,8 @@ function RepoSection({
   repoLogs,
   onCopyInstruction,
   copiedDay,
-}: RepoSectionProps) {
+  repoKey,
+}: RepoSectionProps & { repoKey: string }) {
   const { grid: heatmapGrid, monthLabels, numWeeks } = useMemo(
     () => getFullYearHeatmapGrid(),
     []
@@ -489,6 +491,7 @@ function RepoSection({
           maxCommits={maxCommits}
           onCopyInstruction={onCopyInstruction}
           copiedDay={copiedDay}
+          repoKey={repoKey}
         />
       </CardContent>
     </Card>
@@ -544,6 +547,7 @@ function ActivityHeatmap({
   maxCommits,
   onCopyInstruction,
   copiedDay,
+  repoKey,
 }: {
   grid: (string | null)[][];
   monthLabels: string[];
@@ -552,8 +556,14 @@ function ActivityHeatmap({
   maxCommits: number;
   onCopyInstruction: (day: string, rangeEnd?: string) => void;
   copiedDay: string | null;
+  repoKey: string;
 }) {
+  const navigate = useNavigate();
   const cellSize = 'w-full aspect-square min-w-[16px] min-h-[16px] rounded-[3px]';
+
+  const handleDayClick = (dayStr: string) => {
+    navigate(`/logs/day/${dayStr}?repo=${encodeURIComponent(repoKey)}`);
+  };
 
   const renderCell = (dayStr: string | null, row: number, col: number) => {
     if (!dayStr) {
@@ -637,14 +647,16 @@ function ActivityHeatmap({
     return (
       <Tooltip key={dayStr} delayDuration={200}>
         <TooltipTrigger asChild>
-          <div
-            className={`${cellSize} border border-transparent transition-colors cursor-default`}
+          <button
+            type="button"
+            onClick={() => handleDayClick(dayStr)}
+            className={`${cellSize} border border-transparent transition-colors cursor-pointer hover:ring-2 hover:ring-ring hover:ring-offset-1 focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1`}
             style={{
               backgroundColor: activityColor(count),
             }}
             tabIndex={0}
             role="img"
-            aria-label={`${dayStr}: ${count} commits`}
+            aria-label={`${dayStr}: ${count} commits — click to view details`}
           />
         </TooltipTrigger>
         <TooltipContent side="top" className="font-mono text-xs">
@@ -666,7 +678,7 @@ function ActivityHeatmap({
           Activity (past year)
         </h3>
         <span className="text-xs text-muted-foreground shrink-0 ml-2">
-          Click a missing day to copy CLI command
+          Click a day to view details, or a missing day to copy CLI command
         </span>
       </div>
       <div

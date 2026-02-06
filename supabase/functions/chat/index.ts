@@ -217,7 +217,7 @@ serve(async (req) => {
         description: 'Search for rules or solutions by query, kind, or technologies',
         parameters: z.object({
           query: z.string().describe('Search query text'),
-          kind: z.enum(['rule', 'solution']).optional().describe('Filter by rule or solution'),
+          kind: z.enum(['rule', 'solution', 'skill', 'command']).optional().describe('Filter by rule, solution, skill, or command'),
           limit: z.number().optional().default(10).describe('Maximum number of results'),
         }),
         execute: async ({ query, kind, limit = 10 }) => {

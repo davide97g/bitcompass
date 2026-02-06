@@ -16,12 +16,32 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useRule, useUpdateRule, useDeleteRule } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
-import type { Rule } from '@/types/bitcompass';
+import type { Rule, RuleKind } from '@/types/bitcompass';
 import { ArrowLeft, FileDown, Pencil, Trash2, User } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { CommandBlock } from '@/components/create/CommandBlock';
 import { ruleDownloadBasename } from '@/lib/utils';
+
+const getPullCommand = (ruleId: string, kind: RuleKind): string => {
+  const prefixMap: Record<RuleKind, string> = {
+    rule: 'bitcompass rules pull ',
+    solution: 'bitcompass solutions pull ',
+    skill: 'bitcompass skills pull ',
+    command: 'bitcompass commands pull ',
+  };
+  return `${prefixMap[kind]}${ruleId}`;
+};
+
+const getKindDescription = (kind: RuleKind): string => {
+  const descriptions: Record<RuleKind, string> = {
+    rule: 'Rule',
+    solution: 'Problem solution',
+    skill: 'Skill',
+    command: 'Command',
+  };
+  return descriptions[kind];
+};
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
   const basename = ruleDownloadBasename(rule.title, rule.id);
@@ -115,8 +135,8 @@ export default function RuleDetailPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={editing ? 'Edit rule' : rule.title}
-        description={rule.kind === 'solution' ? 'Problem solution' : 'Rule'}
+        title={editing ? `Edit ${rule.kind}` : rule.title}
+        description={getKindDescription(rule.kind)}
       />
       {(rule.author_display_name ?? rule.user_id) && (
         <p className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Author">
@@ -162,7 +182,7 @@ export default function RuleDetailPage() {
       </div>
 
       <CommandBlock
-        commands={[`bitcompass rules pull ${id}`]}
+        commands={rule ? [getPullCommand(id!, rule.kind)] : []}
         className="mb-6"
       />
 
@@ -205,7 +225,7 @@ export default function RuleDetailPage() {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this rule?</AlertDialogTitle>
+            <AlertDialogTitle>Delete this {rule.kind}?</AlertDialogTitle>
             <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

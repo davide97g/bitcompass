@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { loadConfig, loadCredentials } from '../auth/config.js';
 import { DEFAULT_SUPABASE_ANON_KEY, DEFAULT_SUPABASE_URL } from '../auth/defaults.js';
-import type { ActivityLog, ActivityLogInsert, Rule, RuleInsert } from '../types.js';
+import type { ActivityLog, ActivityLogInsert, Rule, RuleInsert, RuleKind } from '../types.js';
 
 /** Shown when MCP is used before logging in; instructs user to login and restart MCP. */
 export const AUTH_REQUIRED_MSG =
@@ -64,7 +64,7 @@ export const getSupabaseClientForRead = (): SupabaseClient | null => {
   });
 };
 
-export const fetchRules = async (kind?: 'rule' | 'solution'): Promise<Rule[]> => {
+export const fetchRules = async (kind?: RuleKind): Promise<Rule[]> => {
   const client = getSupabaseClientForRead();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   let query = client.from('rules').select('*').order('created_at', { ascending: false });
@@ -78,7 +78,7 @@ export const fetchRules = async (kind?: 'rule' | 'solution'): Promise<Rule[]> =>
 
 export const searchRules = async (
   queryText: string,
-  options: { kind?: 'rule' | 'solution'; limit?: number } = {}
+  options: { kind?: RuleKind; limit?: number } = {}
 ): Promise<Rule[]> => {
   const client = getSupabaseClientForRead();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);

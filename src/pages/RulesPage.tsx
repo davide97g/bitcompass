@@ -16,14 +16,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRules, useInsertRule } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
-import type { Rule, RuleInsert } from '@/types/bitcompass';
+import type { Rule, RuleInsert, RuleKind } from '@/types/bitcompass';
 import { BookMarked, Copy, FileDown, Plus, Search, User } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { ruleDownloadBasename } from '@/lib/utils';
 
-const PULL_COMMAND_PREFIX = 'bitcompass rules pull ';
-
-const getPullCommand = (ruleId: string): string => `${PULL_COMMAND_PREFIX}${ruleId}`;
+const getPullCommand = (ruleId: string, kind: RuleKind): string => {
+  const prefixMap: Record<RuleKind, string> = {
+    rule: 'bitcompass rules pull ',
+    solution: 'bitcompass solutions pull ',
+    skill: 'bitcompass skills pull ',
+    command: 'bitcompass commands pull ',
+  };
+  return `${prefixMap[kind]}${ruleId}`;
+};
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
   const basename = ruleDownloadBasename(rule.title, rule.id);
@@ -48,7 +54,7 @@ const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
 };
 
 export default function RulesPage() {
-  const [kindFilter, setKindFilter] = useState<'rule' | 'solution' | 'all'>('all');
+  const [kindFilter, setKindFilter] = useState<RuleKind | 'all'>('all');
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -60,11 +66,21 @@ export default function RulesPage() {
   });
   const { data: rulesRule = [], isLoading: loadingRules } = useRules('rule');
   const { data: rulesSolution = [], isLoading: loadingSolutions } = useRules('solution');
+  const { data: rulesSkill = [], isLoading: loadingSkills } = useRules('skill');
+  const { data: rulesCommand = [], isLoading: loadingCommands } = useRules('command');
   const insertRule = useInsertRule();
   const { toast } = useToast();
 
   const rules =
-    kindFilter === 'rule' ? rulesRule : kindFilter === 'solution' ? rulesSolution : [...rulesRule, ...rulesSolution];
+    kindFilter === 'rule'
+      ? rulesRule
+      : kindFilter === 'solution'
+        ? rulesSolution
+        : kindFilter === 'skill'
+          ? rulesSkill
+          : kindFilter === 'command'
+            ? rulesCommand
+            : [...rulesRule, ...rulesSolution, ...rulesSkill, ...rulesCommand];
   const filtered = search.trim()
     ? rules.filter(
         (r) =>
@@ -75,7 +91,7 @@ export default function RulesPage() {
     : rules;
 
   const handleCopyPullCommand = async (rule: Rule) => {
-    const cmd = getPullCommand(rule.id);
+    const cmd = getPullCommand(rule.id, rule.kind);
     try {
       await navigator.clipboard.writeText(cmd);
       setCopiedId(rule.id);
@@ -132,11 +148,13 @@ export default function RulesPage() {
             className="pl-9"
           />
         </div>
-        <Tabs value={kindFilter} onValueChange={(v) => setKindFilter(v as 'rule' | 'solution' | 'all')}>
+        <Tabs value={kindFilter} onValueChange={(v) => setKindFilter(v as RuleKind | 'all')}>
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="rule">Rules</TabsTrigger>
             <TabsTrigger value="solution">Solutions</TabsTrigger>
+            <TabsTrigger value="skill">Skills</TabsTrigger>
+            <TabsTrigger value="command">Commands</TabsTrigger>
           </TabsList>
         </Tabs>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -148,7 +166,7 @@ export default function RulesPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>New rule or solution</DialogTitle>
+              <DialogTitle>New shared entity</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
@@ -156,10 +174,12 @@ export default function RulesPage() {
                 <select
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                   value={newRule.kind}
-                  onChange={(e) => setNewRule((p) => ({ ...p, kind: e.target.value as 'rule' | 'solution' }))}
+                  onChange={(e) => setNewRule((p) => ({ ...p, kind: e.target.value as RuleKind }))}
                 >
                   <option value="rule">Rule</option>
                   <option value="solution">Solution</option>
+                  <option value="skill">Skill</option>
+                  <option value="command">Command</option>
                 </select>
               </div>
               <div className="space-y-2">
@@ -184,7 +204,7 @@ export default function RulesPage() {
                   className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                   value={newRule.body}
                   onChange={(e) => setNewRule((p) => ({ ...p, body: e.target.value }))}
-                  placeholder="Rule or solution text"
+                  placeholder="Content"
                 />
               </div>
             </div>
@@ -200,7 +220,7 @@ export default function RulesPage() {
         </Dialog>
       </div>
 
-      {(loadingRules || loadingSolutions) && kindFilter !== 'all' ? (
+      {(loadingRules || loadingSolutions || loadingSkills || loadingCommands) && kindFilter !== 'all' ? (
         <div className="flex items-center justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
@@ -208,7 +228,7 @@ export default function RulesPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <BookMarked className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No rules or solutions yet.</p>
+            <p className="text-muted-foreground">No shared entities yet.</p>
             <Button className="mt-4" onClick={() => setCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add one
@@ -252,7 +272,7 @@ export default function RulesPage() {
                     size="sm"
                     onClick={() => void handleCopyPullCommand(rule)}
                     aria-label={copiedId === rule.id ? 'Copied' : 'Copy pull command'}
-                    title={getPullCommand(rule.id)}
+                    title={getPullCommand(rule.id, rule.kind)}
                   >
                     <Copy className="h-4 w-4" />
                   </Button>

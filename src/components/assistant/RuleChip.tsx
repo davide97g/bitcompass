@@ -3,13 +3,14 @@ import { TechTag, getTechColor } from '@/components/ui/tech-tag';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import type { RuleKind } from '@/types/bitcompass';
 
 interface RuleChipProps {
   rule: {
     id: string;
     title: string;
     description?: string;
-    kind: 'rule' | 'solution';
+    kind: RuleKind;
     technologies?: string[];
   };
 }

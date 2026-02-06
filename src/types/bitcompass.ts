@@ -1,4 +1,4 @@
-export type RuleKind = 'rule' | 'solution';
+export type RuleKind = 'rule' | 'solution' | 'skill' | 'command';
 
 export interface Rule {
   id: string;

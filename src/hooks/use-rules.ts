@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import type { Rule, RuleInsert } from '@/types/bitcompass';
+import type { Rule, RuleInsert, RuleKind } from '@/types/bitcompass';
 
 const TABLE = 'rules';
 
-const fetchRules = async (kind?: 'rule' | 'solution'): Promise<Rule[]> => {
+const fetchRules = async (kind?: RuleKind): Promise<Rule[]> => {
   if (!supabase) return [];
   let query = supabase.from(TABLE).select('*').order('created_at', { ascending: false });
   if (kind) query = query.eq('kind', kind);
@@ -23,7 +23,7 @@ const fetchRuleById = async (id: string): Promise<Rule | null> => {
   return data as Rule;
 };
 
-export const useRules = (kind?: 'rule' | 'solution') => {
+export const useRules = (kind?: RuleKind) => {
   return useQuery({
     queryKey: ['rules', kind],
     queryFn: () => fetchRules(kind),

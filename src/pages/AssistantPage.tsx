@@ -1,24 +1,59 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Send, Sparkles, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AssistantMessage } from '@/components/assistant/AssistantMessage';
-import { generateAIResponse, type AIMessage } from '@/lib/aiResponses';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { useAuth } from '@/hooks/use-auth';
+import type { UIMessage } from 'ai';
+
+const initialMessage: UIMessage = {
+  id: 'initial',
+  role: 'assistant',
+  parts: [
+    {
+      type: 'text',
+      text: "Hi! I'm your Knowledge Hub assistant. I can help you find information about people, projects, problems, technologies, and automations.\n\nTry asking me things like:\n- \"Who knows Kubernetes?\"\n- \"Which projects use React?\"\n- \"Find an automation for E2E tests\"\n- \"Suggest an automation for SonarQube\"\n- \"Who worked on the Customer Portal?\"",
+    },
+  ],
+};
 
 export default function AssistantPage() {
-  const [messages, setMessages] = useState<AIMessage[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: "Hi! I'm your Knowledge Hub assistant. I can help you find information about people, projects, problems, technologies, and automations.\n\nTry asking me things like:\n- \"Who knows Kubernetes?\"\n- \"Which projects use React?\"\n- \"Find an automation for E2E tests\"\n- \"Suggest an automation for SonarQube\"\n- \"Who worked on the Customer Portal?\"",
-      timestamp: new Date(),
-    },
-  ]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const { session } = useAuth();
+  const [chatId, setChatId] = useState<string | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
+
+  const { messages, sendMessage, status, input, setInput, error } = useChat({
+    id: chatId,
+    initialMessages: [initialMessage],
+    transport: new DefaultChatTransport({
+      api: `${supabaseUrl}/functions/v1/chat`,
+      headers: async () => {
+        if (!session?.access_token) {
+          throw new Error('Not authenticated');
+        }
+        return {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY ?? '',
+        };
+      },
+      body: () => ({
+        chatId: chatId || undefined,
+      }),
+    }),
+    onFinish: ({ messages: finishedMessages }) => {
+      // Chat ID will be set from the first response if not already set
+      if (!chatId && finishedMessages.length > 0) {
+        // The Edge Function returns chatId in response, but we'll track it locally
+        // For now, generate a local ID or get it from the response metadata
+      }
+    },
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -30,25 +65,8 @@ export default function AssistantPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
-
-    const userMessage: AIMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input.trim(),
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput('');
-    setIsTyping(true);
-
-    // Simulate AI thinking delay
-    setTimeout(() => {
-      const response = generateAIResponse(input.trim());
-      setMessages((prev) => [...prev, response]);
-      setIsTyping(false);
-    }, 800 + Math.random() * 700);
+    if (!input.trim() || status !== 'ready') return;
+    sendMessage({ text: input });
   };
 
   return (
@@ -84,7 +102,12 @@ export default function AssistantPage() {
               <div className={`max-w-[80%] ${message.role === 'user' ? 'items-end' : ''}`}>
                 {message.role === 'user' ? (
                   <div className="chat-bubble chat-bubble-user">
-                    <p className="text-sm">{message.content}</p>
+                    <p className="text-sm">
+                      {message.parts
+                        .filter((p) => p.type === 'text')
+                        .map((p) => ('text' in p ? p.text : ''))
+                        .join('')}
+                    </p>
                   </div>
                 ) : (
                   <AssistantMessage message={message} />
@@ -94,7 +117,7 @@ export default function AssistantPage() {
           ))}
           
           {/* Typing indicator */}
-          {isTyping && (
+          {(status === 'submitted' || status === 'streaming') && (
             <div className="flex gap-3">
               <Avatar className="w-8 h-8 shrink-0">
                 <AvatarFallback className="bg-primary text-primary-foreground">
@@ -110,6 +133,22 @@ export default function AssistantPage() {
               </div>
             </div>
           )}
+          
+          {error && (
+            <div className="flex gap-3">
+              <Avatar className="w-8 h-8 shrink-0">
+                <AvatarFallback className="bg-destructive text-destructive-foreground">
+                  <Sparkles className="w-4 h-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="chat-bubble chat-bubble-assistant bg-destructive/10 border-destructive/20">
+                <p className="text-sm text-destructive">
+                  An error occurred. Please try again.
+                </p>
+              </div>
+            </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
 
@@ -121,9 +160,9 @@ export default function AssistantPage() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about people, projects, or problems..."
               className="flex-1"
-              disabled={isTyping}
+              disabled={status !== 'ready'}
             />
-            <Button type="submit" disabled={!input.trim() || isTyping}>
+            <Button type="submit" disabled={!input.trim() || status !== 'ready'}>
               <Send className="w-4 h-4" />
             </Button>
           </div>

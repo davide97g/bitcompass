@@ -21,14 +21,16 @@ import { ArrowLeft, FileDown, Pencil, Trash2, User } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { CommandBlock } from '@/components/create/CommandBlock';
+import { ruleDownloadBasename } from '@/lib/utils';
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
+  const basename = ruleDownloadBasename(rule.title, rule.id);
   if (format === 'json') {
     const blob = new Blob([JSON.stringify(rule, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `rule-${rule.id}.json`;
+    a.download = `${basename}.json`;
     a.click();
     URL.revokeObjectURL(url);
   } else {
@@ -37,7 +39,7 @@ const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `rule-${rule.id}.md`;
+    a.download = `${basename}.md`;
     a.click();
     URL.revokeObjectURL(url);
   }

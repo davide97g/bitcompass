@@ -19,18 +19,20 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Rule, RuleInsert } from '@/types/bitcompass';
 import { BookMarked, Copy, FileDown, Plus, Search, User } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { ruleDownloadBasename } from '@/lib/utils';
 
 const PULL_COMMAND_PREFIX = 'bitcompass rules pull ';
 
 const getPullCommand = (ruleId: string): string => `${PULL_COMMAND_PREFIX}${ruleId}`;
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
+  const basename = ruleDownloadBasename(rule.title, rule.id);
   if (format === 'json') {
     const blob = new Blob([JSON.stringify(rule, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `rule-${rule.id}.json`;
+    a.download = `${basename}.json`;
     a.click();
     URL.revokeObjectURL(url);
   } else {
@@ -39,7 +41,7 @@ const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `rule-${rule.id}.md`;
+    a.download = `${basename}.md`;
     a.click();
     URL.revokeObjectURL(url);
   }

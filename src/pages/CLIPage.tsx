@@ -128,6 +128,48 @@ export default function CLIPage() {
                 </ul>
               </div>
               <div>
+                <strong className="text-foreground text-sm font-semibold mb-2 block">Skills:</strong>
+                <ul className="space-y-2 text-sm font-mono text-muted-foreground">
+                  <li>
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass skills search [query]</code>
+                    <span className="ml-2 text-sm font-normal">Search skills</span>
+                  </li>
+                  <li>
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass skills list</code>
+                    <span className="ml-2 text-sm font-normal">List all skills</span>
+                  </li>
+                  <li>
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass skills pull [id]</code>
+                    <span className="ml-2 text-sm font-normal">Pull skill into project output folder</span>
+                  </li>
+                  <li>
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass skills push [file]</code>
+                    <span className="ml-2 text-sm font-normal">Push skill to server</span>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <strong className="text-foreground text-sm font-semibold mb-2 block">Commands:</strong>
+                <ul className="space-y-2 text-sm font-mono text-muted-foreground">
+                  <li>
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass commands search [query]</code>
+                    <span className="ml-2 text-sm font-normal">Search commands</span>
+                  </li>
+                  <li>
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass commands list</code>
+                    <span className="ml-2 text-sm font-normal">List all commands</span>
+                  </li>
+                  <li>
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass commands pull [id]</code>
+                    <span className="ml-2 text-sm font-normal">Pull command into project output folder</span>
+                  </li>
+                  <li>
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass commands push [file]</code>
+                    <span className="ml-2 text-sm font-normal">Push command to server</span>
+                  </li>
+                </ul>
+              </div>
+              <div>
                 <strong className="text-foreground text-sm font-semibold mb-2 block">Activity Logs:</strong>
                 <ul className="space-y-2 text-sm font-mono text-muted-foreground">
                   <li>

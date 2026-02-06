@@ -215,14 +215,14 @@ export default function RuleDetailPage() {
         <div className="space-y-2">
           <p className="text-sm font-medium flex items-center gap-2">
             <Link2 className="h-4 w-4" />
-            Use this rule
+            Use this {rule ? getKindDescription(rule.kind).toLowerCase() : 'rule'}
           </p>
           <CommandBlock commands={rule ? [getPullCommand(id!, rule.kind, false)] : []} />
         </div>
         <div className="space-y-2">
           <p className="text-sm font-medium flex items-center gap-2">
             <GitFork className="h-4 w-4" />
-            Clone this rule
+            Clone this {rule ? getKindDescription(rule.kind).toLowerCase() : 'rule'}
           </p>
           <CommandBlock commands={rule ? [getPullCommand(id!, rule.kind, true)] : []} />
         </div>

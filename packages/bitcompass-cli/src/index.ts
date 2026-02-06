@@ -15,6 +15,8 @@ import { runMcpStart, runMcpStatus } from './commands/mcp.js';
 import { runLog } from './commands/log.js';
 import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './commands/rules.js';
 import { runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
+import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
+import { runCommandsList, runCommandsPull, runCommandsPush, runCommandsSearch } from './commands/commands.js';
 import { runWhoami } from './commands/whoami.js';
 
 // Read version from package.json
@@ -85,6 +87,30 @@ solutions
   .option('--copy', 'Copy file instead of creating symbolic link')
   .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runSolutionsPull(id, options).catch(handleErr));
 solutions.command('push [file]').description('Push a solution (file or interactive)').action((file?: string) => runSolutionsPush(file).catch(handleErr));
+
+// skills
+const skills = program.command('skills').description('Manage skills');
+skills.command('search [query]').description('Search skills').action((query?: string) => runSkillsSearch(query).catch(handleErr));
+skills.command('list').description('List skills').action(() => runSkillsList().catch(handleErr));
+skills
+  .command('pull [id]')
+  .description('Pull a skill by ID or choose from list (creates symbolic link by default)')
+  .option('-g, --global', 'Install globally to ~/.cursor/rules/ for all projects')
+  .option('--copy', 'Copy file instead of creating symbolic link')
+  .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runSkillsPull(id, options).catch(handleErr));
+skills.command('push [file]').description('Push a skill (file or interactive)').action((file?: string) => runSkillsPush(file).catch(handleErr));
+
+// commands
+const commands = program.command('commands').description('Manage commands');
+commands.command('search [query]').description('Search commands').action((query?: string) => runCommandsSearch(query).catch(handleErr));
+commands.command('list').description('List commands').action(() => runCommandsList().catch(handleErr));
+commands
+  .command('pull [id]')
+  .description('Pull a command by ID or choose from list (creates symbolic link by default)')
+  .option('-g, --global', 'Install globally to ~/.cursor/rules/ for all projects')
+  .option('--copy', 'Copy file instead of creating symbolic link')
+  .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runCommandsPull(id, options).catch(handleErr));
+commands.command('push [file]').description('Push a command (file or interactive)').action((file?: string) => runCommandsPush(file).catch(handleErr));
 
 // mcp
 const mcp = program.command('mcp').description('MCP server');

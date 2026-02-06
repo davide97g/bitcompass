@@ -3,7 +3,7 @@ import { join, relative, dirname } from 'path';
 import { homedir } from 'os';
 import { getRuleById } from '../api/client.js';
 import { getProjectConfig } from '../auth/project-config.js';
-import { ruleFilename, solutionFilename } from './slug.js';
+import { ruleFilename, solutionFilename, skillFilename, commandFilename } from './slug.js';
 import { ensureRuleCached } from './rule-cache.js';
 import type { Rule } from '../types.js';
 
@@ -46,10 +46,22 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
 
   mkdirSync(outDir, { recursive: true });
 
-  const filename =
-    rule.kind === 'solution'
-      ? join(outDir, solutionFilename(rule.title, rule.id))
-      : join(outDir, ruleFilename(rule.title, rule.id));
+  let filename: string;
+  switch (rule.kind) {
+    case 'solution':
+      filename = join(outDir, solutionFilename(rule.title, rule.id));
+      break;
+    case 'skill':
+      filename = join(outDir, skillFilename(rule.title, rule.id));
+      break;
+    case 'command':
+      filename = join(outDir, commandFilename(rule.title, rule.id));
+      break;
+    case 'rule':
+    default:
+      filename = join(outDir, ruleFilename(rule.title, rule.id));
+      break;
+  }
 
   // Remove existing file/symlink if it exists
   if (existsSync(filename)) {
@@ -79,10 +91,22 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
     }
   } else {
     // Fallback: copy file content (for compatibility or when symlinks aren't desired)
-    const content =
-      rule.kind === 'solution'
-        ? `# ${rule.title}\n\n${rule.description}\n\n## Solution\n\n${rule.body}\n`
-        : `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
+    let content: string;
+    switch (rule.kind) {
+      case 'solution':
+        content = `# ${rule.title}\n\n${rule.description}\n\n## Solution\n\n${rule.body}\n`;
+        break;
+      case 'skill':
+        content = `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
+        break;
+      case 'command':
+        content = `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
+        break;
+      case 'rule':
+      default:
+        content = `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
+        break;
+    }
     writeFileSync(filename, content);
   }
 

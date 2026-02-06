@@ -32,3 +32,23 @@ export const solutionFilename = (title: string, id: string): string => {
   const base = slug ? `solution-${slug}` : `solution-${id}`;
   return `${base}.md`;
 };
+
+/**
+ * Returns the skill filename (e.g. skill-strava-api-authentication-flow.md).
+ * Falls back to id if slug is empty.
+ */
+export const skillFilename = (title: string, id: string): string => {
+  const slug = titleToSlug(title);
+  const base = slug ? `skill-${slug}` : `skill-${id}`;
+  return `${base}.md`;
+};
+
+/**
+ * Returns the command filename (e.g. command-strava-api-authentication-flow.md).
+ * Falls back to id if slug is empty.
+ */
+export const commandFilename = (title: string, id: string): string => {
+  const slug = titleToSlug(title);
+  const base = slug ? `command-${slug}` : `command-${id}`;
+  return `${base}.md`;
+};

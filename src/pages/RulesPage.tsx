@@ -68,6 +68,16 @@ const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string
   return `${prefixMap[kind]}${ruleId}${copyFlag}`;
 };
 
+const getKindLabel = (kind: RuleKind): string => {
+  const labels: Record<RuleKind, string> = {
+    rule: 'rule',
+    solution: 'solution',
+    skill: 'skill',
+    command: 'command',
+  };
+  return labels[kind];
+};
+
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
   const basename = ruleDownloadBasename(rule.title, rule.id);
   if (format === 'json') {
@@ -369,7 +379,7 @@ export default function RulesPage() {
                     className="gap-1.5"
                   >
                     <Link2 className="h-4 w-4" />
-                    Use this rule
+                    Use this {getKindLabel(rule.kind)}
                   </Button>
                   
                   {/* Secondary action: Clone with --copy flag */}

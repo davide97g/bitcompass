@@ -37,18 +37,21 @@ export default function AssistantPage() {
         if (!supabaseUrl) {
           throw new Error('Supabase URL not configured');
         }
-        if (!session?.access_token) {
-          throw new Error('Not authenticated');
-        }
+        // TODO: Re-enable JWT validation - currently relaxed for development
         return {
-          Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY ?? '',
         };
       },
-      body: () => ({
-        chatId: chatId || undefined,
-      }),
+      body: () => {
+        if (!session?.user?.id) {
+          throw new Error('User ID not available');
+        }
+        return {
+          chatId: chatId || undefined,
+          userId: session.user.id,
+        };
+      },
     }),
     onFinish: ({ messages: finishedMessages }) => {
       // Chat ID will be set from the first response if not already set

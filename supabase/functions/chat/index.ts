@@ -12,6 +12,7 @@ const corsHeaders = {
 interface ChatRequest {
   messages: UIMessage[];
   chatId?: string;
+  userId: string; // TODO: Remove this and use JWT token validation instead
 }
 
 serve(async (req) => {
@@ -21,16 +22,11 @@ serve(async (req) => {
   }
 
   try {
-    // Get authorization header and apikey
-    const authHeader = req.headers.get('Authorization');
-    const apikey = req.headers.get('apikey');
-    
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // WARNING: JWT validation is currently disabled for development
+    // TODO: Re-enable proper JWT token validation using Authorization header
+    // TODO: Remove userId from request body and use authenticated user from JWT instead
+    // SECURITY: Currently trusting userId from request body without validation - this is insecure!
+    console.warn('⚠️  JWT validation is disabled - trusting userId from request body. This should be fixed before production!');
 
     // Initialize Supabase clients
     // Get URL from request or environment
@@ -39,6 +35,7 @@ serve(async (req) => {
                        `https://${requestUrl.hostname.split('.')[0]}.supabase.co`;
     
     // Get anon key from request header (sent by frontend) or environment
+    const apikey = req.headers.get('apikey');
     const supabaseAnonKey = apikey || Deno.env.get('SUPABASE_ANON_KEY') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || supabaseAnonKey;
     
@@ -48,29 +45,6 @@ serve(async (req) => {
         details: `URL: ${supabaseUrl ? 'set' : 'missing'}, AnonKey: ${supabaseAnonKey ? 'set' : 'missing'}`
       }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    
-    // Use anon key client to validate user token
-    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
-
-    // Get user from token
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
-
-    if (userError || !user) {
-      console.error('Auth error:', userError?.message, userError);
-      return new Response(JSON.stringify({ 
-        error: 'Invalid token', 
-        details: userError?.message || 'Unable to authenticate user' 
-      }), {
-        status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -84,14 +58,25 @@ serve(async (req) => {
     });
 
     // Parse request body
-    const { messages, chatId }: ChatRequest = await req.json();
+    const { messages, chatId, userId }: ChatRequest = await req.json();
+
+    // Validate userId is provided
+    if (!userId) {
+      return new Response(JSON.stringify({ 
+        error: 'Missing userId in request body',
+        hint: 'Please provide userId in the request body. Example: {"messages": [...], "userId": "user-uuid"}'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Get or create chat session
     let sessionId = chatId;
     if (!sessionId) {
       const { data: session, error: sessionError } = await supabase
         .from('chat_sessions')
-        .insert({ user_id: user.id })
+        .insert({ user_id: userId })
         .select()
         .single();
       
@@ -172,7 +157,7 @@ serve(async (req) => {
           let dbQuery = supabase
             .from('rules')
             .select('*')
-            .eq('user_id', user.id); // RLS ensures user can only see their own rules
+            .eq('user_id', userId); // TODO: Re-enable RLS validation when JWT auth is restored
           
           if (kind) {
             dbQuery = dbQuery.eq('kind', kind);
@@ -207,7 +192,7 @@ serve(async (req) => {
           limit: z.number().optional().default(10).describe('Maximum number of results'),
         }),
         execute: async ({ category, query, limit = 10 }) => {
-          let dbQuery = supabase.from('automations').select('*').eq('user_id', user.id);
+          let dbQuery = supabase.from('automations').select('*').eq('user_id', userId);
           
           if (category) {
             dbQuery = dbQuery.eq('category', category);

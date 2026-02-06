@@ -98,13 +98,7 @@ export default function ActivityLogDetailPage() {
                     <dd className="font-mono break-all">{repo.remote_url}</dd>
                   </>
                 )}
-                {repo.repo_path != null && (
-                  <>
-                    <dt className="font-medium text-muted-foreground">Path</dt>
-                    <dd className="font-mono text-muted-foreground break-all">{repo.repo_path}</dd>
-                  </>
-                )}
-                {!repo.branch && !repo.remote_url && !repo.repo_path && (
+                {!repo.branch && !repo.remote_url && (
                   <dd className="text-muted-foreground">No repo summary</dd>
                 )}
               </dl>

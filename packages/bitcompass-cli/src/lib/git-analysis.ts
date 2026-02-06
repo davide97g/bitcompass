@@ -1,13 +1,12 @@
 import { execSync } from 'child_process';
 import { existsSync } from 'fs';
-import { join } from 'path';
 
 export type TimeFrame = 'day' | 'week' | 'month';
 
 export interface RepoSummary {
   remote_url: string;
   branch: string;
-  repo_path: string;
+  repo_path?: string; // Deprecated: no longer saved, kept for backward compatibility
 }
 
 export interface GitCommitInfo {
@@ -51,7 +50,8 @@ export const getRepoRoot = (cwd: string): string | null => {
 };
 
 /**
- * Get a short summary of the repo: remote URL, current branch, path.
+ * Get a short summary of the repo: remote URL, current branch.
+ * Note: repo_path is no longer included to avoid storing absolute paths.
  */
 export const getRepoSummary = (repoRoot: string): RepoSummary => {
   const remoteUrl = exec('git remote get-url origin', repoRoot) || '';
@@ -59,7 +59,6 @@ export const getRepoSummary = (repoRoot: string): RepoSummary => {
   return {
     remote_url: remoteUrl,
     branch,
-    repo_path: repoRoot,
   };
 };
 

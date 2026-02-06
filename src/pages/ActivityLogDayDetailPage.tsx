@@ -30,7 +30,7 @@ const getRepoDisplayName = (log: ActivityLog): string => {
     const url = r.remote_url.replace(/^https?:\/\//, '').replace(/\.git$/, '');
     parts.push(url);
   }
-  return parts.length ? parts.join(' · ') : r.repo_path || '—';
+  return parts.length ? parts.join(' · ') : '—';
 };
 
 export default function ActivityLogDayDetailPage() {
@@ -229,12 +229,6 @@ export default function ActivityLogDayDetailPage() {
                 <>
                   <dt className="font-medium text-muted-foreground">Remote</dt>
                   <dd className="font-mono break-all">{dayData.repoSummary.remote_url}</dd>
-                </>
-              )}
-              {dayData.repoSummary.repo_path != null && (
-                <>
-                  <dt className="font-medium text-muted-foreground">Path</dt>
-                  <dd className="font-mono text-muted-foreground break-all">{dayData.repoSummary.repo_path}</dd>
                 </>
               )}
             </dl>

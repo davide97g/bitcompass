@@ -51,7 +51,6 @@ export const getRepoKey = (log: ActivityLog): string => {
   if (r.remote_url) {
     return r.remote_url.replace(/^https?:\/\//, '').replace(/\.git$/, '').toLowerCase();
   }
-  if (r.repo_path) return r.repo_path;
   return log.id;
 };
 
@@ -298,9 +297,7 @@ export default function ActivityLogsPage() {
       const matchCommit = commits.some(
         (c) => c.subject?.toLowerCase().includes(q)
       );
-      if (matchCommit) return true;
-      const repoPath = (log.repoSummary.repo_path ?? '').toLowerCase();
-      return repoPath.includes(q);
+      return matchCommit;
     });
   }, [logs, searchQuery]);
 

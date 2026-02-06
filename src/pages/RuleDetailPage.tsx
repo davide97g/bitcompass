@@ -211,16 +211,16 @@ export default function RuleDetailPage() {
         )}
       </div>
 
-      <div className="space-y-3 mb-6">
-        <div>
-          <p className="text-sm font-medium mb-2 flex items-center gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="space-y-2">
+          <p className="text-sm font-medium flex items-center gap-2">
             <Link2 className="h-4 w-4" />
             Use this rule
           </p>
           <CommandBlock commands={rule ? [getPullCommand(id!, rule.kind, false)] : []} />
         </div>
-        <div>
-          <p className="text-sm font-medium mb-2 flex items-center gap-2">
+        <div className="space-y-2">
+          <p className="text-sm font-medium flex items-center gap-2">
             <GitFork className="h-4 w-4" />
             Clone this rule
           </p>

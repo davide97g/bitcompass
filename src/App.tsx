@@ -2,12 +2,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 // Pages
 import CreateEntryPage from "@/pages/CreateEntryPage";
-import ActivityLogDetailPage from "./pages/ActivityLogDetailPage";
 import ActivityLogDayDetailPage from "./pages/ActivityLogDayDetailPage";
+import ActivityLogDetailPage from "./pages/ActivityLogDetailPage";
 import ActivityLogsPage from "./pages/ActivityLogsPage";
 import AssistantPage from "./pages/AssistantPage";
 import AutomationDetailPage from "./pages/AutomationDetailPage";
@@ -36,10 +37,11 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
         <Routes>
           {/* Public route */}
           <Route path="/login" element={<LoginPage />} />
@@ -75,7 +77,8 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </TooltipProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

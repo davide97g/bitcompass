@@ -9,6 +9,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { searchAll } from '@/data/mockData';
 import { useAuth } from '@/hooks/use-auth';
 import { LogOut, Menu, Search } from 'lucide-react';
@@ -110,6 +111,7 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
 
       {/* User avatar with dropdown - pushed to top right */}
       <div className="flex items-center gap-3 ml-auto shrink-0">
+        <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button

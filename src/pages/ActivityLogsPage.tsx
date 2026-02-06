@@ -1,21 +1,20 @@
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/ui/page-header';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useActivityLogs } from '@/hooks/use-activity-logs';
+import { useToast } from '@/hooks/use-toast';
+import { isSupabaseConfigured } from '@/lib/supabase';
+import type { ActivityLog } from '@/types/entities';
+import { Calendar, Check, Copy, FileText, GitBranch, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PageHeader } from '@/components/ui/page-header';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useActivityLogs } from '@/hooks/use-activity-logs';
-import { isSupabaseConfigured } from '@/lib/supabase';
-import type { ActivityLog, ActivityLogTimeFrame } from '@/types/entities';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { FileText, GitBranch, Calendar, Search, Copy, Check } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 const formatPeriod = (log: ActivityLog): string => {
   const start = new Date(log.periodStart);
@@ -451,14 +450,6 @@ function RepoSection({
   onCopyInstruction,
   copiedDay,
 }: RepoSectionProps) {
-  const [timeFrameTab, setTimeFrameTab] =
-    useState<ActivityLogTimeFrame>('day');
-
-  const logsForTab = useMemo(
-    () => repoLogs.filter((l) => l.timeFrame === timeFrameTab),
-    [repoLogs, timeFrameTab]
-  );
-
   const { grid: heatmapGrid, monthLabels, numWeeks } = useMemo(
     () => getFullYearHeatmapGrid(),
     []
@@ -488,31 +479,7 @@ function RepoSection({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Tabs
-          value={timeFrameTab}
-          onValueChange={(v) => setTimeFrameTab(v as ActivityLogTimeFrame)}
-        >
-          <TabsList className="grid w-full max-w-[240px] grid-cols-3">
-            <TabsTrigger value="day" aria-label="Day logs">
-              Day
-            </TabsTrigger>
-            <TabsTrigger value="week" aria-label="Week logs">
-              Week
-            </TabsTrigger>
-            <TabsTrigger value="month" aria-label="Month logs">
-              Month
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="day" className="mt-4">
-            <LogList logs={logsForTab} />
-          </TabsContent>
-          <TabsContent value="week" className="mt-4">
-            <LogList logs={logsForTab} />
-          </TabsContent>
-          <TabsContent value="month" className="mt-4">
-            <LogList logs={logsForTab} />
-          </TabsContent>
-        </Tabs>
+        <LogList logs={repoLogs} />
 
         <ActivityHeatmap
           grid={heatmapGrid}

@@ -6,11 +6,14 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 // Pages
 import CreateEntryPage from "@/pages/CreateEntryPage";
+import ActivityLogDetailPage from "./pages/ActivityLogDetailPage";
+import ActivityLogsPage from "./pages/ActivityLogsPage";
 import AssistantPage from "./pages/AssistantPage";
 import AutomationDetailPage from "./pages/AutomationDetailPage";
 import AutomationsPage from "./pages/AutomationsPage";
 import CLIPage from "./pages/CLIPage";
 import LoginPage from "./pages/LoginPage";
+import MCPPage from "./pages/MCPPage";
 import NotFound from "./pages/NotFound";
 import PeoplePage from "./pages/PeoplePage";
 import PersonDetailPage from "./pages/PersonDetailPage";
@@ -18,8 +21,6 @@ import ProblemDetailPage from "./pages/ProblemDetailPage";
 import ProblemsPage from "./pages/ProblemsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
-import ActivityLogDetailPage from "./pages/ActivityLogDetailPage";
-import ActivityLogsPage from "./pages/ActivityLogsPage";
 import RuleDetailPage from "./pages/RuleDetailPage";
 import RulesPage from "./pages/RulesPage";
 import TopicDetailPage from "./pages/TopicDetailPage";
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/logs" element={<ActivityLogsPage />} />
             <Route path="/logs/:id" element={<ActivityLogDetailPage />} />
             <Route path="/cli" element={<CLIPage />} />
+            <Route path="/mcp" element={<MCPPage />} />
             <Route path="/assistant" element={<AssistantPage />} />
             <Route path="/create" element={<CreateEntryPage />} />
             <Route path="/create/:type" element={<CreateEntryPage />} />

@@ -1,21 +1,22 @@
-import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  Lightbulb, 
-  AlertCircle, 
-  FolderKanban, 
-  Users, 
-  MessageSquare, 
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  Workflow,
-  PlusCircle,
-  BookMarked,
-  Terminal,
-  History
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import {
+    AlertCircle,
+    BookMarked,
+    ChevronLeft,
+    ChevronRight,
+    FolderKanban,
+    History,
+    Lightbulb,
+    MessageSquare,
+    Plug,
+    PlusCircle,
+    Sparkles,
+    Terminal,
+    Users,
+    Workflow
+} from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -31,6 +32,7 @@ const navItems = [
   { to: '/rules', icon: BookMarked, label: 'Rules & solutions' },
   { to: '/logs', icon: History, label: 'Activity logs' },
   { to: '/cli', icon: Terminal, label: 'CLI' },
+  { to: '/mcp', icon: Plug, label: 'MCP' },
   { to: '/create', icon: PlusCircle, label: 'Create entry' },
   { to: '/assistant', icon: MessageSquare, label: 'AI Assistant' },
 ];

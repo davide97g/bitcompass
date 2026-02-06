@@ -20,7 +20,8 @@ import type { RuleInsert, RuleKind } from '../types.js';
 import type { TimeFrame } from '../lib/git-analysis.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const packageJsonPath = join(__dirname, '..', 'package.json');
+// From dist/mcp/server.js (or src/mcp/server.ts when run via Bun), package.json is at package root
+const packageJsonPath = join(__dirname, '..', '..', 'package.json');
 const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as { version?: string };
 const VERSION = packageJson.version ?? '0.0.0';
 

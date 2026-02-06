@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import { streamText, convertToModelMessages, tool, type UIMessage } from 'https://esm.sh/ai@6.0.0';
 import { openai } from 'https://esm.sh/@ai-sdk/openai@1.0.0';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { convertToModelMessages, streamText, tool, type UIMessage } from 'https://esm.sh/ai@6.0.0';
 import { z } from 'https://esm.sh/zod@3.25.76';
 
 const corsHeaders = {

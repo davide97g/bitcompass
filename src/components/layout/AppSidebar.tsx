@@ -23,18 +23,39 @@ interface AppSidebarProps {
   onToggle: () => void;
 }
 
-const navItems = [
-  { to: '/topics', icon: Lightbulb, label: 'Topics' },
-  { to: '/problems', icon: AlertCircle, label: 'Problems' },
-  { to: '/projects', icon: FolderKanban, label: 'Projects' },
-  { to: '/people', icon: Users, label: 'People' },
-  { to: '/automations', icon: Workflow, label: 'Automations' },
-  { to: '/rules', icon: BookMarked, label: 'Rules & solutions' },
-  { to: '/logs', icon: History, label: 'Activity logs' },
-  { to: '/cli', icon: Terminal, label: 'CLI' },
-  { to: '/mcp', icon: Plug, label: 'MCP' },
-  { to: '/create', icon: PlusCircle, label: 'Create entry' },
-  { to: '/assistant', icon: MessageSquare, label: 'AI Assistant' },
+interface NavItem {
+  to: string;
+  icon: typeof Lightbulb;
+  label: string;
+}
+
+const navGroups: { label: string; items: NavItem[] }[] = [
+  {
+    label: 'Knowledge',
+    items: [
+      { to: '/topics', icon: Lightbulb, label: 'Topics' },
+      { to: '/problems', icon: AlertCircle, label: 'Problems' },
+      { to: '/projects', icon: FolderKanban, label: 'Projects' },
+      { to: '/people', icon: Users, label: 'People' },
+      { to: '/automations', icon: Workflow, label: 'Automations' },
+      { to: '/rules', icon: BookMarked, label: 'Rules & solutions' },
+      { to: '/logs', icon: History, label: 'Activity logs' },
+    ],
+  },
+  {
+    label: 'Tools',
+    items: [
+      { to: '/cli', icon: Terminal, label: 'CLI' },
+      { to: '/mcp', icon: Plug, label: 'MCP' },
+    ],
+  },
+  {
+    label: 'Create & Assistant',
+    items: [
+      { to: '/create', icon: PlusCircle, label: 'Create entry' },
+      { to: '/assistant', icon: MessageSquare, label: 'AI Assistant' },
+    ],
+  },
 ];
 
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
@@ -62,26 +83,34 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((item) => {
-          const isActive = location.pathname.startsWith(item.to);
-          const Icon = item.icon;
-          
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "sidebar-item",
-                isActive && "sidebar-item-active"
-              )}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon className="w-5 h-5 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
-            </NavLink>
-          );
-        })}
+      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+        {navGroups.map((group) => (
+          <div key={group.label} className={cn('space-y-1', !collapsed && 'mb-6')}>
+            {!collapsed && (
+              <p className="px-2 mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {group.label}
+              </p>
+            )}
+            {group.items.map((item) => {
+              const isActive = location.pathname.startsWith(item.to);
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={cn(
+                    'sidebar-item',
+                    isActive && 'sidebar-item-active'
+                  )}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <Icon className="w-5 h-5 shrink-0" />
+                  {!collapsed && <span>{item.label}</span>}
+                </NavLink>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* Collapse toggle */}

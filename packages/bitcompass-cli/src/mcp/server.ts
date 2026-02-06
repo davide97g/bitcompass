@@ -84,29 +84,36 @@ function createStdioServer(): {
             tools: [
               {
                 name: 'search-rules',
-                description: 'Search BitCompass rules by query',
+                description:
+                  'Use when the user wants to find rules, solutions, skills, or commands by keyword or topic. Returns a list of matching items with id, title, kind, author, and a short body snippet. Optionally filter by kind (rule, solution, skill, command) and limit results.',
                 inputSchema: {
                   type: 'object',
-                  properties: { query: { type: 'string' }, kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'] }, limit: { type: 'number' } },
+                  properties: {
+                    query: { type: 'string', description: 'Search query or keywords' },
+                    kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'], description: 'Optional: restrict to one kind' },
+                    limit: { type: 'number', description: 'Optional: max results (default 20)' },
+                  },
                   required: ['query'],
                 },
               },
               {
                 name: 'search-solutions',
-                description: 'Search BitCompass solutions by query',
+                description:
+                  'Use when the user asks for problem solutions or how-to guides. Returns a list of solutions with id, title, author, and a short snippet. Prefer this over search-rules when the intent is clearly "solutions" or "problem solutions".',
                 inputSchema: {
                   type: 'object',
-                  properties: { query: { type: 'string' }, limit: { type: 'number' } },
+                  properties: { query: { type: 'string', description: 'Search query' }, limit: { type: 'number', description: 'Optional: max results' } },
                   required: ['query'],
                 },
               },
               {
                 name: 'post-rules',
-                description: 'Publish a new rule or solution to BitCompass',
+                description:
+                  'Use when the user wants to publish or share a new rule, solution, skill, or command to BitCompass. Requires kind, title, and body. Returns the created id and title on success. User must be logged in (bitcompass login).',
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'] },
+                    kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'], description: 'Type of entry to publish' },
                     title: { type: 'string' },
                     description: { type: 'string' },
                     body: { type: 'string' },
@@ -119,7 +126,8 @@ function createStdioServer(): {
               },
               {
                 name: 'create-activity-log',
-                description: "Collect a summary of the repository and git activity for the chosen period, then push the log to the user's private activity logs. Requires a git repository; if repo_path is not a git repo, returns an error. Ask the user which time frame they want: day, week, or month.",
+                description:
+                  "Use when the user wants to record their repo activity (commits, files changed) for a time period. Ask for time_frame: day, week, or month. Requires a git repo at repo_path (default: cwd). Returns success and log id, or an error if not a git repo or auth missing.",
                 inputSchema: {
                   type: 'object',
                   properties: {
@@ -131,7 +139,8 @@ function createStdioServer(): {
               },
               {
                 name: 'get-rule',
-                description: 'Get full details of a rule or solution by ID',
+                description:
+                  'Use when you have a rule/solution ID and need the full content (title, description, body, examples, technologies). Returns the complete rule object or an error if not found. Optional kind filter verifies the entry matches that type.',
                 inputSchema: {
                   type: 'object',
                   properties: {
@@ -143,7 +152,8 @@ function createStdioServer(): {
               },
               {
                 name: 'list-rules',
-                description: 'List all rules and solutions (with optional filtering by kind)',
+                description:
+                  'Use when the user wants to browse or list all rules and/or solutions without a search query. Optional kind filter (rule or solution) and limit. Returns an array of items with id, title, kind, description, author, snippet, created_at, plus total/returned counts.',
                 inputSchema: {
                   type: 'object',
                   properties: {
@@ -154,7 +164,8 @@ function createStdioServer(): {
               },
               {
                 name: 'update-rule',
-                description: 'Update an existing rule or solution',
+                description:
+                  'Use when the user wants to edit an existing rule or solution they own. Pass id and any fields to update (title, description, body, context, examples, technologies). Returns updated metadata. Requires authentication.',
                 inputSchema: {
                   type: 'object',
                   properties: {
@@ -171,7 +182,8 @@ function createStdioServer(): {
               },
               {
                 name: 'delete-rule',
-                description: 'Delete a rule or solution by ID',
+                description:
+                  'Use when the user wants to remove a rule or solution by ID. Returns success or error. Requires authentication; user can only delete their own entries.',
                 inputSchema: {
                   type: 'object',
                   properties: {
@@ -182,7 +194,8 @@ function createStdioServer(): {
               },
               {
                 name: 'pull-rule',
-                description: 'Pull a rule or solution to a file in the project rules directory',
+                description:
+                  'Use when the user wants to install a rule or solution into their project (e.g. "pull this rule to my project"). Writes the rule to the project rules directory or optional output_path; global installs to ~/.cursor/rules/. Returns the file path written or an error.',
                 inputSchema: {
                   type: 'object',
                   properties: {
@@ -195,7 +208,8 @@ function createStdioServer(): {
               },
               {
                 name: 'list-activity-logs',
-                description: "List user's activity logs",
+                description:
+                  "Use when the user wants to see their past activity logs (e.g. 'show my logs', 'list activity'). Optional limit and time_frame (day, week, month). Returns an array of logs with id, time_frame, period_start, period_end, created_at.",
                 inputSchema: {
                   type: 'object',
                   properties: {
@@ -206,7 +220,8 @@ function createStdioServer(): {
               },
               {
                 name: 'get-activity-log',
-                description: 'Get activity log details by ID',
+                description:
+                  'Use when the user asks for details of a specific activity log by ID. Returns the full log: time_frame, period_start, period_end, repo_summary, git_analysis, created_at.',
                 inputSchema: {
                   type: 'object',
                   properties: {

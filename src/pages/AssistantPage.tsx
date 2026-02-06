@@ -10,13 +10,20 @@ import { DefaultChatTransport } from 'ai';
 import { Send, Sparkles, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+const SUGGESTED_PROMPTS = [
+  'Who knows React?',
+  'Show me open problems',
+  'What projects use GraphQL?',
+  'Find an automation for E2E tests',
+] as const;
+
 const initialMessage: UIMessage = {
   id: 'initial',
   role: 'assistant',
   parts: [
     {
       type: 'text',
-      text: "Hi! I'm your Knowledge Hub assistant. I can help you find information about people, projects, problems, technologies, and automations.\n\nTry asking me things like:\n- \"Who knows Kubernetes?\"\n- \"Which projects use React?\"\n- \"Find an automation for E2E tests\"\n- \"Suggest an automation for SonarQube\"\n- \"Who worked on the Customer Portal?\"",
+      text: "Hi! I'm your Knowledge Hub assistant. I can help you find information about people, projects, problems, technologies, and automations.\n\nTry one of the suggested questions below or type your own.",
     },
   ],
 };
@@ -70,12 +77,20 @@ export default function AssistantPage() {
     scrollToBottom();
   }, [messages]);
 
+  const hasUserSentMessage = messages.some((m) => m.role === 'user');
+  const showSuggestedChipsProminent = !hasUserSentMessage && status === 'ready';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const inputValue = input.trim();
     if (!inputValue || status !== 'ready') return;
     sendMessage({ text: inputValue });
-    setInput(''); // Clear input after sending
+    setInput('');
+  };
+
+  const handleSuggestedClick = (text: string) => {
+    if (status !== 'ready') return;
+    sendMessage({ text });
   };
 
   if (!supabaseUrl) {
@@ -171,6 +186,29 @@ export default function AssistantPage() {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Suggested prompt chips on first load */}
+        {showSuggestedChipsProminent && (
+          <div className="px-4 pt-2 pb-1 border-t border-border/50 bg-muted/30">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Suggested questions</p>
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTED_PROMPTS.map((question) => (
+                <Button
+                  key={question}
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="text-xs h-8"
+                  onClick={() => handleSuggestedClick(question)}
+                  disabled={status !== 'ready'}
+                  aria-label={`Ask: ${question}`}
+                >
+                  {question}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Input */}
         <form onSubmit={handleSubmit} className="p-4 border-t bg-background">
           <div className="flex gap-2">
@@ -188,20 +226,24 @@ export default function AssistantPage() {
         </form>
       </Card>
 
-      {/* Suggested questions */}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {['Who knows React?', 'Show me open problems', 'What projects use GraphQL?', 'Find an automation for E2E tests'].map((question) => (
-          <Button
-            key={question}
-            variant="outline"
-            size="sm"
-            className="text-xs"
-            onClick={() => setInput(question)}
-          >
-            {question}
-          </Button>
-        ))}
-      </div>
+      {/* Suggested questions (downplayed after first message) */}
+      {hasUserSentMessage && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {SUGGESTED_PROMPTS.map((question) => (
+            <Button
+              key={question}
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground h-7"
+              onClick={() => setInput(question)}
+              aria-label={`Use suggestion: ${question}`}
+            >
+              {question}
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

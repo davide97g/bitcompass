@@ -14,7 +14,7 @@ import { runLogout } from './commands/logout.js';
 import { runMcpStart, runMcpStatus } from './commands/mcp.js';
 import { runLog, ValidationError } from './commands/log.js';
 import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './commands/rules.js';
-import { runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
+import { runSolutionsList, runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
 import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
 import { runCommandsList, runCommandsPull, runCommandsPush, runCommandsSearch } from './commands/commands.js';
 import { runWhoami } from './commands/whoami.js';
@@ -63,6 +63,15 @@ program
   .description(
     'Collect repo summary and git activity, then push to your activity logs. Optional: bitcompass log YYYY-MM-DD or bitcompass log YYYY-MM-DD YYYY-MM-DD'
   )
+  .addHelpText(
+    'after',
+    `
+Examples:
+  bitcompass log
+  bitcompass log 2025-02-01
+  bitcompass log 2025-02-01 2025-02-05
+`
+  )
   .action((dates: string[]) =>
     runLog(dates ?? []).catch((err) => {
       if (err instanceof ValidationError) {
@@ -82,12 +91,21 @@ configCmd.command('get <key>').description('Get a config value').action((key: st
 // rules
 const rules = program.command('rules').description('Manage rules');
 rules.command('search [query]').description('Search rules').action((query?: string) => runRulesSearch(query).catch(handleErr));
-rules.command('list').description('List rules').action(() => runRulesList().catch(handleErr));
+rules
+  .command('list')
+  .description('List rules')
+  .option('--table', 'Show output in aligned columns (default when TTY)')
+  .addHelpText('after', '\nExamples:\n  bitcompass rules list\n  bitcompass rules list --table\n')
+  .action((opts: { table?: boolean }) => runRulesList({ table: opts.table }).catch(handleErr));
 rules
   .command('pull [id]')
   .description('Pull a rule by ID or choose from list (creates symbolic link by default)')
   .option('-g, --global', 'Install globally to ~/.cursor/rules/ for all projects')
   .option('--copy', 'Copy file instead of creating symbolic link')
+  .addHelpText(
+    'after',
+    '\nExamples:\n  bitcompass rules pull <id>\n  bitcompass rules pull <id> --global\n  bitcompass rules pull <id> --copy\n'
+  )
   .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runRulesPull(id, options).catch(handleErr));
 rules.command('push [file]').description('Push a rule (file or interactive)').action((file?: string) => runRulesPush(file).catch(handleErr));
 
@@ -95,34 +113,62 @@ rules.command('push [file]').description('Push a rule (file or interactive)').ac
 const solutions = program.command('solutions').description('Manage solutions');
 solutions.command('search [query]').description('Search solutions').action((query?: string) => runSolutionsSearch(query).catch(handleErr));
 solutions
+  .command('list')
+  .description('List solutions')
+  .option('--table', 'Show output in aligned columns (default when TTY)')
+  .addHelpText('after', '\nExamples:\n  bitcompass solutions list\n  bitcompass solutions list --table\n')
+  .action((opts: { table?: boolean }) => runSolutionsList({ table: opts.table }).catch(handleErr));
+solutions
   .command('pull [id]')
   .description('Pull a solution by ID or choose from list (creates symbolic link by default)')
   .option('-g, --global', 'Install globally to ~/.cursor/rules/ for all projects')
   .option('--copy', 'Copy file instead of creating symbolic link')
+  .addHelpText(
+    'after',
+    '\nExamples:\n  bitcompass solutions pull <id>\n  bitcompass solutions pull <id> --global\n'
+  )
   .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runSolutionsPull(id, options).catch(handleErr));
 solutions.command('push [file]').description('Push a solution (file or interactive)').action((file?: string) => runSolutionsPush(file).catch(handleErr));
 
 // skills
 const skills = program.command('skills').description('Manage skills');
 skills.command('search [query]').description('Search skills').action((query?: string) => runSkillsSearch(query).catch(handleErr));
-skills.command('list').description('List skills').action(() => runSkillsList().catch(handleErr));
+skills
+  .command('list')
+  .description('List skills')
+  .option('--table', 'Show output in aligned columns (default when TTY)')
+  .addHelpText('after', '\nExamples:\n  bitcompass skills list\n  bitcompass skills list --table\n')
+  .action((opts: { table?: boolean }) => runSkillsList({ table: opts.table }).catch(handleErr));
 skills
   .command('pull [id]')
   .description('Pull a skill by ID or choose from list (creates symbolic link by default)')
   .option('-g, --global', 'Install globally to ~/.cursor/rules/ for all projects')
   .option('--copy', 'Copy file instead of creating symbolic link')
+  .addHelpText(
+    'after',
+    '\nExamples:\n  bitcompass skills pull <id>\n  bitcompass skills pull <id> --global\n'
+  )
   .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runSkillsPull(id, options).catch(handleErr));
 skills.command('push [file]').description('Push a skill (file or interactive)').action((file?: string) => runSkillsPush(file).catch(handleErr));
 
 // commands
 const commands = program.command('commands').description('Manage commands');
 commands.command('search [query]').description('Search commands').action((query?: string) => runCommandsSearch(query).catch(handleErr));
-commands.command('list').description('List commands').action(() => runCommandsList().catch(handleErr));
+commands
+  .command('list')
+  .description('List commands')
+  .option('--table', 'Show output in aligned columns (default when TTY)')
+  .addHelpText('after', '\nExamples:\n  bitcompass commands list\n  bitcompass commands list --table\n')
+  .action((opts: { table?: boolean }) => runCommandsList({ table: opts.table }).catch(handleErr));
 commands
   .command('pull [id]')
   .description('Pull a command by ID or choose from list (creates symbolic link by default)')
   .option('-g, --global', 'Install globally to ~/.cursor/rules/ for all projects')
   .option('--copy', 'Copy file instead of creating symbolic link')
+  .addHelpText(
+    'after',
+    '\nExamples:\n  bitcompass commands pull <id>\n  bitcompass commands pull <id> --global\n'
+  )
   .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runCommandsPull(id, options).catch(handleErr));
 commands.command('push [file]').description('Push a command (file or interactive)').action((file?: string) => runCommandsPush(file).catch(handleErr));
 

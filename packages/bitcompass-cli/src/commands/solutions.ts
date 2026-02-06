@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { loadCredentials } from '../auth/config.js';
 import { searchRules, fetchRules, getRuleById, insertRule } from '../api/client.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
+import { formatList, shouldUseTable } from '../lib/list-format.js';
 import type { RuleInsert } from '../types.js';
 
 export const runSolutionsSearch = async (query?: string): Promise<void> => {
@@ -32,6 +33,25 @@ export const runSolutionsSearch = async (query?: string): Promise<void> => {
     console.log(chalk.cyan(rule.title));
     console.log(rule.body);
   }
+};
+
+export const runSolutionsList = async (options?: { table?: boolean }): Promise<void> => {
+  if (!loadCredentials()) {
+    console.error(chalk.red('Not logged in. Run bitcompass login.'));
+    process.exit(1);
+  }
+  const spinner = ora('Loading solutions…').start();
+  const list = await fetchRules('solution');
+  spinner.stop();
+  if (list.length === 0) {
+    console.log(chalk.yellow('No solutions yet.'));
+    return;
+  }
+  const useTable = shouldUseTable(options?.table);
+  formatList(
+    list.map((r) => ({ id: r.id, title: r.title, kind: r.kind })),
+    { useTable, showKind: false }
+  );
 };
 
 export const runSolutionsPull = async (id?: string, options?: { global?: boolean; copy?: boolean }): Promise<void> => {

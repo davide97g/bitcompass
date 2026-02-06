@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { loadCredentials } from '../auth/config.js';
 import { searchRules, fetchRules, getRuleById, insertRule } from '../api/client.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
+import { formatList, shouldUseTable } from '../lib/list-format.js';
 import type { RuleInsert } from '../types.js';
 
 export const runSkillsSearch = async (query?: string): Promise<void> => {
@@ -34,7 +35,7 @@ export const runSkillsSearch = async (query?: string): Promise<void> => {
   }
 };
 
-export const runSkillsList = async (): Promise<void> => {
+export const runSkillsList = async (options?: { table?: boolean }): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
     process.exit(1);
@@ -42,8 +43,15 @@ export const runSkillsList = async (): Promise<void> => {
   const spinner = ora('Loading skills…').start();
   const list = await fetchRules('skill');
   spinner.stop();
-  list.forEach((r) => console.log(`${chalk.cyan(r.title)}  ${chalk.dim(r.id)}`));
-  if (list.length === 0) console.log(chalk.yellow('No skills yet.'));
+  if (list.length === 0) {
+    console.log(chalk.yellow('No skills yet.'));
+    return;
+  }
+  const useTable = shouldUseTable(options?.table);
+  formatList(
+    list.map((r) => ({ id: r.id, title: r.title, kind: r.kind })),
+    { useTable, showKind: false }
+  );
 };
 
 export const runSkillsPull = async (id?: string, options?: { global?: boolean; copy?: boolean }): Promise<void> => {

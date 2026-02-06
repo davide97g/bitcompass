@@ -17,7 +17,7 @@ import {
 import { useRule, useUpdateRule, useDeleteRule } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
 import type { Rule, RuleKind } from '@/types/bitcompass';
-import { ArrowLeft, FileDown, Pencil, Trash2, User, Link2, GitFork } from 'lucide-react';
+import { ArrowLeft, FileDown, Pencil, Trash2, User, Link2 } from 'lucide-react';
 import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { PageHeader } from '@/components/ui/page-header';
 import { MarkdownContent } from '@/components/ui/markdown-content';
@@ -213,21 +213,21 @@ export default function RuleDetailPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="space-y-2">
-          <p className="text-sm font-medium flex items-center gap-2">
-            <Link2 className="h-4 w-4" />
-            Use this {rule ? getKindDescription(rule.kind).toLowerCase() : 'rule'}
-          </p>
-          <CommandBlock commands={rule ? [getPullCommand(id!, rule.kind, false)] : []} />
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm font-medium flex items-center gap-2">
-            <GitFork className="h-4 w-4" />
-            Clone this {rule ? getKindDescription(rule.kind).toLowerCase() : 'rule'}
-          </p>
-          <CommandBlock commands={rule ? [getPullCommand(id!, rule.kind, true)] : []} />
-        </div>
+      <div className="space-y-3 mb-6">
+        <p className="text-sm font-medium flex items-center gap-2" id="pull-to-project">
+          <Link2 className="h-4 w-4" aria-hidden />
+          Pull to project
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Run this in your terminal to install this {rule ? getKindDescription(rule.kind).toLowerCase() : 'rule'} into your project (symbolic link). Copy the command with the button.
+        </p>
+        <CommandBlock commands={rule ? [getPullCommand(id!, rule.kind, false)] : []} className="max-w-2xl" />
+        <p className="text-xs text-muted-foreground">
+          To copy the file instead of a symlink, use:{' '}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            {rule ? getPullCommand(id!, rule.kind, true) : ''}
+          </code>
+        </p>
       </div>
 
       <Card>

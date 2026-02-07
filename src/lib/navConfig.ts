@@ -6,7 +6,6 @@ import {
   FolderKanban,
   History,
   Lightbulb,
-  MessageSquare,
   Plug,
   PlusCircle,
   Terminal,
@@ -41,10 +40,9 @@ export const navGroups: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
-    label: 'Create & Assistant',
+    label: 'Create',
     items: [
       { to: '/create', icon: PlusCircle, label: 'Create entry' },
-      { to: '/assistant', icon: MessageSquare, label: 'AI Assistant' },
     ],
   },
   {

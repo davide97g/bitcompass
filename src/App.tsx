@@ -29,7 +29,6 @@ import TopicDetailPage from "./pages/TopicDetailPage";
 import TopicsPage from "./pages/TopicsPage";
 
 // Heavy routes: lazy-loaded for smaller initial bundle
-const AssistantPage = lazy(() => import("./pages/AssistantPage"));
 const CreateEntryPage = lazy(() => import("./pages/CreateEntryPage"));
 
 // Layout
@@ -73,7 +72,6 @@ const App = () => (
             <Route path="/cli" element={<CLIPage />} />
             <Route path="/mcp" element={<MCPPage />} />
             <Route path="/glossary" element={<GlossaryPage />} />
-            <Route path="/assistant" element={<AssistantPage />} />
             <Route path="/create" element={<CreateEntryPage />} />
             <Route path="/create/:type" element={<CreateEntryPage />} />
           </Route>

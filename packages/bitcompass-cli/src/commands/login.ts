@@ -9,6 +9,13 @@ import type { StoredCredentials } from '../types.js';
 
 const CALLBACK_PORT = 38473;
 
+/** Hardcoded Compass rules URL: prod or local testing. Used for "See rules on Compass" link after login. */
+const COMPASS_RULES_URL_PROD = 'https://bitcompass.vercel.app/rules';
+const COMPASS_RULES_URL_DEV = 'http://localhost:8080/rules';
+
+const getCompassRulesUrl = (): string =>
+  process.env.NODE_ENV === 'development' ? COMPASS_RULES_URL_DEV : COMPASS_RULES_URL_PROD;
+
 /** Design tokens matching src/index.css (light theme) */
 const STYLES = {
   background: 'hsl(0, 0%, 98%)',
@@ -22,7 +29,32 @@ const STYLES = {
   shadow: '0 10px 15px -3px hsl(220 13% 11% / 0.08), 0 4px 6px -4px hsl(220 13% 11% / 0.05)',
 };
 
-const CALLBACK_SUCCESS_HTML = `<!DOCTYPE html>
+/**
+ * Builds the Compass rules URL, optionally with auth hash so the web app can set the session
+ * without asking the user to log in again (use-auth.ts reads #access_token and #refresh_token).
+ */
+const compassRulesUrlWithSession = (
+  baseUrl: string,
+  session: { access_token: string; refresh_token: string } | null
+): string => {
+  if (!session?.access_token || !session?.refresh_token) return baseUrl;
+  const hash = `access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`;
+  return `${baseUrl}#${hash}`;
+};
+
+/** Builds the post-login success (recap) page HTML with Compass rules CTA link. Session in URL hash persists login on the website. */
+const buildCallbackSuccessHtml = (
+  compassRulesUrl: string,
+  session: { access_token: string; refresh_token: string } | null
+): string => {
+  const href = compassRulesUrlWithSession(compassRulesUrl, session);
+  const compassCtaBlock = `
+    <div class="compass-cta-block">
+      <a href="${escapeHtml(href)}" class="compass-cta" target="_blank" rel="noopener noreferrer">See Available Rules on Compass</a>
+      <p class="compass-cta-hint">Opens in the same browser; you’ll be signed in automatically.</p>
+    </div>`;
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -123,6 +155,28 @@ const CALLBACK_SUCCESS_HTML = `<!DOCTYPE html>
     }
     .copy-btn:hover { opacity: 0.9; }
     .copy-btn.copied { background: ${STYLES.muted}; cursor: default; }
+    .compass-cta-block {
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid ${STYLES.border};
+    }
+    .compass-cta {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: ${STYLES.primary};
+      color: ${STYLES.primaryForeground};
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 0.5rem;
+      transition: opacity 0.15s;
+    }
+    .compass-cta:hover { opacity: 0.9; }
+    .compass-cta-hint {
+      margin: 0.5rem 0 0;
+      font-size: 0.75rem;
+      color: ${STYLES.muted};
+    }
   </style>
 </head>
 <body>
@@ -135,7 +189,7 @@ const CALLBACK_SUCCESS_HTML = `<!DOCTYPE html>
     </div>
     <h1>You're all set</h1>
     <p class="muted">You're logged in successfully. You can close this window safely—your credentials are saved and the CLI is ready to use.</p>
-    <p class="hint">Return to your terminal to continue.</p>
+    <p class="hint">Return to your terminal to continue.</p>${compassCtaBlock}
     <div class="verify-block">
       <p class="muted" style="margin:0">Verify in terminal:</p>
       <div class="cmd-row">
@@ -163,6 +217,7 @@ const CALLBACK_SUCCESS_HTML = `<!DOCTYPE html>
   </script>
 </body>
 </html>`;
+};
 
 const escapeHtml = (s: string) =>
   s
@@ -320,7 +375,7 @@ export const runLogin = async (): Promise<void> => {
           const tokenPath = getTokenFilePath();
           saveCredentials(creds);
           res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end(CALLBACK_SUCCESS_HTML);
+          res.end(buildCallbackSuccessHtml(getCompassRulesUrl(), session));
           spinner.succeed(chalk.green('Logged in successfully.'));
           console.log(chalk.dim('Credentials saved to:'), tokenPath);
           server.close();

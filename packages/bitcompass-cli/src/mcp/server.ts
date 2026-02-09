@@ -166,7 +166,7 @@ function createStdioServer(): {
               {
                 name: 'update-rule',
                 description:
-                  'Use when the user wants to edit an existing rule or solution they own. Pass id and any fields to update (title, description, body, context, examples, technologies). Returns updated metadata. Requires authentication.',
+                  'Use when the user wants to edit an existing rule or solution they own. Pass id and any fields to update (title, description, body, context, examples, technologies, globs, always_apply). Returns updated metadata. Requires authentication.',
                 inputSchema: {
                   type: 'object',
                   properties: {
@@ -177,6 +177,8 @@ function createStdioServer(): {
                     context: { type: 'string', description: 'Updated context' },
                     examples: { type: 'array', items: { type: 'string' }, description: 'Updated examples array' },
                     technologies: { type: 'array', items: { type: 'string' }, description: 'Updated technologies array' },
+                    globs: { type: 'string', description: 'Glob patterns for when rule applies (e.g. "*.ts, *.tsx")' },
+                    always_apply: { type: 'boolean', description: 'If true, Cursor applies this rule globally' },
                   },
                   required: ['id'],
                 },
@@ -424,6 +426,8 @@ function createStdioServer(): {
         context: rule.context ?? null,
         examples: rule.examples ?? [],
         technologies: rule.technologies ?? [],
+        globs: rule.globs ?? null,
+        always_apply: rule.always_apply ?? false,
         author: rule.author_display_name ?? null,
         created_at: rule.created_at,
         updated_at: rule.updated_at,
@@ -475,6 +479,8 @@ function createStdioServer(): {
     if (args.context !== undefined) updates.context = (args.context as string) || undefined;
     if (Array.isArray(args.examples)) updates.examples = args.examples as string[];
     if (Array.isArray(args.technologies)) updates.technologies = args.technologies as string[];
+    if (args.globs !== undefined) updates.globs = (args.globs as string) || null;
+    if (args.always_apply !== undefined) updates.always_apply = Boolean(args.always_apply);
     try {
       const updated = await updateRule(id, updates);
       return {

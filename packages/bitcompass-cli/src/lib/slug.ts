@@ -14,13 +14,13 @@ export const titleToSlug = (title: string): string => {
 };
 
 /**
- * Returns the rule filename (e.g. rule-strava-api-authentication-flow.md).
+ * Returns the rule filename in Cursor .mdc format (e.g. rule-strava-api-authentication-flow.mdc).
  * Falls back to id if slug is empty.
  */
 export const ruleFilename = (title: string, id: string): string => {
   const slug = titleToSlug(title);
   const base = slug ? `rule-${slug}` : `rule-${id}`;
-  return `${base}.md`;
+  return `${base}.mdc`;
 };
 
 /**

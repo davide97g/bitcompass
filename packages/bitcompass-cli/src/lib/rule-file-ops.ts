@@ -5,6 +5,7 @@ import { getRuleById } from '../api/client.js';
 import { getProjectConfig } from '../auth/project-config.js';
 import { ruleFilename, solutionFilename, skillFilename, commandFilename } from './slug.js';
 import { ensureRuleCached } from './rule-cache.js';
+import { buildRuleMdcContent } from './mdc-format.js';
 import type { Rule } from '../types.js';
 
 export interface PullRuleOptions {
@@ -90,23 +91,13 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
       }
     }
   } else {
-    // Fallback: copy file content (for compatibility or when symlinks aren't desired)
-    let content: string;
-    switch (rule.kind) {
-      case 'solution':
-        content = `# ${rule.title}\n\n${rule.description}\n\n## Solution\n\n${rule.body}\n`;
-        break;
-      case 'skill':
-        content = `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
-        break;
-      case 'command':
-        content = `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
-        break;
-      case 'rule':
-      default:
-        content = `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
-        break;
-    }
+    // Fallback: copy file content (rules as .mdc with frontmatter, others as .md)
+    const content =
+      rule.kind === 'rule'
+        ? buildRuleMdcContent(rule)
+        : rule.kind === 'solution'
+          ? `# ${rule.title}\n\n${rule.description}\n\n## Solution\n\n${rule.body}\n`
+          : `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
     writeFileSync(filename, content);
   }
 

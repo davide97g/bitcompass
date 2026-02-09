@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { loadCredentials } from '../auth/config.js';
 import { searchRules, fetchRules, getRuleById, insertRule } from '../api/client.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
+import { parseRuleMdcContent } from '../lib/mdc-format.js';
 import { formatList, shouldUseTable } from '../lib/list-format.js';
 import type { RuleInsert } from '../types.js';
 
@@ -120,9 +121,22 @@ export const runRulesPush = async (file?: string): Promise<void> => {
     try {
       payload = JSON.parse(raw) as RuleInsert;
     } catch {
-      const lines = raw.split('\n');
-      const title = lines[0].replace(/^#\s*/, '') || 'Untitled';
-      payload = { kind: 'rule', title, description: '', body: raw };
+      const parsed = parseRuleMdcContent(raw);
+      if (parsed) {
+        const titleFromBody = parsed.body.split('\n')[0]?.replace(/^#\s*/, '').trim() || 'Untitled';
+        payload = {
+          kind: 'rule',
+          title: titleFromBody,
+          description: parsed.description,
+          body: parsed.body,
+          globs: parsed.globs ?? undefined,
+          always_apply: parsed.alwaysApply,
+        };
+      } else {
+        const lines = raw.split('\n');
+        const title = lines[0].replace(/^#\s*/, '') || 'Untitled';
+        payload = { kind: 'rule', title, description: '', body: raw };
+      }
     }
   } else {
     const answers = await inquirer.prompt<{ title: string; description: string; body: string }>([

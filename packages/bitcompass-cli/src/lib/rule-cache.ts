@@ -1,8 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, statSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { getConfigDir } from '../auth/config.js';
 import { getRuleById } from '../api/client.js';
-import { ruleFilename, solutionFilename } from './slug.js';
+import { ruleFilename, solutionFilename, skillFilename, commandFilename } from './slug.js';
+import { buildRuleMdcContent } from './mdc-format.js';
 import type { Rule } from '../types.js';
 
 /**
@@ -17,20 +18,24 @@ export const getCacheDir = (): string => {
 };
 
 /**
- * Gets the cached file path for a rule by ID
+ * Gets the cached file path for a rule by ID (rules use .mdc, others use .md)
  */
 export const getCachedRulePath = (rule: Rule): string => {
   const cacheDir = getCacheDir();
   const filename =
     rule.kind === 'solution'
       ? solutionFilename(rule.title, rule.id)
-      : ruleFilename(rule.title, rule.id);
+      : rule.kind === 'skill'
+        ? skillFilename(rule.title, rule.id)
+        : rule.kind === 'command'
+          ? commandFilename(rule.title, rule.id)
+          : ruleFilename(rule.title, rule.id);
   return join(cacheDir, `${rule.id}-${filename}`);
 };
 
 /**
  * Ensures a rule is cached. Downloads and caches it if not present or outdated.
- * Returns the path to the cached file.
+ * Returns the path to the cached file. Rules are stored as .mdc with Cursor frontmatter.
  */
 export const ensureRuleCached = async (id: string): Promise<string> => {
   const rule = await getRuleById(id);
@@ -43,9 +48,11 @@ export const ensureRuleCached = async (id: string): Promise<string> => {
 
   if (needsUpdate) {
     const content =
-      rule.kind === 'solution'
-        ? `# ${rule.title}\n\n${rule.description}\n\n## Solution\n\n${rule.body}\n`
-        : `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
+      rule.kind === 'rule'
+        ? buildRuleMdcContent(rule)
+        : rule.kind === 'solution'
+          ? `# ${rule.title}\n\n${rule.description}\n\n## Solution\n\n${rule.body}\n`
+          : `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
 
     writeFileSync(cachedPath, content, 'utf-8');
   }

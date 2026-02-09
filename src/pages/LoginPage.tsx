@@ -38,7 +38,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4">
             <Sparkles className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Knowledge Hub</h1>
+          <h1 className="text-2xl font-bold mb-2">Bitcompass</h1>
           <p className="text-muted-foreground">
             Your company's internal knowledge base
           </p>

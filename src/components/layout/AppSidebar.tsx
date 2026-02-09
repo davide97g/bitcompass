@@ -27,7 +27,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           </div>
           {!collapsed && (
             <span className="font-semibold text-sidebar-foreground whitespace-nowrap">
-              Knowledge Hub
+              Bitcompass
             </span>
           )}
         </div>

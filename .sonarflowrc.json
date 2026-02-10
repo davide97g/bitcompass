@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/davide97g/sonarflow/v2.0.0/schemas/sonarflowrc.schema.json",
+  "repoName": "bitcompass",
+  "gitProvider": "github",
+  "repositoryVisibility": "public",
+  "sonarOrganization": "davide97g",
+  "sonarProjectKey": "davide97g_bitcompass",
+  "sonarMode": "standard",
+  "sonarBaseUrl": "",
+  "publicSonar": true,
+  "aiEditor": "cursor",
+  "rulesFlavor": "yolo",
+  "rulePath": ".cursor/rules/sonarflow-autofix.mdc"
+}

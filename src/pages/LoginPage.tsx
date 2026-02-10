@@ -1,3 +1,4 @@
+import ClickSpark from '@/components/ClickSpark';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -78,6 +79,13 @@ export default function LoginPage() {
         </ShaderGradientCanvas>
       </div>
 
+      <ClickSpark
+        sparkColor='#fff'
+        sparkSize={10}
+        sparkRadius={15}
+        sparkCount={8}
+        duration={400}
+      >
       <div className="relative z-10 w-full max-w-md animate-fade-in">
         {/* Single container: Shape Blur wraps all content so the effect is all around */}
         <div className="relative w-full min-h-[480px] rounded-2xl overflow-hidden">
@@ -88,7 +96,7 @@ export default function LoginPage() {
           <div className="relative z-10 flex flex-col p-8 pt-10 pb-10">
             {/* Logo and Title */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/90 backdrop-blur mb-4 shadow-lg">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/90 backdrop-blur mb-4 shadow-lg">
                 <Sparkles className="w-8 h-8 text-primary-foreground" />
               </div>
               <h1 className="text-2xl font-bold mb-2 text-white drop-shadow-md">Bitcompass</h1>
@@ -143,6 +151,7 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+    </ClickSpark>
     </div>
   );
 }

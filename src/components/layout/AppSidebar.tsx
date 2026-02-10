@@ -22,7 +22,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg  text-black-foreground dark:text-white-foreground">
             <Sparkles className="w-5 h-5" />
           </div>
           {!collapsed && (

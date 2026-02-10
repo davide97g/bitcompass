@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +13,7 @@ import ActivityLogsPage from "./pages/ActivityLogsPage";
 import AutomationDetailPage from "./pages/AutomationDetailPage";
 import AutomationsPage from "./pages/AutomationsPage";
 import CLIPage from "./pages/CLIPage";
+import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import MCPPage from "./pages/MCPPage";
 import NotFound from "./pages/NotFound";
@@ -27,9 +28,7 @@ import RuleDetailPage from "./pages/RuleDetailPage";
 import RulesPage from "./pages/RulesPage";
 import TopicDetailPage from "./pages/TopicDetailPage";
 import TopicsPage from "./pages/TopicsPage";
-
-// Heavy routes: lazy-loaded for smaller initial bundle
-const CreateEntryPage = lazy(() => import("./pages/CreateEntryPage"));
+import WelcomePage from "./pages/WelcomePage";
 
 // Layout
 import { AppLayout } from "./components/layout/AppLayout";
@@ -46,14 +45,16 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
         <Routes>
-          {/* Public route */}
+          {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/welcome" element={<WelcomePage />} />
           
           {/* Root: recover OAuth hash before any redirect */}
           <Route path="/" element={<RootRedirect />} />
           
           {/* App routes with layout (auth required when Supabase configured) */}
           <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
+            <Route path="/home" element={<HomePage />} />
             <Route path="/topics" element={<TopicsPage />} />
             <Route path="/topics/:id" element={<TopicDetailPage />} />
             <Route path="/problems" element={<ProblemsPage />} />
@@ -72,8 +73,6 @@ const App = () => (
             <Route path="/cli" element={<CLIPage />} />
             <Route path="/mcp" element={<MCPPage />} />
             <Route path="/glossary" element={<GlossaryPage />} />
-            <Route path="/create" element={<CreateEntryPage />} />
-            <Route path="/create/:type" element={<CreateEntryPage />} />
           </Route>
           
           {/* Catch-all */}

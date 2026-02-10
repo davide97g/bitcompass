@@ -21,7 +21,7 @@ import { ArrowLeft, FileDown, Pencil, Trash2, User, Link2 } from 'lucide-react';
 import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { PageHeader } from '@/components/ui/page-header';
 import { MarkdownContent } from '@/components/ui/markdown-content';
-import { CommandBlock } from '@/components/create/CommandBlock';
+import { CommandBlock } from '@/components/ui/CommandBlock';
 import { ruleDownloadBasename } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { RuleDetailSkeleton } from '@/components/skeletons';

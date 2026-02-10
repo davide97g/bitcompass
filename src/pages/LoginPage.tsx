@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { ShaderGradient, ShaderGradientCanvas } from '@shadergradient/react';
+import { Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,36 +31,86 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md animate-fade-in">
-        {/* Logo and Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4">
-            <Sparkles className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold mb-2">Bitcompass</h1>
-          <p className="text-muted-foreground">
-            Your company's internal knowledge base
-          </p>
-        </div>
+    <div className="relative min-h-screen flex items-center justify-center p-4">
+      {/* Fixed gradient background */}
+      <div className="fixed inset-0 z-0">
+        <ShaderGradientCanvas
+          style={{ position: 'absolute', inset: 0 }}
+          pixelDensity={1}
+          fov={45}
+          pointerEvents="none"
+          className="h-full w-full"
+        >
+          <ShaderGradient
+            animate="on"
+            brightness={0.8}
+            cAzimuthAngle={180}
+            cDistance={3.59}
+            cPolarAngle={90}
+            cameraZoom={1}
+            color1="#ff3355"
+            color2="#c746db"
+            color3="#31d8e1"
+            enableCameraUpdate={false}
+            envPreset="city"
+            grain="on"
+            lightType="3d"
+            positionX={-1.4}
+            positionY={0}
+            positionZ={0}
+            range="disabled"
+            rangeEnd={40}
+            rangeStart={0}
+            reflection={0.1}
+            rotationX={0}
+            rotationY={10}
+            rotationZ={50}
+            shader="defaults"
+            type="plane"
+            uAmplitude={1}
+            uDensity={2.8}
+            uFrequency={5.5}
+            uSpeed={0.4}
+            uStrength={1.8}
+            uTime={0}
+            wireframe={false}
+          />
+        </ShaderGradientCanvas>
+      </div>
 
-        {/* Login Card */}
-        <Card className="border shadow-lg">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-center mb-6">
+      <div className="relative z-10 w-full max-w-md animate-fade-in">
+        {/* Single container: Shape Blur wraps all content so the effect is all around */}
+        <div className="relative w-full min-h-[480px] rounded-2xl overflow-hidden">
+          {/* Dark tint so the blur frame is visible on all sides */}
+          <div className="absolute inset-0 rounded-2xl bg-black/25 backdrop-blur-sm" aria-hidden />
+          
+          {/* All content inside the blur frame – inset so border is visible on every side */}
+          <div className="relative z-10 flex flex-col p-8 pt-10 pb-10">
+            {/* Logo and Title */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/90 backdrop-blur mb-4 shadow-lg">
+                <Sparkles className="w-8 h-8 text-primary-foreground" />
+              </div>
+              <h1 className="text-2xl font-bold mb-2 text-white drop-shadow-md">Bitcompass</h1>
+              <p className="text-white/90 drop-shadow-sm">
+                Your company's internal knowledge base
+              </p>
+            </div>
+
+            <h2 className="text-lg font-semibold text-center mb-6 text-foreground">
               Sign in to your account
             </h2>
 
             <Button
               variant="outline"
-              className="w-full h-12 text-base font-medium gap-3"
+              className="w-full h-12 text-base font-medium gap-3 bg-background/80 hover:bg-background border-border"
               onClick={handleGoogleLogin}
               disabled={isLoading}
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
               ) : (
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden>
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -85,13 +135,13 @@ export default function LoginPage() {
             <p className="text-xs text-center text-muted-foreground mt-6">
               Use your company Google account to sign in
             </p>
-          </CardContent>
-        </Card>
 
-        {/* Footer */}
-        <p className="text-xs text-center text-muted-foreground mt-6">
-          By signing in, you agree to our Terms of Service and Privacy Policy
-        </p>
+            {/* Footer inside the blur frame */}
+            <p className="text-xs text-center text-white/70 drop-shadow-sm mt-8 pt-4 border-t border-white/10">
+              By signing in, you agree to our Terms of Service and Privacy Policy
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

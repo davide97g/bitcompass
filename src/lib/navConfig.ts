@@ -5,9 +5,9 @@ import {
   BookOpen,
   FolderKanban,
   History,
+  Home,
   Lightbulb,
   Plug,
-  PlusCircle,
   Terminal,
   Users,
   Workflow,
@@ -20,6 +20,12 @@ export interface NavItem {
 }
 
 export const navGroups: { label: string; items: NavItem[] }[] = [
+  {
+    label: 'Home',
+    items: [
+      { to: '/home', icon: Home, label: 'Home' },
+    ],
+  },
   {
     label: 'Knowledge',
     items: [
@@ -37,12 +43,6 @@ export const navGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { to: '/cli', icon: Terminal, label: 'CLI' },
       { to: '/mcp', icon: Plug, label: 'MCP' },
-    ],
-  },
-  {
-    label: 'Create',
-    items: [
-      { to: '/create', icon: PlusCircle, label: 'Create entry' },
     ],
   },
   {

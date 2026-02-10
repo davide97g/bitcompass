@@ -36,8 +36,8 @@ export function CommandBlock({ commands, className }: CommandBlockProps) {
   };
 
   return (
-    <div className={cn('rounded-lg border bg-muted/50 overflow-hidden', className)}>
-      <div className="px-3 py-2 border-b bg-muted/80 text-xs font-medium text-muted-foreground">
+    <div className={cn('rounded-lg border border-border bg-muted/50 overflow-hidden', className)}>
+      <div className="px-3 py-2 border-b border-border bg-muted/80 text-xs font-medium text-muted-foreground">
         Run in your terminal
       </div>
       <ul className="divide-y divide-border">

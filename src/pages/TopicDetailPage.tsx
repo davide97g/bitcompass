@@ -55,8 +55,8 @@ export default function TopicDetailPage() {
 
       {/* Header */}
       <div className="flex items-start gap-4 mb-6">
-        <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-          <Icon className="w-7 h-7 text-primary" />
+        <div className="w-14 h-14 bg-primary flex items-center justify-center shrink-0 text-primary-foreground">
+          <Icon className="w-7 h-7 text-primary-foreground" />
         </div>
         <div>
           <h1 className="text-2xl font-bold mb-1">{topic.name}</h1>
@@ -92,7 +92,7 @@ export default function TopicDetailPage() {
           <ul className="space-y-3">
             {topic.tips.map((tip, index) => (
               <li key={index} className="flex gap-3 text-sm">
-                <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center shrink-0 mt-0.5">
+                <span className="w-5 h-5 bg-primary text-primary-foreground text-xs flex items-center justify-center shrink-0 mt-0.5">
                   {index + 1}
                 </span>
                 <span>{tip}</span>

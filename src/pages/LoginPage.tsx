@@ -87,20 +87,16 @@ export default function LoginPage() {
         duration={400}
       >
       <div className="relative z-10 w-full max-w-md animate-fade-in">
-        {/* Single container: Shape Blur wraps all content so the effect is all around */}
-        <div className="relative w-full min-h-[480px] rounded-2xl overflow-hidden">
-          {/* Dark tint so the blur frame is visible on all sides */}
-          <div className="absolute inset-0 rounded-2xl bg-black/25 backdrop-blur-sm" aria-hidden />
-          
-          {/* All content inside the blur frame – inset so border is visible on every side */}
+        {/* Soft panel: ambient organic style, sits on gradient */}
+        <div className="relative w-full min-h-[480px] rounded-2xl border border-border bg-background/95 shadow-xl backdrop-blur-sm">
           <div className="relative z-10 flex flex-col p-8 pt-10 pb-10">
             {/* Logo and Title */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/90 backdrop-blur mb-4 shadow-lg">
-                <Sparkles className="w-8 h-8 text-primary-foreground" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4 shadow-lg">
+                <Sparkles className="w-8 h-8 text-primary" />
               </div>
-              <h1 className="text-2xl font-bold mb-2 text-white drop-shadow-md">Bitcompass</h1>
-              <p className="text-white/90 drop-shadow-sm">
+              <h1 className="text-2xl font-bold mb-2 text-foreground">Bitcompass</h1>
+              <p className="text-muted-foreground">
                 Your company's internal knowledge base
               </p>
             </div>
@@ -111,7 +107,7 @@ export default function LoginPage() {
 
             <Button
               variant="outline"
-              className="w-full h-12 text-base font-medium gap-3 bg-background/80 hover:bg-background border-border"
+              className="w-full h-12 text-base font-medium gap-3 bg-background hover:bg-muted border-border transition-colors duration-ui ease-out"
               onClick={handleGoogleLogin}
               disabled={isLoading}
             >
@@ -144,8 +140,8 @@ export default function LoginPage() {
               Use your company Google account to sign in
             </p>
 
-            {/* Footer inside the blur frame */}
-            <p className="text-xs text-center text-white/70 drop-shadow-sm mt-8 pt-4 border-t border-white/10">
+            {/* Footer */}
+            <p className="text-xs text-center text-muted-foreground mt-8 pt-4 border-t border-border">
               By signing in, you agree to our Terms of Service and Privacy Policy
             </p>
           </div>

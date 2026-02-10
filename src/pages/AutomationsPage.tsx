@@ -62,7 +62,7 @@ export default function AutomationsPage() {
             {option.label}
             <span
               className={cn(
-                'ml-2 text-xs px-1.5 py-0.5 rounded-full',
+                'ml-2 text-xs px-1.5 py-0.5',
                 filter === option.value ? 'bg-primary-foreground/20' : 'bg-muted'
               )}
             >

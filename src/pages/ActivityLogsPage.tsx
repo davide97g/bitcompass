@@ -254,7 +254,7 @@ function SearchPreview({ hits, getRepoDisplayName }: SearchPreviewProps) {
               <li key={`${hit.log.id}-${hit.type}-${index}`}>
                 <Link
                   to={`/logs/${hit.log.id}`}
-                  className="block rounded-lg border bg-card p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring"
+                  className="block rounded-lg border border-border bg-card p-3 text-left transition-colors duration-ui ease-out hover:bg-muted/50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label={`View log: ${repoName}, ${hit.snippet.before}${hit.snippet.match}${hit.snippet.after}`}
                 >
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-1.5">
@@ -266,7 +266,7 @@ function SearchPreview({ hits, getRepoDisplayName }: SearchPreviewProps) {
                   </div>
                   <p className="text-sm font-mono break-words">
                     {hit.snippet.before}
-                    <mark className="bg-primary/20 text-foreground rounded px-0.5 font-medium">
+                    <mark className="bg-primary text-primary-foreground px-0.5 font-medium">
                       {hit.snippet.match}
                     </mark>
                     {hit.snippet.after}
@@ -385,7 +385,7 @@ export default function ActivityLogsPage() {
             <p className="text-muted-foreground">No activity logs yet.</p>
             <p className="text-sm text-muted-foreground mt-1">
               Run{' '}
-              <code className="rounded bg-muted px-1.5 py-0.5">bitcompass log</code>{' '}
+              <code className="bg-muted px-1.5 py-0.5">bitcompass log</code>{' '}
               in a git repo, or use the create-activity-log MCP tool.
             </p>
           </CardContent>
@@ -527,7 +527,7 @@ function LogList({ logs }: { logs: ActivityLog[] }) {
     <ul className="space-y-3">
       {logs.map((log) => (
         <li key={log.id}>
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
               <Calendar className="h-4 w-4 shrink-0" aria-hidden />
               <span>{formatPeriod(log)}</span>
@@ -541,7 +541,7 @@ function LogList({ logs }: { logs: ActivityLog[] }) {
               </span>
               <Link
                 to={`/logs/${log.id}`}
-                className="text-sm font-medium text-primary hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring rounded"
+                className="text-sm font-medium text-primary hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring"
               >
                 View details
               </Link>
@@ -587,7 +587,7 @@ function ActivityHeatmap({
       return (
         <div
           key={`empty-${row}-${col}`}
-          className={`${cellSize} bg-muted/30`}
+          className={`${cellSize} bg-muted`}
           aria-hidden
         />
       );
@@ -610,7 +610,7 @@ function ActivityHeatmap({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className={`${cellSize} border border-dashed border-muted-foreground/25 bg-muted/40 cursor-pointer outline-none transition-colors hover:bg-muted hover:border-muted-foreground/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 block`}
+              className={`${cellSize} border border-dashed border-muted-foreground bg-muted cursor-pointer outline-none transition-colors duration-ui ease-out hover:bg-accent hover:border-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 block`}
               aria-label={`${dayStr}: no log — click to copy command`}
               title={`${dayStr} — no log (click to copy)`}
             />
@@ -620,7 +620,7 @@ function ActivityHeatmap({
             <p className="text-xs text-muted-foreground mb-3">
               No log for this day. Run in your repo:
             </p>
-            <code className="block text-xs bg-muted rounded px-2 py-1.5 mb-3 break-all font-mono">
+            <code className="block text-xs bg-muted px-2 py-1.5 mb-3 break-all font-mono">
               {cmd}
             </code>
             <Button
@@ -648,7 +648,7 @@ function ActivityHeatmap({
         <Tooltip key={dayStr} delayDuration={200}>
           <TooltipTrigger asChild>
             <div
-              className={`${cellSize} border border-transparent transition-colors cursor-default bg-amber-400/90`}
+              className={`${cellSize} border border-transparent transition-colors cursor-default bg-amber-400`}
               tabIndex={0}
               role="img"
               aria-label={`${dayStr}: 0 commits`}
@@ -667,7 +667,7 @@ function ActivityHeatmap({
           <button
             type="button"
             onClick={() => handleDayClick(dayStr)}
-            className={`${cellSize} border border-transparent transition-colors cursor-pointer hover:ring-2 hover:ring-ring hover:ring-offset-1 focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1`}
+            className={`${cellSize} border border-transparent transition-colors duration-ui ease-out cursor-pointer hover:ring-2 hover:ring-ring hover:ring-offset-0 focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0`}
             style={{
               backgroundColor: activityColor(count),
             }}

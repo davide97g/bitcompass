@@ -225,7 +225,7 @@ export default function RuleDetailPage() {
         <CommandBlock commands={rule ? [getPullCommand(id!, rule.kind, false)] : []} className="max-w-2xl" />
         <p className="text-xs text-muted-foreground">
           To copy the file instead of a symlink, use:{' '}
-          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+          <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">
             {rule ? getPullCommand(id!, rule.kind, true) : ''}
           </code>
         </p>
@@ -273,7 +273,7 @@ export default function RuleDetailPage() {
               <div className="space-y-2">
                 <Label>Content</Label>
                 <textarea
-                  className="flex min-h-[200px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  className="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   value={editForm.body}
                   onChange={(e) => setEditForm((p) => ({ ...p, body: e.target.value }))}
                 />

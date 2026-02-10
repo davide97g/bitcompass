@@ -172,11 +172,11 @@ export default function ActivityLogDayDetailPage() {
                   {dayData.commits.map((commit, index) => (
                     <li
                       key={`${commit.logId}-${commit.hash}-${index}`}
-                      className="flex flex-col gap-1.5 rounded-lg border bg-card p-3"
+                      className="flex flex-col gap-1.5 rounded-lg border border-border bg-card p-3"
                     >
                       <div className="flex flex-wrap items-center gap-2 text-sm">
                         {commit.hash && (
-                          <code className="text-xs bg-muted rounded px-1.5 py-0.5 font-mono text-muted-foreground">
+                          <code className="text-xs bg-muted px-1.5 py-0.5 font-mono text-muted-foreground">
                             {commit.hash}
                           </code>
                         )}
@@ -194,7 +194,7 @@ export default function ActivityLogDayDetailPage() {
                       )}
                       <Link
                         to={`/logs/${commit.logId}`}
-                        className="text-xs text-primary hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring rounded"
+                        className="text-xs text-primary hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         View log: {commit.logPeriod}
                       </Link>

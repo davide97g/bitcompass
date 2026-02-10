@@ -96,6 +96,10 @@ export default {
         'lg': 'var(--shadow-lg)',
         'card-hover': 'var(--shadow-card-hover)',
       },
+      transitionDuration: {
+        'ui': '250ms',
+        'fluid': '300ms',
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

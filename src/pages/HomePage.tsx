@@ -7,7 +7,7 @@ export default function HomePage() {
         style={{ position: "absolute", inset: 0 }}
         pixelDensity={1}
         fov={45}
-        className="rounded-xl"
+        className="size-full rounded-xl"
       >
         <ShaderGradient
           animate="on"

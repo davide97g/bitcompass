@@ -43,7 +43,7 @@ export function CodeBlockWithCopy({ code, className, ariaLabel = 'Copy to clipbo
 
   return (
     <div
-      className={cn('relative rounded-lg border bg-muted/50 overflow-hidden', className)}
+      className={cn('relative rounded-lg border border-border bg-muted/50 overflow-hidden', className)}
     >
       <pre className="p-4 text-sm font-mono overflow-x-auto whitespace-pre">
         {code}

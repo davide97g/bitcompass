@@ -245,9 +245,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary - Vibrant blue for actions */
+    /* Primary - Vibrant blue for actions (flat, opaque; no gradients) */
     --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
+    --primary-hover: 221 83% 45%;
 
     /* Secondary - Soft neutral */
     --secondary: 220 14% 96%;
@@ -270,7 +271,9 @@
     --input: 220 13% 91%;
     --ring: 221 83% 53%;
 
-    --radius: 0.625rem;
+    /* Ambient organic: soft radius, fluid motion */
+    --radius: 0.5rem;
+    --duration-ui: 250ms;
 
     /* Sidebar - Slightly darker */
     --sidebar-background: 220 14% 96%;
@@ -309,13 +312,13 @@
     --status-solved: 142 71% 45%;
     --status-in-progress: 221 83% 53%;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(220 13% 11% / 0.03);
-    --shadow-md: 0 4px 6px -1px hsl(220 13% 11% / 0.05), 0 2px 4px -2px hsl(220 13% 11% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(220 13% 11% / 0.08), 0 4px 6px -4px hsl(220 13% 11% / 0.05);
-    --shadow-card-hover: 0 8px 25px -5px hsl(220 13% 11% / 0.1), 0 8px 10px -6px hsl(220 13% 11% / 0.05);
+    /* Shadows: soft, ambient (organic 3D gradient style) */
+    --shadow-sm: 0 1px 3px 0 hsl(220 13% 11% / 0.06), 0 1px 2px -1px hsl(220 13% 11% / 0.04);
+    --shadow-md: 0 4px 6px -1px hsl(220 13% 11% / 0.06), 0 2px 4px -2px hsl(220 13% 11% / 0.04);
+    --shadow-lg: 0 10px 15px -3px hsl(220 13% 11% / 0.08), 0 4px 6px -4px hsl(220 13% 11% / 0.04);
+    --shadow-card-hover: 0 8px 25px -5px hsl(220 13% 11% / 0.08), 0 8px 10px -6px hsl(220 13% 11% / 0.04);
 
-    /* Gradients */
+    /* Gradients: mood / hero / ambient (organic layer + optional UI accent) */
     --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(243 75% 59%) 100%);
     --gradient-hero: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(199 89% 48%) 100%);
     --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 98%) 100%);
@@ -333,6 +336,7 @@
 
     --primary: 217 91% 60%;
     --primary-foreground: 222 47% 6%;
+    --primary-hover: 217 91% 50%;
 
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
@@ -396,20 +400,22 @@
 }
 
 @layer components {
-  /* Card hover effect */
+  /* Card hover: fluid, ambient (organic style) */
   .card-interactive {
-    @apply transition-all duration-200 ease-out;
+    transition: box-shadow var(--duration-ui) ease-out, transform var(--duration-ui) ease-out;
     box-shadow: var(--shadow-sm);
   }
 
   .card-interactive:hover {
     box-shadow: var(--shadow-card-hover);
-    @apply -translate-y-0.5;
+    transform: translateY(-2px);
   }
 
   /* Tag variants */
   .tag {
     @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md transition-colors;
+    transition-duration: 250ms;
+    transition-timing-function: ease-out;
   }
 
   .tag-blue {
@@ -499,15 +505,17 @@
     background-clip: text;
   }
 
-  /* Glass effect */
+  /* Ambient overlay (soft, blends with organic background) */
   .glass {
     @apply bg-background/80 backdrop-blur-sm;
   }
 
-  /* Sidebar item */
+  /* Sidebar item: fluid, soft (organic style) */
   .sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-150;
+    @apply flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all;
     @apply text-muted-foreground hover:text-foreground hover:bg-accent;
+    transition-duration: 250ms;
+    transition-timing-function: ease-out;
   }
 
   .sidebar-item-active {

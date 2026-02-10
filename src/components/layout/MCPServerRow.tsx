@@ -60,21 +60,21 @@ export function MCPServerRow({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-lg border bg-card px-4 py-3 text-card-foreground',
+        'flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-card-foreground',
         className
       )}
       role="listitem"
       aria-label={`MCP server: ${name}, ${isError ? 'error' : 'ready'}`}
     >
       <div className="relative shrink-0">
-        <Avatar className="h-10 w-10 rounded-full bg-muted">
+        <Avatar className="h-10 w-10 bg-muted">
           <AvatarFallback className="text-sm font-medium text-muted-foreground">
             {getInitial(name)}
           </AvatarFallback>
         </Avatar>
         {isError && (
           <span
-            className="absolute -bottom-0.5 -left-0.5 h-3 w-3 rounded-full border-2 border-card bg-destructive"
+            className="absolute -bottom-0.5 -left-0.5 h-3 w-3 border-2 border-card bg-destructive"
             aria-hidden
           />
         )}
@@ -88,8 +88,8 @@ export function MCPServerRow({
             onClick={onShowOutput}
             onKeyDown={handleShowOutputKeyDown}
             className={cn(
-              'text-sm truncate text-left transition-colors hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded',
-              isError ? 'text-destructive hover:text-destructive/90' : 'text-muted-foreground hover:text-foreground'
+              'text-sm truncate text-left transition-colors duration-ui ease-out hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0',
+              isError ? 'text-destructive hover:text-destructive' : 'text-muted-foreground hover:text-foreground'
             )}
             tabIndex={0}
             aria-label={`${subtext}, show output`}

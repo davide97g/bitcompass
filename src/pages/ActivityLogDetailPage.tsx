@@ -69,7 +69,7 @@ export default function ActivityLogDetailPage() {
       <Collapsible open={repoOpen} onOpenChange={setRepoOpen}>
         <Card>
           <CollapsibleTrigger asChild>
-            <CardHeader className="flex flex-row items-center justify-between cursor-pointer hover:bg-muted/50 rounded-t-lg">
+            <CardHeader className="flex flex-row items-center justify-between cursor-pointer transition-colors duration-ui ease-out hover:bg-muted">
               <CardTitle className="text-base flex items-center gap-2">
                 <GitBranch className="h-4 w-4" aria-hidden />
                 Repository summary
@@ -106,7 +106,7 @@ export default function ActivityLogDetailPage() {
       <Collapsible open={gitOpen} onOpenChange={setGitOpen}>
         <Card>
           <CollapsibleTrigger asChild>
-            <CardHeader className="flex flex-row items-center justify-between cursor-pointer hover:bg-muted/50 rounded-t-lg">
+            <CardHeader className="flex flex-row items-center justify-between cursor-pointer transition-colors duration-ui ease-out hover:bg-muted">
               <CardTitle className="text-base flex items-center gap-2">
                 <GitCommit className="h-4 w-4" aria-hidden />
                 Git analysis

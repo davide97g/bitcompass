@@ -51,7 +51,7 @@ const highlightText = (text: string, query: string): React.ReactNode => {
     }
     // Add highlighted match
     parts.push(
-      <mark key={index} className="bg-primary/20 text-foreground rounded px-0.5 font-medium">
+      <mark key={index} className="bg-primary text-primary-foreground px-0.5 font-medium">
         {text.slice(index, index + q.length)}
       </mark>
     );
@@ -269,7 +269,7 @@ export default function RulesPage() {
               <div className="space-y-2">
                 <Label>Kind</Label>
                 <select
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                   value={newRule.kind}
                   onChange={(e) => setNewRule((p) => ({ ...p, kind: e.target.value as RuleKind }))}
                 >
@@ -319,7 +319,7 @@ export default function RulesPage() {
               <div className="space-y-2">
                 <Label>Content</Label>
                 <textarea
-                  className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   value={newRule.body}
                   onChange={(e) => setNewRule((p) => ({ ...p, body: e.target.value }))}
                   placeholder="Content"

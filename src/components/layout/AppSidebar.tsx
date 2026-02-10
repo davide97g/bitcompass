@@ -15,14 +15,14 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   return (
     <aside 
       className={cn(
-        "flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-300 ease-out",
+        "flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-ui ease-out",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg  text-black-foreground dark:text-white-foreground">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg text-sidebar-foreground">
             <Sparkles className="w-5 h-5" />
           </div>
           {!collapsed && (

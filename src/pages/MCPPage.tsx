@@ -79,7 +79,7 @@ export default function MCPPage() {
             onKeyDown={handleAddToCursorKeyDown}
             aria-label="Add BitCompass MCP to Cursor (opens Cursor)"
             tabIndex={0}
-            className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background shadow-sm transition-colors hover:bg-foreground/90 focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background shadow-sm transition-all duration-ui ease-out hover:bg-foreground/90 hover:shadow-md focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <Plus className="w-4 h-4 shrink-0" />
             Add to Cursor
@@ -90,10 +90,8 @@ export default function MCPPage() {
             onKeyDown={handleAddToAntigrativityKeyDown}
             aria-label="Add BitCompass MCP to Antigrativity"
             tabIndex={0}
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:shadow-md focus-visible:outline focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
-            style={{
-              background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #6D28D9 100%)',
-            }}
+            className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white bg-[#7C3AED] shadow-sm transition-all duration-ui ease-out hover:opacity-90 hover:shadow-md focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #6D28D9 100%)' }}
           >
             <Plus className="w-4 h-4 shrink-0" />
             Add to Antigrativity
@@ -109,7 +107,7 @@ export default function MCPPage() {
               Model Context Protocol (MCP) allows AI editors like Cursor to interact with external tools and services. BitCompass provides an MCP server that gives your AI assistant access to rules, solutions, and activity logs.
             </p>
             <p className="text-sm text-muted-foreground">
-              The MCP server reads the same project config as the CLI (<code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">.bitcompass/config.json</code>). If the project is not initialized, a one-line warning is shown and defaults are used (Cursor / <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">.cursor/rules</code>).
+              The MCP server reads the same project config as the CLI (<code className="bg-muted px-1.5 py-0.5 font-mono text-xs">.bitcompass/config.json</code>). If the project is not initialized, a one-line warning is shown and defaults are used (Cursor / <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">.cursor/rules</code>).
             </p>
           </CardContent>
         </Card>
@@ -124,7 +122,7 @@ export default function MCPPage() {
               Add to Your Editor
             </CardTitle>
             <p className="text-sm text-muted-foreground font-normal">
-              Paste this configuration into your editor's MCP settings. For Cursor: Settings → Features → MCP → Edit config (or <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.cursor/mcp.json</code>). For Antigrativity: Settings → MCP → Add Server. Run <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">bitcompass login</code> first, then restart the MCP server if you added it before logging in.
+              Paste this configuration into your editor's MCP settings. For Cursor: Settings → Features → MCP → Edit config (or <code className="bg-muted px-1 py-0.5 font-mono text-xs">~/.cursor/mcp.json</code>). For Antigrativity: Settings → MCP → Add Server. Run <code className="bg-muted px-1 py-0.5 font-mono text-xs">bitcompass login</code> first, then restart the MCP server if you added it before logging in.
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Button
@@ -142,10 +140,8 @@ export default function MCPPage() {
                 onKeyDown={handleAddToAntigrativityKeyDown}
                 aria-label="Add BitCompass MCP to Antigrativity"
                 tabIndex={0}
-                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow-md focus-visible:outline focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
-                style={{
-                  background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #6D28D9 100%)',
-                }}
+                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-ui ease-out hover:opacity-90 hover:shadow-md focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #6D28D9 100%)' }}
               >
                 <Plus className="w-4 h-4 shrink-0" />
                 Add to Antigrativity
@@ -176,35 +172,35 @@ export default function MCPPage() {
                 <strong className="text-foreground text-sm font-semibold">Rules & Solutions:</strong>
                 <ul className="ml-4 mt-2 space-y-2 text-sm text-muted-foreground">
                   <li>
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">search-rules</code>
+                    <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">search-rules</code>
                     <span className="ml-2">Search rules by query</span>
                   </li>
                   <li>
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">search-solutions</code>
+                    <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">search-solutions</code>
                     <span className="ml-2">Search solutions by query</span>
                   </li>
                   <li>
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">get-rule</code>
+                    <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">get-rule</code>
                     <span className="ml-2">Get full rule/solution by ID</span>
                   </li>
                   <li>
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">list-rules</code>
+                    <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">list-rules</code>
                     <span className="ml-2">List all rules/solutions</span>
                   </li>
                   <li>
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">post-rules</code>
+                    <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">post-rules</code>
                     <span className="ml-2">Create/publish rule or solution</span>
                   </li>
                   <li>
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">update-rule</code>
+                    <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">update-rule</code>
                     <span className="ml-2">Update existing rule/solution</span>
                   </li>
                   <li>
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">delete-rule</code>
+                    <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">delete-rule</code>
                     <span className="ml-2">Delete rule/solution by ID</span>
                   </li>
                   <li>
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">pull-rule</code>
+                    <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">pull-rule</code>
                     <span className="ml-2">Pull rule/solution to file</span>
                   </li>
                 </ul>
@@ -213,15 +209,15 @@ export default function MCPPage() {
                 <strong className="text-foreground text-sm font-semibold">Activity Logs:</strong>
                 <ul className="ml-4 mt-2 space-y-2 text-sm text-muted-foreground">
                   <li>
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">create-activity-log</code>
+                    <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">create-activity-log</code>
                     <span className="ml-2">Create from git repo</span>
                   </li>
                   <li>
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">list-activity-logs</code>
+                    <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">list-activity-logs</code>
                     <span className="ml-2">List user's activity logs</span>
                   </li>
                   <li>
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">get-activity-log</code>
+                    <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">get-activity-log</code>
                     <span className="ml-2">Get activity log by ID</span>
                   </li>
                 </ul>
@@ -236,10 +232,10 @@ export default function MCPPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-3">
-              Most MCP tools require authentication (except <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">search-rules</code> and <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">search-solutions</code>).
+              Most MCP tools require authentication (except <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">search-rules</code> and <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">search-solutions</code>).
             </p>
             <p className="text-sm text-muted-foreground">
-              If you get an authentication error, run <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">bitcompass login</code> in your terminal and restart the MCP server in Cursor.
+              If you get an authentication error, run <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">bitcompass login</code> in your terminal and restart the MCP server in Cursor.
             </p>
           </CardContent>
         </Card>
@@ -254,16 +250,16 @@ export default function MCPPage() {
             </p>
             <ul className="space-y-2 text-sm font-mono text-muted-foreground">
               <li>
-                <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass mcp start</code>
+                <code className="bg-muted px-1.5 py-0.5 text-foreground">bitcompass mcp start</code>
                 <span className="ml-2 text-sm font-normal">Start MCP server (stdio mode for AI editors)</span>
               </li>
               <li>
-                <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">bitcompass mcp status</code>
+                <code className="bg-muted px-1.5 py-0.5 text-foreground">bitcompass mcp status</code>
                 <span className="ml-2 text-sm font-normal">Show MCP server status</span>
               </li>
             </ul>
             <p className="text-sm text-muted-foreground mt-3">
-              Usually configured automatically by the AI editor. Use <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">status</code> to verify MCP is working.
+              Usually configured automatically by the AI editor. Use <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">status</code> to verify MCP is working.
             </p>
           </CardContent>
         </Card>

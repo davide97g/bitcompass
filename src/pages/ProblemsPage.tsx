@@ -45,7 +45,7 @@ export default function ProblemsPage() {
           >
             {status === 'all' ? 'All' : status.replace('-', ' ')}
             <span className={cn(
-              'ml-2 text-xs px-1.5 py-0.5 rounded-full',
+              'ml-2 text-xs px-1.5 py-0.5',
               filter === status ? 'bg-primary-foreground/20' : 'bg-muted'
             )}>
               {counts[status]}

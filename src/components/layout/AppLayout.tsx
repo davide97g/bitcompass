@@ -36,7 +36,7 @@ export function AppLayout() {
       />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar onMenuToggle={handleToggleSidebar} />
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-6 border-l border-border">
           <Suspense
             fallback={
               <div className="flex items-center justify-center min-h-[12rem] text-muted-foreground">

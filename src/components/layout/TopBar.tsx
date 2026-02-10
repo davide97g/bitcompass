@@ -73,7 +73,7 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
   };
 
   return (
-    <header className="relative z-[30] flex items-center h-16 px-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="relative z-[30] flex items-center h-16 px-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       {/* Mobile menu toggle */}
       <Button 
         variant="ghost" 
@@ -90,7 +90,7 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
         <Input
           type="search"
           placeholder="Search people, projects, problems, skills..."
-          className="pl-10 bg-muted/50 border-0 focus-visible:bg-background focus-visible:ring-1"
+          className="pl-10 bg-muted/50 border-0 focus-visible:bg-background focus-visible:ring-1 rounded-lg"
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -119,7 +119,7 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
               className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label="Open user menu"
             >
-              <Avatar className="w-9 h-9 cursor-pointer ring-2 ring-transparent hover:ring-primary/20 transition-all">
+              <Avatar className="w-9 h-9 cursor-pointer ring-2 ring-transparent hover:ring-primary/20 transition-all duration-ui ease-out">
                 <AvatarImage src={avatarUrl} alt={user?.user_metadata?.full_name as string ?? 'User'} />
                 <AvatarFallback className="text-sm font-medium">{initials}</AvatarFallback>
               </Avatar>

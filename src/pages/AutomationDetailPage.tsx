@@ -106,7 +106,7 @@ export default function AutomationDetailPage() {
                 key={person.id}
                 type="button"
                 onClick={() => navigate(`/people/${person.id}`)}
-                className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-muted transition-colors text-left"
+                className="flex items-center gap-2 px-2 py-1 hover:bg-muted transition-colors duration-ui ease-out text-left"
                 aria-label={`View ${person.name}`}
               >
                 <Avatar className="w-6 h-6">
@@ -154,9 +154,9 @@ export default function AutomationDetailPage() {
               alt=""
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer transition-opacity hover:bg-black/60">
+            <div className="absolute inset-0 bg-foreground flex items-center justify-center cursor-pointer transition-opacity duration-ui ease-out hover:opacity-90">
               <div
-                className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center"
+                className="w-16 h-16 bg-primary flex items-center justify-center text-primary-foreground"
                 role="button"
                 tabIndex={0}
                 aria-label="Play automation demo"
@@ -169,7 +169,7 @@ export default function AutomationDetailPage() {
             </div>
           </div>
         </AspectRatio>
-        <CardContent className="py-2 px-4 bg-muted/30">
+        <CardContent className="py-2 px-4 bg-muted">
           <p className="text-xs text-muted-foreground">Demo video (mock)</p>
         </CardContent>
       </Card>
@@ -196,7 +196,7 @@ export default function AutomationDetailPage() {
                   )}
                 >
                   <div
-                    className="shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center"
+                    className="shrink-0 w-8 h-8 bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center"
                     aria-hidden
                   >
                     {step.order}

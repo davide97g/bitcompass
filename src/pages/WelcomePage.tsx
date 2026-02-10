@@ -60,7 +60,7 @@ export default function WelcomePage() {
         >
           <Button
             size="lg"
-            className="min-w-[180px] bg-white/95 px-8 py-6 text-base font-semibold text-foreground shadow-xl transition hover:bg-white"
+            className="min-w-[180px] bg-white/95 px-8 py-6 text-base font-semibold text-foreground shadow-xl transition-all duration-ui ease-out hover:bg-white hover:shadow-2xl hover:-translate-y-0.5"
             aria-label="Get started"
           >
             Get started

@@ -99,9 +99,7 @@ const animateAuthorLine = async () => {
   process.stdout.write("\r\x1b[K" + finalLine + "\n");
 };
 
-(async () => {
-  console.log("");
-  console.log(gradient(`version ${version}`, cyan, magenta));
-  await animateAuthorLine();
-  console.log("");
-})();
+console.log("");
+console.log(gradient(`version ${version}`, cyan, magenta));
+await animateAuthorLine();
+console.log("");

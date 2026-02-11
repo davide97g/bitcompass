@@ -1,20 +1,44 @@
+import chalk from 'chalk';
 import inquirer from 'inquirer';
 import ora from 'ora';
-import chalk from 'chalk';
 import { insertActivityLog } from '../api/client.js';
 import { loadCredentials } from '../auth/config.js';
-import type { ActivityLogInsert } from '../types.js';
 import type { TimeFrame } from '../lib/git-analysis.js';
 import {
-  getRepoRoot,
-  getRepoSummary,
-  getGitAnalysis,
-  getPeriodForTimeFrame,
-  getPeriodForCustomDates,
-  parseDate,
+    getGitAnalysis,
+    getPeriodForCustomDates,
+    getPeriodForTimeFrame,
+    getRepoRoot,
+    getRepoSummary,
+    parseDate,
 } from '../lib/git-analysis.js';
+import type { ActivityLogInsert } from '../types.js';
 
 export type LogProgressStep = 'analyzing' | 'pushing';
+
+type PeriodBounds = { period_start: string; period_end: string; since: string };
+
+/** Core logic: gather summary + git analysis, insert log. Shared by both build functions. */
+const buildAndPushCore = async (
+  repoRoot: string,
+  period: PeriodBounds,
+  timeFrame: TimeFrame,
+  onProgress?: (step: LogProgressStep) => void
+): Promise<{ id: string }> => {
+  onProgress?.('analyzing');
+  const repo_summary = getRepoSummary(repoRoot);
+  const git_analysis = getGitAnalysis(repoRoot, period.since, period.period_end);
+  const payload: ActivityLogInsert = {
+    time_frame: timeFrame,
+    period_start: period.period_start,
+    period_end: period.period_end,
+    repo_summary: repo_summary as unknown as Record<string, unknown>,
+    git_analysis: git_analysis as unknown as Record<string, unknown>,
+  };
+  onProgress?.('pushing');
+  const created = await insertActivityLog(payload);
+  return { id: created.id };
+};
 
 /**
  * Shared logic: resolve repo, compute period, gather summary + git analysis, insert log.
@@ -31,26 +55,14 @@ export const buildAndPushActivityLog = async (
     throw new Error('Not a git repository. Run from a project with git or pass a valid repo path.');
   }
   const period = getPeriodForTimeFrame(timeFrame);
-  onProgress?.('analyzing');
-  const repo_summary = getRepoSummary(repoRoot);
-  const git_analysis = getGitAnalysis(repoRoot, period.since);
-  const payload: ActivityLogInsert = {
-    time_frame: timeFrame,
-    period_start: period.period_start,
-    period_end: period.period_end,
-    repo_summary: repo_summary as unknown as Record<string, unknown>,
-    git_analysis: git_analysis as unknown as Record<string, unknown>,
-  };
-  onProgress?.('pushing');
-  const created = await insertActivityLog(payload);
-  return { id: created.id };
+  return buildAndPushCore(repoRoot, period, timeFrame, onProgress);
 };
 
 /**
  * Push an activity log for a custom date or date range. timeFrame is used for display (day/week/month).
  */
 export const buildAndPushActivityLogWithPeriod = async (
-  period: { period_start: string; period_end: string; since: string },
+  period: PeriodBounds,
   timeFrame: TimeFrame,
   cwd: string,
   onProgress?: (step: LogProgressStep) => void
@@ -59,19 +71,7 @@ export const buildAndPushActivityLogWithPeriod = async (
   if (!repoRoot) {
     throw new Error('Not a git repository. Run from a project with git or pass a valid repo path.');
   }
-  onProgress?.('analyzing');
-  const repo_summary = getRepoSummary(repoRoot);
-  const git_analysis = getGitAnalysis(repoRoot, period.since, period.period_end);
-  const payload: ActivityLogInsert = {
-    time_frame: timeFrame,
-    period_start: period.period_start,
-    period_end: period.period_end,
-    repo_summary: repo_summary as unknown as Record<string, unknown>,
-    git_analysis: git_analysis as unknown as Record<string, unknown>,
-  };
-  onProgress?.('pushing');
-  const created = await insertActivityLog(payload);
-  return { id: created.id };
+  return buildAndPushCore(repoRoot, period, timeFrame, onProgress);
 };
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -111,6 +111,59 @@ const timeFrameForRange = (start: string, end: string): TimeFrame => {
   return 'month';
 };
 
+const runLogWithParsedDates = async (
+  parsed: { start: string; end?: string },
+  cwd: string,
+  spinner: ReturnType<typeof ora>,
+  onProgress: (step: LogProgressStep) => void
+): Promise<void> => {
+  if (!parseDate(parsed.start)) {
+    spinner.stop();
+    throw new ValidationError(`Invalid date "${parsed.start}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
+  }
+  if (parsed.end !== undefined && !parseDate(parsed.end)) {
+    spinner.stop();
+    throw new ValidationError(`Invalid date "${parsed.end}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
+  }
+  const period = getPeriodForCustomDates(parsed.start, parsed.end);
+  const timeFrame = parsed.end ? timeFrameForRange(parsed.start, parsed.end) : 'day';
+  try {
+    const result = await buildAndPushActivityLogWithPeriod(period, timeFrame, cwd, onProgress);
+    spinner.succeed(chalk.green('Log saved.'));
+    console.log(chalk.dim(result.id));
+  } catch (err) {
+    spinner.fail(chalk.red(err instanceof Error ? err.message : 'Failed'));
+    throw err;
+  }
+};
+
+const runLogInteractive = async (
+  cwd: string,
+  onProgress: (step: LogProgressStep) => void
+): Promise<void> => {
+  const choice = await inquirer.prompt<{ time_frame: TimeFrame }>([
+    {
+      name: 'time_frame',
+      message: 'Time frame',
+      type: 'list',
+      choices: [
+        { name: 'Day', value: 'day' },
+        { name: 'Week', value: 'week' },
+        { name: 'Month', value: 'month' },
+      ],
+    },
+  ]);
+  const spinner = ora('Analyzing repository…').start();
+  try {
+    const result = await buildAndPushActivityLog(choice.time_frame, cwd, onProgress);
+    spinner.succeed(chalk.green('Log saved.'));
+    console.log(chalk.dim(result.id));
+  } catch (err) {
+    spinner.fail(chalk.red(err instanceof Error ? err.message : 'Failed'));
+    throw err;
+  }
+};
+
 export const runLog = async (args: string[] = []): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
@@ -130,48 +183,10 @@ export const runLog = async (args: string[] = []): Promise<void> => {
   };
 
   if (parsed) {
-    if (!parseDate(parsed.start)) {
-      spinner.stop();
-      throw new ValidationError(`Invalid date "${parsed.start}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
-    }
-    if (parsed.end !== undefined && !parseDate(parsed.end)) {
-      spinner.stop();
-      throw new ValidationError(`Invalid date "${parsed.end}". Use YYYY-MM-DD (e.g. 2025-02-06).`);
-    }
-    const period = getPeriodForCustomDates(parsed.start, parsed.end);
-    const timeFrame = parsed.end ? timeFrameForRange(parsed.start, parsed.end) : 'day';
-    try {
-      const result = await buildAndPushActivityLogWithPeriod(period, timeFrame, cwd, onProgress);
-      spinner.succeed(chalk.green('Log saved.'));
-      console.log(chalk.dim(result.id));
-    } catch (err) {
-      spinner.fail(chalk.red(err instanceof Error ? err.message : 'Failed'));
-      throw err;
-    }
+    await runLogWithParsedDates(parsed, cwd, spinner, onProgress);
     return;
   }
 
   spinner.stop();
-  const choice = await inquirer.prompt<{ time_frame: TimeFrame }>([
-    {
-      name: 'time_frame',
-      message: 'Time frame',
-      type: 'list',
-      choices: [
-        { name: 'Day', value: 'day' },
-        { name: 'Week', value: 'week' },
-        { name: 'Month', value: 'month' },
-      ],
-    },
-  ]);
-  const timeFrame = choice.time_frame;
-  spinner.start('Analyzing repository…');
-  try {
-    const result = await buildAndPushActivityLog(timeFrame, cwd, onProgress);
-    spinner.succeed(chalk.green('Log saved.'));
-    console.log(chalk.dim(result.id));
-  } catch (err) {
-    spinner.fail(chalk.red(err instanceof Error ? err.message : 'Failed'));
-    throw err;
-  }
+  await runLogInteractive(cwd, onProgress);
 };

@@ -52,17 +52,7 @@ export const getSupabaseClient = (): SupabaseClient | null => {
 };
 
 /** Client for public read-only (rules/solutions). Works without login when RLS allows public select. */
-export const getSupabaseClientForRead = (): SupabaseClient | null => {
-  const pair = getSupabaseUrlAndKey();
-  if (!pair) return null;
-  const creds = loadCredentials();
-  const accessToken = creds?.access_token;
-  return createClient(pair.url, pair.key, {
-    global: accessToken
-      ? { headers: { Authorization: `Bearer ${accessToken}` } }
-      : undefined,
-  });
-};
+export const getSupabaseClientForRead = getSupabaseClient;
 
 export const fetchRules = async (kind?: RuleKind): Promise<Rule[]> => {
   const client = getSupabaseClientForRead();

@@ -18,18 +18,23 @@ export interface FetchRulesPaginatedOptions {
   limit: number;
   offset: number;
   search?: string;
+  /** When set, only rules in this Compass project (or global if null). Omit for all visible rules. */
+  projectId?: string | null;
 }
 
 const fetchRulesPaginated = async (
   options: FetchRulesPaginatedOptions
 ): Promise<{ data: Rule[]; total: number }> => {
   if (!supabase) return { data: [], total: 0 };
-  const { kind, limit, offset, search } = options;
+  const { kind, limit, offset, search, projectId } = options;
   let query = supabase
     .from(TABLE)
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false });
   if (kind && kind !== 'all') query = query.eq('kind', kind);
+  if (projectId !== undefined && projectId !== null) {
+    query = query.eq('project_id', projectId);
+  }
   if (search?.trim()) {
     const q = search.trim();
     query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,body.ilike.%${q}%`);
@@ -64,6 +69,7 @@ export interface UseRulesPaginatedParams {
   page: number;
   search?: string;
   pageSize?: number;
+  projectId?: string | null;
 }
 
 export const useRulesPaginated = ({
@@ -71,16 +77,18 @@ export const useRulesPaginated = ({
   page,
   search = '',
   pageSize = RULES_PAGE_SIZE,
+  projectId,
 }: UseRulesPaginatedParams) => {
   const offset = (page - 1) * pageSize;
   return useQuery({
-    queryKey: ['rules-paginated', kind, page, search.trim(), pageSize],
+    queryKey: ['rules-paginated', kind, page, search.trim(), pageSize, projectId ?? 'all'],
     queryFn: () =>
       fetchRulesPaginated({
         kind,
         limit: pageSize,
         offset,
         search: search.trim() || undefined,
+        projectId,
       }),
     enabled: Boolean(supabase),
   });

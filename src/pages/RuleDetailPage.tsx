@@ -15,9 +15,16 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useRule, useUpdateRule, useDeleteRule } from '@/hooks/use-rules';
+import { useCompassProjects } from '@/hooks/use-compass-projects';
 import { useToast } from '@/hooks/use-toast';
 import type { Rule, RuleKind } from '@/types/bitcompass';
-import { ArrowLeft, FileDown, Pencil, Trash2, User, Link2 } from 'lucide-react';
+import { ArrowLeft, FileDown, Layers, Pencil, Trash2, User, Link2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { PageHeader } from '@/components/ui/page-header';
 import { MarkdownContent } from '@/components/ui/markdown-content';
@@ -76,24 +83,28 @@ export default function RuleDetailPage() {
   const updateRule = useUpdateRule();
   const deleteRule = useDeleteRule();
   const { toast } = useToast();
+  const { data: compassProjects = [] } = useCompassProjects();
+  const projectIdToTitle = Object.fromEntries(compassProjects.map((p) => [p.id, p.title]));
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ 
-    title: '', 
-    description: '', 
-    body: '', 
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    body: '',
     version: '1.0.0',
     technologies: [] as string[],
+    project_id: undefined as string | null | undefined,
   });
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const handleStartEdit = () => {
     if (rule) {
-      setEditForm({ 
-        title: rule.title, 
-        description: rule.description, 
+      setEditForm({
+        title: rule.title,
+        description: rule.description,
         body: rule.body,
         version: rule.version || '1.0.0',
         technologies: rule.technologies || [],
+        project_id: rule.project_id ?? undefined,
       });
       setEditing(true);
     }
@@ -102,9 +113,34 @@ export default function RuleDetailPage() {
   const handleSaveEdit = async () => {
     if (!id) return;
     try {
-      await updateRule.mutateAsync({ id, updates: editForm });
+      await updateRule.mutateAsync({
+        id,
+        updates: {
+          title: editForm.title,
+          description: editForm.description,
+          body: editForm.body,
+          version: editForm.version,
+          technologies: editForm.technologies,
+          project_id: editForm.project_id ?? undefined,
+        },
+      });
       toast({ title: 'Updated' });
       setEditing(false);
+    } catch (e) {
+      toast({ title: e instanceof Error ? e.message : 'Failed', variant: 'destructive' });
+    }
+  };
+
+  const handleProjectChange = async (projectId: string | null) => {
+    if (!id) return;
+    try {
+      await updateRule.mutateAsync({
+        id,
+        updates: { project_id: projectId },
+      });
+      toast({
+        title: projectId ? 'Linked to project' : 'Unlinked (global)',
+      });
     } catch (e) {
       toast({ title: e instanceof Error ? e.message : 'Failed', variant: 'destructive' });
     }
@@ -155,6 +191,44 @@ export default function RuleDetailPage() {
         title={editing ? `Edit ${rule.kind}` : rule.title}
         description={getKindDescription(rule.kind)}
       />
+      {/* Project chip and link/unlink at top */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+          <Layers className="h-4 w-4 shrink-0" aria-hidden />
+          Project:
+        </span>
+        <Badge variant="outline" className="text-xs font-normal">
+          {rule.project_id ? (
+            <Link to={`/compass-projects/${rule.project_id}`} className="hover:underline">
+              {projectIdToTitle[rule.project_id] ?? 'Project'}
+            </Link>
+          ) : (
+            <span>Global (open to everyone)</span>
+          )}
+        </Badge>
+        {!editing && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" aria-label="Change project">
+                Change project
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => handleProjectChange(null)}>
+                Global (default – open to everyone)
+              </DropdownMenuItem>
+              {compassProjects.map((p) => (
+                <DropdownMenuItem
+                  key={p.id}
+                  onClick={() => handleProjectChange(p.id)}
+                >
+                  {p.title}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
         {(rule.author_display_name ?? rule.user_id) && (
           <div className="flex items-center gap-2" aria-label="Author">
@@ -256,6 +330,24 @@ export default function RuleDetailPage() {
                   onChange={(e) => setEditForm((p) => ({ ...p, version: e.target.value }))}
                   placeholder="1.0.0"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Compass project (optional)</Label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                  value={editForm.project_id ?? ''}
+                  onChange={(e) =>
+                    setEditForm((p) => ({ ...p, project_id: e.target.value || undefined }))
+                  }
+                  aria-label="Scope to Compass project"
+                >
+                  <option value="">Global (default – open to everyone)</option>
+                  {compassProjects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.title}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
                 <Label>Technologies (comma-separated)</Label>

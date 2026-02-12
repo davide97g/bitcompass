@@ -121,6 +121,7 @@ function createStdioServer(): {
                     context: { type: 'string' },
                     examples: { type: 'array', items: { type: 'string' } },
                     technologies: { type: 'array', items: { type: 'string' } },
+                    project_id: { type: 'string', description: 'Optional: Compass project UUID to scope this rule to' },
                   },
                   required: ['kind', 'title', 'body'],
                 },
@@ -381,6 +382,7 @@ function createStdioServer(): {
       context: (args.context as string) || undefined,
       examples: Array.isArray(args.examples) ? (args.examples as string[]) : undefined,
       technologies: Array.isArray(args.technologies) ? (args.technologies as string[]) : undefined,
+      project_id: typeof args.project_id === 'string' ? args.project_id : undefined,
     };
     try {
       const created = await insertRule(payload);

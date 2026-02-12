@@ -119,7 +119,13 @@ rules
     '\nExamples:\n  bitcompass rules pull <id>\n  bitcompass rules pull <id> --global\n  bitcompass rules pull <id> --copy\n'
   )
   .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runRulesPull(id, options).catch(handleErr));
-rules.command('push [file]').description('Push a rule (file or interactive)').action((file?: string) => runRulesPush(file).catch(handleErr));
+rules
+  .command('push [file]')
+  .description('Push a rule (file or interactive)')
+  .option('--project-id <uuid>', 'Scope to Compass project (UUID)')
+  .action((file?: string, opts?: { projectId?: string }) =>
+    runRulesPush(file, { projectId: opts?.projectId }).catch(handleErr)
+  );
 
 // solutions
 const solutions = program.command('solutions').description('Manage solutions');
@@ -146,7 +152,13 @@ solutions
     '\nExamples:\n  bitcompass solutions pull <id>\n  bitcompass solutions pull <id> --global\n'
   )
   .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runSolutionsPull(id, options).catch(handleErr));
-solutions.command('push [file]').description('Push a solution (file or interactive)').action((file?: string) => runSolutionsPush(file).catch(handleErr));
+solutions
+  .command('push [file]')
+  .description('Push a solution (file or interactive)')
+  .option('--project-id <uuid>', 'Scope to Compass project (UUID)')
+  .action((file?: string, opts?: { projectId?: string }) =>
+    runSolutionsPush(file, { projectId: opts?.projectId }).catch(handleErr)
+  );
 
 // skills
 const skills = program.command('skills').description('Manage skills');
@@ -173,7 +185,13 @@ skills
     '\nExamples:\n  bitcompass skills pull <id>\n  bitcompass skills pull <id> --global\n'
   )
   .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runSkillsPull(id, options).catch(handleErr));
-skills.command('push [file]').description('Push a skill (file or interactive)').action((file?: string) => runSkillsPush(file).catch(handleErr));
+skills
+  .command('push [file]')
+  .description('Push a skill (file or interactive)')
+  .option('--project-id <uuid>', 'Scope to Compass project (UUID)')
+  .action((file?: string, opts?: { projectId?: string }) =>
+    runSkillsPush(file, { projectId: opts?.projectId }).catch(handleErr)
+  );
 
 // commands
 const commands = program.command('commands').description('Manage commands');
@@ -200,7 +218,13 @@ commands
     '\nExamples:\n  bitcompass commands pull <id>\n  bitcompass commands pull <id> --global\n'
   )
   .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runCommandsPull(id, options).catch(handleErr));
-commands.command('push [file]').description('Push a command (file or interactive)').action((file?: string) => runCommandsPush(file).catch(handleErr));
+commands
+  .command('push [file]')
+  .description('Push a command (file or interactive)')
+  .option('--project-id <uuid>', 'Scope to Compass project (UUID)')
+  .action((file?: string, opts?: { projectId?: string }) =>
+    runCommandsPush(file, { projectId: opts?.projectId }).catch(handleErr)
+  );
 
 // mcp
 const mcp = program.command('mcp').description('MCP server');

@@ -24,6 +24,7 @@ import {
   PaginationEllipsis,
 } from '@/components/ui/pagination';
 import { useRulesPaginated, useInsertRule } from '@/hooks/use-rules';
+import { useCompassProjects } from '@/hooks/use-compass-projects';
 import { useToast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Rule, RuleInsert, RuleKind } from '@/types/bitcompass';
@@ -113,6 +114,7 @@ const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
 const KIND_PARAM = 'kind';
 const Q_PARAM = 'q';
 const PAGE_PARAM = 'page';
+const PROJECT_PARAM = 'project';
 
 const VALID_KINDS: Array<RuleKind | 'all'> = ['all', 'rule', 'solution', 'skill', 'command'];
 const RULES_PAGE_SIZE = 20;
@@ -122,10 +124,12 @@ export default function RulesPage() {
   const kindFromUrl = searchParams.get(KIND_PARAM);
   const qFromUrl = searchParams.get(Q_PARAM) ?? '';
   const pageFromUrl = searchParams.get(PAGE_PARAM);
+  const projectFromUrl = searchParams.get(PROJECT_PARAM);
   const [kindFilter, setKindFilter] = useState<RuleKind | 'all'>(() =>
     kindFromUrl && VALID_KINDS.includes(kindFromUrl as RuleKind | 'all') ? (kindFromUrl as RuleKind | 'all') : 'all'
   );
   const [search, setSearch] = useState(() => qFromUrl);
+  const [projectFilter, setProjectFilter] = useState<string | null>(() => projectFromUrl || null);
   const page = Math.max(1, parseInt(pageFromUrl ?? '1', 10) || 1);
   const [createOpen, setCreateOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -138,11 +142,15 @@ export default function RulesPage() {
     technologies: [],
   });
 
+  const { data: compassProjects = [] } = useCompassProjects();
+  const projectIdToTitle = Object.fromEntries(compassProjects.map((p) => [p.id, p.title]));
+
   const { data: paginatedResult, isLoading: loadingPaginated } = useRulesPaginated({
     kind: kindFilter,
     page,
     search,
     pageSize: RULES_PAGE_SIZE,
+    projectId: projectFilter ?? undefined,
   });
   const rules = paginatedResult?.data ?? [];
   const total = paginatedResult?.total ?? 0;
@@ -155,11 +163,18 @@ export default function RulesPage() {
     const k = searchParams.get(KIND_PARAM);
     const q = searchParams.get(Q_PARAM) ?? '';
     const p = searchParams.get(PAGE_PARAM);
+    const proj = searchParams.get(PROJECT_PARAM);
     if (k && VALID_KINDS.includes(k as RuleKind | 'all')) setKindFilter(k as RuleKind | 'all');
     setSearch(q);
+    setProjectFilter(proj || null);
   }, [searchParams]);
 
-  const updateUrl = (kind: RuleKind | 'all', q: string, pageNum: number = 1) => {
+  const updateUrl = (
+    kind: RuleKind | 'all',
+    q: string,
+    pageNum: number = 1,
+    projectId: string | null = null
+  ) => {
     const next = new URLSearchParams(searchParams);
     if (kind === 'all') next.delete(KIND_PARAM);
     else next.set(KIND_PARAM, kind);
@@ -167,22 +182,29 @@ export default function RulesPage() {
     else next.set(Q_PARAM, q.trim());
     if (pageNum <= 1) next.delete(PAGE_PARAM);
     else next.set(PAGE_PARAM, String(pageNum));
+    if (!projectId) next.delete(PROJECT_PARAM);
+    else next.set(PROJECT_PARAM, projectId);
     setSearchParams(next, { replace: true });
   };
 
   const handleKindChange = (v: string) => {
     const value = v as RuleKind | 'all';
     setKindFilter(value);
-    updateUrl(value, search, 1);
+    updateUrl(value, search, 1, projectFilter);
   };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    updateUrl(kindFilter, value, 1);
+    updateUrl(kindFilter, value, 1, projectFilter);
+  };
+
+  const handleProjectFilterChange = (projectId: string | null) => {
+    setProjectFilter(projectId);
+    updateUrl(kindFilter, search, 1, projectId);
   };
 
   const handlePageChange = (pageNum: number) => {
-    updateUrl(kindFilter, search, pageNum);
+    updateUrl(kindFilter, search, pageNum, projectFilter);
   };
 
   const filtered = rules;
@@ -208,7 +230,15 @@ export default function RulesPage() {
       await insertRule.mutateAsync(newRule);
       toast({ title: 'Created' });
       setCreateOpen(false);
-      setNewRule({ kind: 'rule', title: '', description: '', body: '', version: '1.0.0', technologies: [] });
+      setNewRule({
+        kind: 'rule',
+        title: '',
+        description: '',
+        body: '',
+        version: '1.0.0',
+        technologies: [],
+        project_id: undefined,
+      });
     } catch (e) {
       toast({ title: e instanceof Error ? e.message : 'Failed', variant: 'destructive' });
     }
@@ -254,6 +284,25 @@ export default function RulesPage() {
             <TabsTrigger value="command">Commands</TabsTrigger>
           </TabsList>
         </Tabs>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="rules-project-filter" className="text-muted-foreground text-sm whitespace-nowrap">
+            Project
+          </Label>
+          <select
+            id="rules-project-filter"
+            className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm min-w-[140px]"
+            value={projectFilter ?? ''}
+            onChange={(e) => handleProjectFilterChange(e.target.value || null)}
+            aria-label="Filter by Compass project"
+          >
+            <option value="">All / Global (default)</option>
+            {compassProjects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.title}
+              </option>
+            ))}
+          </select>
+        </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -277,6 +326,24 @@ export default function RulesPage() {
                   <option value="solution">Solution</option>
                   <option value="skill">Skill</option>
                   <option value="command">Command</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Compass project (optional)</Label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                  value={newRule.project_id ?? ''}
+                  onChange={(e) =>
+                    setNewRule((p) => ({ ...p, project_id: e.target.value || undefined }))
+                  }
+                  aria-label="Scope to Compass project"
+                >
+                  <option value="">Global (default – open to everyone)</option>
+                  {compassProjects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.title}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="space-y-2">
@@ -383,7 +450,18 @@ export default function RulesPage() {
                     {search.trim() ? highlightText(rule.title, search) : rule.title}
                   </Link>
                 </CardTitle>
-                <span className="text-xs text-muted-foreground capitalize">{rule.kind}</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground capitalize">{rule.kind}</span>
+                  <Badge variant="outline" className="text-xs font-normal">
+                    {rule.project_id ? (
+                      <Link to={`/compass-projects/${rule.project_id}`} className="hover:underline">
+                        {projectIdToTitle[rule.project_id] ?? 'Project'}
+                      </Link>
+                    ) : (
+                      <span>Global</span>
+                    )}
+                  </Badge>
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground line-clamp-2">

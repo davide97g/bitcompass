@@ -109,7 +109,10 @@ export const runRulesPull = async (id?: string, options?: { global?: boolean; co
   }
 };
 
-export const runRulesPush = async (file?: string): Promise<void> => {
+export const runRulesPush = async (
+  file?: string,
+  options?: { projectId?: string }
+): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
     process.exit(1);
@@ -146,8 +149,11 @@ export const runRulesPush = async (file?: string): Promise<void> => {
     ]);
     payload = { kind: 'rule', title: answers.title, description: answers.description, body: answers.body };
   }
+  if (options?.projectId) {
+    payload = { ...payload, project_id: options.projectId };
+  }
   const spinner = ora('Publishing rule…').start();
   const created = await insertRule(payload);
   spinner.succeed(chalk.green('Published rule ') + created.id);
   console.log(chalk.dim(created.title));
-}
+};

@@ -1,4 +1,6 @@
-import { ShaderGradientCanvas, ShaderGradient } from "@shadergradient/react";
+import { Button } from "@/components/ui/button";
+import { ShaderGradient, ShaderGradientCanvas } from "@shadergradient/react";
+import { Link } from "react-router-dom";
 
 export default function HomePage() {
   return (
@@ -7,7 +9,7 @@ export default function HomePage() {
         style={{ position: "absolute", inset: 0 }}
         pixelDensity={1}
         fov={45}
-        className="size-full rounded-xl"
+        className="size-full rounded-xl pointer-events-none"
       >
         <ShaderGradient
           animate="on"
@@ -50,6 +52,10 @@ export default function HomePage() {
         <p className="max-w-md text-sm text-white/90 drop-shadow">
           Explore knowledge areas, problems, projects, and people.
         </p>
+
+        <Button asChild>
+          <Link to="/login">Get started</Link>
+        </Button>
       </div>
     </div>
   );

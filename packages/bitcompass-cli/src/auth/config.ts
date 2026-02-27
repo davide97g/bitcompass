@@ -88,3 +88,10 @@ export const isLoggedIn = (): boolean => {
   const creds = loadCredentials();
   return Boolean(creds?.access_token);
 };
+
+/** Returns the current user email if logged in, otherwise null. Reused by whoami and init. */
+export const getCurrentUserEmail = (): string | null => {
+  const creds = loadCredentials();
+  if (!creds?.access_token) return null;
+  return creds.user?.email ?? null;
+};

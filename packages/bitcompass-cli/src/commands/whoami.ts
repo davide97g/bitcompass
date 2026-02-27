@@ -1,4 +1,4 @@
-import { loadCredentials } from '../auth/config.js';
+import { getCurrentUserEmail, loadCredentials } from '../auth/config.js';
 import chalk from 'chalk';
 
 export const runWhoami = (): void => {
@@ -7,7 +7,7 @@ export const runWhoami = (): void => {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
     process.exit(1);
   }
-  const email = (creds as { user?: { email?: string } }).user?.email;
+  const email = getCurrentUserEmail();
   if (email) {
     console.log(email);
   } else {

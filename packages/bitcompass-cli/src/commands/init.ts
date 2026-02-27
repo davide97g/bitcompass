@@ -8,7 +8,13 @@ import {
     loadProjectConfig,
     saveProjectConfig,
 } from '../auth/project-config.js';
+import { getCurrentUserEmail, isLoggedIn } from '../auth/config.js';
+import { gradient, printBanner } from '../lib/banner.js';
 import type { EditorProvider, ProjectConfig } from '../types.js';
+
+const cyan: [number, number, number] = [0, 212, 255];
+const magenta: [number, number, number] = [255, 64, 200];
+const INDENT = '  ';
 
 const EDITOR_CHOICES: { name: string; value: EditorProvider }[] = [
   { name: 'VSCode', value: 'vscode' },
@@ -35,6 +41,8 @@ const ensureGitignoreEntry = (): void => {
 };
 
 export const runInit = async (): Promise<void> => {
+  await printBanner();
+
   const existing = loadProjectConfig();
   const answers = await inquirer.prompt<{ editor: EditorProvider; outputPath: string }>([
     {
@@ -210,10 +218,25 @@ Use these commands when you need to interact with BitCompass from the terminal:
 
   writeFileSync(rulePath, ruleContent, 'utf-8');
 
-  console.log(chalk.green('Project configured.'));
-  console.log(chalk.dim('Config:'), join(getProjectConfigDir(), 'config.json'));
-  console.log(chalk.dim('Editor:'), config.editor);
-  console.log(chalk.dim('Output path:'), config.outputPath);
-  console.log(chalk.dim('.gitignore:'), GITIGNORE_ENTRY, 'added or already present.');
-  console.log(chalk.green('Rule created:'), rulePath);
+  console.log(gradient('Project configured.', cyan, magenta));
+  console.log(INDENT + chalk.bold('Config:'), join(getProjectConfigDir(), 'config.json'));
+  console.log(INDENT + chalk.bold('Editor:'), config.editor);
+  console.log(INDENT + chalk.bold('Output path:'), config.outputPath);
+  console.log(INDENT + chalk.bold('.gitignore:'), GITIGNORE_ENTRY, 'added or already present.');
+  console.log(INDENT + chalk.bold('Rule created:'), rulePath);
+
+  const email = getCurrentUserEmail();
+  const loggedIn = isLoggedIn();
+  console.log('');
+  if (loggedIn) {
+    console.log(
+      email
+        ? 'You are ready to go ' + chalk.bold(email) + '!'
+        : 'You are ready to go!'
+    );
+  } else {
+    console.log(
+      chalk.dim('Run ') + chalk.cyan('bitcompass login') + chalk.dim(' to sign in.')
+    );
+  }
 };

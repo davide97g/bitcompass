@@ -7,18 +7,18 @@ import { Command } from 'commander';
 import { readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { runCommandsList, runCommandsPull, runCommandsPush, runCommandsSearch } from './commands/commands.js';
 import { runConfigGet, runConfigList, runConfigSet } from './commands/config-cmd.js';
+import { runGlossary } from './commands/glossary.js';
 import { runInit } from './commands/init.js';
+import { runLog, ValidationError } from './commands/log.js';
 import { runLogin } from './commands/login.js';
 import { runLogout } from './commands/logout.js';
 import { runMcpStart, runMcpStatus } from './commands/mcp.js';
-import { runLog, ValidationError } from './commands/log.js';
 import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './commands/rules.js';
-import { runSolutionsList, runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
-import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
-import { runCommandsList, runCommandsPull, runCommandsPush, runCommandsSearch } from './commands/commands.js';
-import { runGlossary } from './commands/glossary.js';
 import { runSharePush } from './commands/share.js';
+import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
+import { runSolutionsList, runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
 import { runWhoami } from './commands/whoami.js';
 
 // Disable chalk colors when NO_COLOR is set or --no-color is passed (must run before any command)
@@ -33,6 +33,7 @@ const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
 const version = packageJson.version;
 
 const program = new Command();
+
 
 program
   .name('bitcompass')

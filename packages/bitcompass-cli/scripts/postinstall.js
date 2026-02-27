@@ -65,25 +65,29 @@ const glowWithBrightness = (text, [r, g, b], brightness) =>
 
 const cyan = [0, 212, 255];
 const magenta = [255, 64, 200];
-const amber = [255, 190, 50];
 const glowColor = [255, 120, 255];
 
 const PREFIX = "made by ";
-const AUTHOR = "davide97g";
+const AUTHOR = "@davide97g";
 const GITHUB_URL = "https://github.com/davide97g/";
+const INIT_TIP =
+  chalk.dim("Run ") + chalk.cyan("bitcompass init") + chalk.dim(" in your project to configure.");
 
 /** Wraps text in OSC 8 hyperlink so it's clickable in supported terminals (VS Code, iTerm2, Windows Terminal). */
 const link = (url, text) => `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\`;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** npm v7+ runs lifecycle scripts in background and suppresses stdout. Write to stderr so the message is visible during `npm i bitcompass -g`. */
+const out = process.stderr;
+
 const animateAuthorLine = async () => {
-  const isTty = process.stdout.isTTY;
+  const isTty = out.isTTY;
   const frames = 6;
   const frameMs = 80;
 
   if (!isTty) {
-    console.log(PREFIX + link(GITHUB_URL, glow(AUTHOR, glowColor)));
+    out.write(PREFIX + link(GITHUB_URL, glow(AUTHOR, glowColor)) + "\n");
     return;
   }
 
@@ -92,14 +96,15 @@ const animateAuthorLine = async () => {
     const brightness = 0.3 + 0.7 * (1 - Math.cos(t * Math.PI));
     const styledAuthor = glowWithBrightness(AUTHOR, glowColor, brightness);
     const line = PREFIX + link(GITHUB_URL, styledAuthor);
-    process.stdout.write("\r\x1b[K" + line);
+    out.write("\r\x1b[K" + line);
     await sleep(frameMs);
   }
   const finalLine = PREFIX + link(GITHUB_URL, glow(AUTHOR, glowColor));
-  process.stdout.write("\r\x1b[K" + finalLine + "\n");
+  out.write("\r\x1b[K" + finalLine + "\n");
 };
 
-console.log("");
-console.log(gradient(`version ${version}`, cyan, magenta));
+out.write("\n");
+out.write(gradient(`version ${version}`, cyan, magenta) + "\n");
 await animateAuthorLine();
-console.log("");
+out.write(INIT_TIP + "\n");
+out.write("\n");

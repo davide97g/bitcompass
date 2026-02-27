@@ -31,6 +31,7 @@ import TopicsPage from "./pages/TopicsPage";
 import WelcomePage from "./pages/WelcomePage";
 
 // Layout
+import { AppLock } from "./components/AppLock";
 import { AppLayout } from "./components/layout/AppLayout";
 import { RequireAuth } from "./components/RequireAuth";
 import { RootRedirect } from "./components/RootRedirect";
@@ -53,7 +54,13 @@ const App = () => (
           <Route path="/" element={<RootRedirect />} />
           
           {/* App routes with layout (auth required when Supabase configured) */}
-          <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
+          <Route element={
+            <RequireAuth>
+              <AppLock>
+                <AppLayout />
+              </AppLock>
+            </RequireAuth>
+          }>
             <Route path="/topics" element={<TopicsPage />} />
             <Route path="/topics/:id" element={<TopicDetailPage />} />
             <Route path="/problems" element={<ProblemsPage />} />

@@ -13,7 +13,9 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { searchAll } from '@/data/mockData';
 import { useRulesSearch } from '@/hooks/use-rules';
 import { useAuth } from '@/hooks/use-auth';
-import { LogOut, Menu, Search } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { createCredential, getWebAuthnErrorMessage, hasStoredCredential, removeCredential } from '@/lib/webauthn-app-lock';
+import { Fingerprint, LogOut, Menu, Search, ShieldOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SearchResults } from './SearchResults';
@@ -48,9 +50,12 @@ interface TopBarProps {
 export function TopBar({ onMenuToggle }: TopBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { user, signOut } = useAuth();
+  const hasBiometric = hasStoredCredential();
   const avatarUrl = getUserAvatarUrl(user);
   const initials = getUserInitials(user);
 
@@ -89,6 +94,26 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
       return;
     }
     navigate(`/${type}/${id}`);
+  };
+
+  const handleEnableBiometric = async () => {
+    setBiometricLoading(true);
+    try {
+      await createCredential();
+      window.location.reload();
+    } catch (err) {
+      toast({
+        title: getWebAuthnErrorMessage(err),
+        variant: 'destructive',
+      });
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
+
+  const handleRemoveBiometric = () => {
+    removeCredential();
+    window.location.reload();
   };
 
   return (
@@ -155,6 +180,27 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
                 )}
               </div>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {hasBiometric ? (
+              <DropdownMenuItem
+                onSelect={handleRemoveBiometric}
+                className="cursor-pointer"
+                aria-label="Rimuovi blocco biometrico"
+              >
+                <ShieldOff className="mr-2 h-4 w-4" />
+                Rimuovi biometrico
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                onSelect={() => void handleEnableBiometric()}
+                disabled={biometricLoading}
+                className="cursor-pointer"
+                aria-label="Attiva blocco biometrico"
+              >
+                <Fingerprint className="mr-2 h-4 w-4" />
+                {biometricLoading ? 'Configurazione…' : 'Attiva biometrico'}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onSelect={() => void signOut()}

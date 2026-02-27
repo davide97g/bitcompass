@@ -11,6 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { searchAll } from '@/data/mockData';
+import { useRulesSearch } from '@/hooks/use-rules';
 import { useAuth } from '@/hooks/use-auth';
 import { LogOut, Menu, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -54,6 +55,20 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
   const initials = getUserInitials(user);
 
   const searchResults = searchQuery.length > 1 ? searchAll(searchQuery) : null;
+  const { data: rulesResults = [] } = useRulesSearch(searchQuery);
+  const hasAnyResults =
+    (searchResults?.hasResults ?? false) || rulesResults.length > 0;
+  const mergedResults = searchResults
+    ? { ...searchResults, rules: rulesResults }
+    : {
+        people: [],
+        topics: [],
+        problems: [],
+        projects: [],
+        automations: [],
+        rules: rulesResults,
+        hasResults: rulesResults.length > 0,
+      };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -69,11 +84,15 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
   const handleResultClick = (type: string, id: string) => {
     setShowResults(false);
     setSearchQuery('');
+    if (type === 'rules') {
+      navigate(`/rules/${id}`);
+      return;
+    }
     navigate(`/${type}/${id}`);
   };
 
   return (
-    <header className="relative z-[30] flex items-center h-16 px-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center border-b border-border bg-background px-4 shadow-sm dark:bg-zinc-950">
       {/* Mobile menu toggle */}
       <Button 
         variant="ghost" 
@@ -89,7 +108,7 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search people, projects, problems, skills..."
+          placeholder="Search people, projects, problems, rules, solutions, skills, commands..."
           className="pl-10 bg-muted/50 border-0 focus-visible:bg-background focus-visible:ring-1 rounded-lg"
           value={searchQuery}
           onChange={(e) => {
@@ -100,9 +119,9 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
         />
         
         {/* Search Results Dropdown */}
-        {showResults && searchResults && searchResults.hasResults && (
-          <SearchResults 
-            results={searchResults} 
+        {showResults && hasAnyResults && (
+          <SearchResults
+            results={mergedResults}
             onResultClick={handleResultClick}
             onClose={() => setShowResults(false)}
           />

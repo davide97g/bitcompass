@@ -13,10 +13,10 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const location = useLocation();
 
   return (
-    <aside 
+    <aside
       className={cn(
-        "flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-ui ease-out",
-        collapsed ? "w-16" : "w-64"
+        'fixed left-0 top-0 z-20 flex h-screen flex-col bg-sidebar border-r border-sidebar-border transition-[width] duration-ui ease-out',
+        collapsed ? 'w-16' : 'w-64'
       )}
     >
       {/* Logo */}
@@ -33,12 +33,25 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+      {/* Navigation - no scroll: sidebar stays static; nav fits or uses internal scroll only */}
+      <nav className="flex-1 overflow-y-auto min-h-0 px-3 py-4">
         {navGroups.map((group) => (
-          <div key={group.label} className={cn('space-y-1', !collapsed && 'mb-6')}>
+          <div
+            key={group.label}
+            className={cn(
+              'space-y-1',
+              !collapsed && 'mb-6',
+              group.mocked && 'sidebar-group-mocked'
+            )}
+          >
             {!collapsed && (
-              <p className="px-2 mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <p
+                className={cn(
+                  'px-2 mb-2 text-xs font-medium uppercase tracking-wider',
+                  group.mocked ? 'text-amber-600/90 dark:text-amber-400/80' : 'text-muted-foreground'
+                )}
+                title={group.mocked ? 'Mocked – not ready for production' : undefined}
+              >
                 {group.label}
               </p>
             )}
@@ -51,9 +64,10 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                   to={item.to}
                   className={cn(
                     'sidebar-item',
-                    isActive && 'sidebar-item-active'
+                    isActive && 'sidebar-item-active',
+                    group.mocked && 'sidebar-item-mocked'
                   )}
-                  title={collapsed ? item.label : undefined}
+                  title={collapsed ? item.label : group.mocked ? `${item.label} (mocked)` : undefined}
                 >
                   <Icon className="w-5 h-5 shrink-0" />
                   {!collapsed && <span>{item.label}</span>}

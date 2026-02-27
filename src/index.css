@@ -1,6 +1,39 @@
 /* Syntax highlighting for markdown code blocks (rehype-highlight) - must be first */
 @import "highlight.js/styles/github.min.css";
 
+/* --- Midnight Aurora: Premium fonts --- */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/PlusJakartaSans-VariableFont_wght.ttf") format("truetype");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/PlusJakartaSans-Italic-VariableFont_wght.ttf") format("truetype");
+  font-weight: 200 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-VariableFont_opsz,wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-Italic-VariableFont_opsz,wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -302,6 +335,8 @@
     --tag-purple-text: 270 67% 47%;
     --tag-orange: 24 100% 95%;
     --tag-orange-text: 24 94% 40%;
+    --tag-gold: 43 96% 94%;
+    --tag-gold-text: 43 74% 35%;
     --tag-pink: 330 81% 95%;
     --tag-pink-text: 330 81% 40%;
     --tag-cyan: 183 74% 93%;
@@ -325,44 +360,45 @@
     --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 98%) 100%);
   }
 
+  /* Midnight Aurora: premium dark theme */
   .dark {
-    --background: 222 47% 6%;
+    --background: 240 6% 4%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 10%;
+    --card: 240 5% 8%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 10%;
+    --popover: 240 5% 8%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 6%;
-    --primary-hover: 217 91% 50%;
+    --primary: 263 70% 58%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 263 70% 50%;
 
-    --secondary: 217 33% 17%;
+    --secondary: 240 5% 14%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 240 5% 14%;
+    --muted-foreground: 215 16% 57%;
 
-    --accent: 217 33% 17%;
+    --accent: 240 5% 14%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 63% 45%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217 28% 22%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
+    --input: 240 5% 14%;
+    --ring: 263 70% 58%;
 
-    --sidebar-background: 222 47% 5%;
+    --sidebar-background: 240 6% 3%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 217 33% 17%;
+    --sidebar-primary: 263 70% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 12%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-ring: 263 70% 58%;
 
     --tag-blue: 213 94% 15%;
     --tag-blue-text: 213 94% 75%;
@@ -372,6 +408,8 @@
     --tag-purple-text: 270 67% 75%;
     --tag-orange: 24 100% 15%;
     --tag-orange-text: 24 94% 70%;
+    --tag-gold: 43 74% 16%;
+    --tag-gold-text: 43 96% 70%;
     --tag-pink: 330 81% 15%;
     --tag-pink-text: 330 81% 70%;
     --tag-cyan: 183 74% 13%;
@@ -437,6 +475,11 @@
   .tag-orange {
     background-color: hsl(var(--tag-orange));
     color: hsl(var(--tag-orange-text));
+  }
+
+  .tag-gold {
+    background-color: hsl(var(--tag-gold));
+    color: hsl(var(--tag-gold-text));
   }
 
   .tag-pink {
@@ -511,6 +554,34 @@
     @apply bg-background/80 backdrop-blur-sm;
   }
 
+  /* Midnight Aurora: main app background with subtle indigo radial gradient */
+  .bg-midnight-aurora {
+    @apply bg-zinc-950 relative;
+    background-color: #0a0a0b;
+  }
+
+  .bg-midnight-aurora::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 80% 60% at 50% -20%,
+      rgba(99, 102, 241, 0.15),
+      transparent 60%
+    );
+    filter: blur(80px);
+  }
+
+  /* Glassmorphic card for Midnight Aurora */
+  .card-glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg;
+  }
+
+  .card-glass:hover {
+    @apply -translate-y-1 shadow-2xl shadow-violet-500/10 transition-all duration-300;
+  }
+
   /* Sidebar item: fluid, soft (organic style) */
   .sidebar-item {
     @apply flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all;
@@ -523,9 +594,22 @@
     @apply bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary;
   }
 
-  /* Rule/Skill card kind accent - left border by type */
+  /* Mocked sidebar section: visually distinct as non-production */
+  .sidebar-item-mocked {
+    @apply opacity-80 text-muted-foreground;
+    border-left: 2px solid hsl(var(--warning) / 0.4);
+  }
+  .sidebar-item-mocked:hover {
+    @apply opacity-90;
+  }
+  .sidebar-item-mocked.sidebar-item-active {
+    @apply opacity-100 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/15;
+    border-left-color: hsl(var(--warning));
+  }
+
+  /* Rule/Skill card kind accent - left border by type (colorization priority) */
   .card-kind-rule {
-    border-left: 3px solid hsl(var(--primary));
+    border-left: 3px solid hsl(var(--tag-blue-text));
   }
   .card-kind-solution {
     border-left: 3px solid hsl(var(--tag-green-text));
@@ -534,7 +618,7 @@
     border-left: 3px solid hsl(var(--tag-purple-text));
   }
   .card-kind-command {
-    border-left: 3px solid hsl(var(--tag-orange-text));
+    border-left: 3px solid hsl(var(--tag-gold-text));
   }
 }
 

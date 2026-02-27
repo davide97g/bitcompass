@@ -16,22 +16,22 @@ export function RootRedirect() {
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
-      navigate('/home', { replace: true });
+      navigate('/rules', { replace: true });
       return;
     }
     if (session) {
-      navigate('/home', { replace: true });
+      navigate('/rules', { replace: true });
       return;
     }
     if (!hasOAuthHash() && !isLoading) {
-      navigate('/home', { replace: true });
+      navigate('/rules', { replace: true });
       return;
     }
     if (hasOAuthHash()) {
       const t = window.setTimeout(() => {
         if (!hasOAuthHash()) return;
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        navigate('/home', { replace: true });
+        navigate('/rules', { replace: true });
       }, 5000);
       return () => clearTimeout(t);
     }

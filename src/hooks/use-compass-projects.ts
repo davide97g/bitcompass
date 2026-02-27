@@ -41,6 +41,20 @@ const fetchCompassProjectMembers = async (
   return (data ?? []) as CompassProjectMember[];
 };
 
+/** Returns project_id -> member count for all projects (for list views). */
+const fetchCompassProjectMemberCounts = async (): Promise<Record<string, number>> => {
+  if (!supabase) return {};
+  const { data, error } = await supabase
+    .from(MEMBERS_TABLE)
+    .select('project_id');
+  if (error) throw error;
+  const rows = (data ?? []) as { project_id: string }[];
+  return rows.reduce<Record<string, number>>((acc, row) => {
+    acc[row.project_id] = (acc[row.project_id] ?? 0) + 1;
+    return acc;
+  }, {});
+};
+
 export const useCompassProjects = () => {
   return useQuery({
     queryKey: ['compass-projects'],
@@ -62,6 +76,14 @@ export const useCompassProjectMembers = (projectId: string | undefined) => {
     queryKey: ['compass-project-members', projectId],
     queryFn: () => fetchCompassProjectMembers(projectId!),
     enabled: Boolean(supabase && projectId),
+  });
+};
+
+export const useCompassProjectMemberCounts = () => {
+  return useQuery({
+    queryKey: ['compass-project-member-counts'],
+    queryFn: fetchCompassProjectMemberCounts,
+    enabled: Boolean(supabase),
   });
 };
 
@@ -88,6 +110,7 @@ export const useInsertCompassProject = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['compass-projects'] });
+      qc.invalidateQueries({ queryKey: ['compass-project-member-counts'] });
     },
   });
 };
@@ -129,6 +152,7 @@ export const useDeleteCompassProject = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['compass-projects'] });
+      qc.invalidateQueries({ queryKey: ['compass-project-member-counts'] });
     },
   });
 };
@@ -153,6 +177,7 @@ export const useAddCompassProjectMember = () => {
     onSuccess: (_, { projectId }) => {
       qc.invalidateQueries({ queryKey: ['compass-project-members', projectId] });
       qc.invalidateQueries({ queryKey: ['compass-project', projectId] });
+      qc.invalidateQueries({ queryKey: ['compass-project-member-counts'] });
     },
   });
 };
@@ -178,6 +203,7 @@ export const useRemoveCompassProjectMember = () => {
     onSuccess: (_, { projectId }) => {
       qc.invalidateQueries({ queryKey: ['compass-project-members', projectId] });
       qc.invalidateQueries({ queryKey: ['compass-project', projectId] });
+      qc.invalidateQueries({ queryKey: ['compass-project-member-counts'] });
     },
   });
 };

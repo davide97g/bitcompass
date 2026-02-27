@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -29,7 +29,8 @@ import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { PageHeader } from '@/components/ui/page-header';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { CommandBlock } from '@/components/ui/CommandBlock';
-import { ruleDownloadBasename } from '@/lib/utils';
+import { ruleDownloadBasename, cn } from '@/lib/utils';
+import { getTechStyle } from '@/lib/tech-styles';
 import { Badge } from '@/components/ui/badge';
 import { RuleDetailSkeleton } from '@/components/skeletons';
 
@@ -52,6 +53,14 @@ const getKindDescription = (kind: RuleKind): string => {
     command: 'Command',
   };
   return descriptions[kind];
+};
+
+/** Card/recap accent by kind (align with list cards) */
+const RECAP_KIND_BORDER: Record<RuleKind, string> = {
+  rule: 'dark:border-l-sky-500/40',
+  solution: 'dark:border-l-emerald-500/40',
+  skill: 'dark:border-l-violet-500/40',
+  command: 'dark:border-l-amber-500/40',
 };
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
@@ -184,126 +193,158 @@ export default function RuleDetailPage() {
     );
   }
 
+  if (!id) return null;
+
   return (
     <div className="space-y-6">
       <PageBreadcrumb items={[{ label: 'Rules', href: '/rules' }, { label: rule.title }]} />
       <PageHeader
         title={editing ? `Edit ${rule.kind}` : rule.title}
         description={getKindDescription(rule.kind)}
-      />
-      {/* Project chip and link/unlink at top */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-          <Layers className="h-4 w-4 shrink-0" aria-hidden />
-          Project:
-        </span>
-        <Badge variant="outline" className="text-xs font-normal">
-          {rule.project_id ? (
-            <Link to={`/compass-projects/${rule.project_id}`} className="hover:underline">
-              {projectIdToTitle[rule.project_id] ?? 'Project'}
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/rules">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
             </Link>
-          ) : (
-            <span>Global (open to everyone)</span>
-          )}
-        </Badge>
-        {!editing && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 text-xs" aria-label="Change project">
-                Change project
+          </Button>
+          {!editing ? (
+            <>
+              <Button variant="ghost" size="sm" onClick={handleStartEdit} aria-label="Edit">
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => handleProjectChange(null)}>
-                Global (default – open to everyone)
-              </DropdownMenuItem>
-              {compassProjects.map((p) => (
-                <DropdownMenuItem
-                  key={p.id}
-                  onClick={() => handleProjectChange(p.id)}
-                >
-                  {p.title}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-        {(rule.author_display_name ?? rule.user_id) && (
-          <div className="flex items-center gap-2" aria-label="Author">
-            <User className="h-4 w-4 shrink-0" />
-            <span>{rule.author_display_name ?? 'Unknown author'}</span>
-          </div>
-        )}
-        {rule.version && (
-          <div className="flex items-center gap-2">
-            <span className="font-medium">Version: v{rule.version}</span>
-          </div>
-        )}
-        {rule.technologies && rule.technologies.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {rule.technologies.map((tech) => (
-              <Badge key={tech} variant="secondary" className="text-xs">
-                {tech}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/rules">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Link>
-        </Button>
-        {!editing ? (
-          <>
-            <Button variant="ghost" size="sm" onClick={handleStartEdit} aria-label="Edit">
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => downloadRule(rule, 'markdown')} aria-label="Download Markdown">
-              <FileDown className="mr-2 h-4 w-4" />
-              Download MD
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => downloadRule(rule, 'json')} aria-label="Download JSON">
-              Download JSON
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)} className="text-destructive" aria-label="Delete">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button size="sm" onClick={() => void handleSaveEdit()} disabled={updateRule.isPending}>
-              Save
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setEditing(false)}>
-              Cancel
-            </Button>
-          </>
-        )}
-      </div>
+              <Button variant="ghost" size="sm" onClick={() => downloadRule(rule, 'markdown')} aria-label="Download Markdown">
+                <FileDown className="mr-2 h-4 w-4" />
+                Download MD
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => downloadRule(rule, 'json')} aria-label="Download JSON">
+                Download JSON
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)} className="text-destructive" aria-label="Delete">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button size="sm" onClick={() => void handleSaveEdit()} disabled={updateRule.isPending}>
+                Save
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setEditing(false)}>
+                Cancel
+              </Button>
+            </>
+          )}
+        </div>
+      </PageHeader>
 
-      <div className="space-y-3 mb-6">
-        <p className="text-sm font-medium flex items-center gap-2" id="pull-to-project">
-          <Link2 className="h-4 w-4" aria-hidden />
-          Pull to project
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Run this in your terminal to install this {rule ? getKindDescription(rule.kind).toLowerCase() : 'rule'} into your project (symbolic link). Copy the command with the button.
-        </p>
-        <CommandBlock commands={rule ? [getPullCommand(id!, rule.kind, false)] : []} className="max-w-2xl" />
-        <p className="text-xs text-muted-foreground">
-          To copy the file instead of a symlink, use:{' '}
-          <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">
-            {rule ? getPullCommand(id!, rule.kind, true) : ''}
-          </code>
-        </p>
-      </div>
+      {/* ReCAP: Type, Version, Author, Tech stack, Project, Pull to project — grouped and always on top */}
+      <Card
+        id="pull-to-project"
+        className={cn(
+          'border-l-4 dark:border-l-4 border-border dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-sm',
+          RECAP_KIND_BORDER[rule.kind]
+        )}
+      >
+        <CardContent className="p-5 space-y-4">
+          {/* Metadata row: Type, Version, Author, Tech stack */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+            <span className="text-muted-foreground dark:text-zinc-400 font-medium">
+              Type: <span className="text-foreground">{getKindDescription(rule.kind)}</span>
+            </span>
+            {rule.version && (
+              <span className="text-muted-foreground dark:text-zinc-400">
+                Version: <span className="font-medium text-foreground">v{rule.version}</span>
+              </span>
+            )}
+            {(rule.author_display_name ?? rule.user_id) && (
+              <div className="flex items-center gap-1.5 text-muted-foreground dark:text-zinc-400">
+                <User className="h-4 w-4 shrink-0" aria-hidden />
+                <span>Author: {rule.author_display_name ?? 'Unknown author'}</span>
+              </div>
+            )}
+            {rule.technologies && rule.technologies.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {rule.technologies.map((tech) => {
+                  const style = getTechStyle(tech);
+                  return (
+                    <span
+                      key={tech}
+                      className={cn(
+                        'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border',
+                        style.bg,
+                        style.text,
+                        style.border
+                      )}
+                    >
+                      {tech}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Project */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted-foreground dark:text-zinc-400 flex items-center gap-1.5">
+              <Layers className="h-4 w-4 shrink-0" aria-hidden />
+              Project:
+            </span>
+            <Badge variant="outline" className="text-xs font-normal">
+              {rule.project_id ? (
+                <Link to={`/compass-projects/${rule.project_id}`} className="hover:underline">
+                  {projectIdToTitle[rule.project_id] ?? 'Project'}
+                </Link>
+              ) : (
+                <span>Global (open to everyone)</span>
+              )}
+            </Badge>
+            {!editing && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs" aria-label="Change project">
+                    Change project
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => handleProjectChange(null)}>
+                    Global (default – open to everyone)
+                  </DropdownMenuItem>
+                  {compassProjects.map((p) => (
+                    <DropdownMenuItem
+                      key={p.id}
+                      onClick={() => handleProjectChange(p.id)}
+                    >
+                      {p.title}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+
+          {/* Pull to project: explanatory text + command + copy (grouped) */}
+          <div className="space-y-2 pt-2 border-t border-border dark:border-white/10">
+            <p className="text-sm font-medium flex items-center gap-2">
+              <Link2 className="h-4 w-4" aria-hidden />
+              Pull to project
+            </p>
+            <p className="text-xs text-muted-foreground dark:text-zinc-400">
+              Run this in your terminal to install this {getKindDescription(rule.kind).toLowerCase()} into your project (symbolic link). Copy the command with the button.
+            </p>
+            <CommandBlock commands={[getPullCommand(id, rule.kind, false)]} className="max-w-2xl" />
+            <p className="text-xs text-muted-foreground dark:text-zinc-400">
+              To copy the file instead of a symlink, use:{' '}
+              <code className="bg-muted dark:bg-white/10 px-1.5 py-0.5 rounded font-mono text-xs">
+                {getPullCommand(id, rule.kind, true)}
+              </code>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="pt-6">

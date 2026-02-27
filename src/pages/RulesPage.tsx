@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type React from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Pagination,
   PaginationContent,
@@ -29,10 +29,10 @@ import { useCompassProjects } from '@/hooks/use-compass-projects';
 import { useToast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Rule, RuleInsert, RuleKind } from '@/types/bitcompass';
-import { BookMarked, Copy, FileDown, Plus, Search, User, Link2, Tag, GitFork } from 'lucide-react';
+import { BookMarked, FileDown, Plus, Search, User, Link2, GitFork } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { ruleDownloadBasename } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { getTechStyle } from '@/lib/tech-styles';
 import { RulesPageSkeleton } from '@/components/skeletons';
 
 /** Highlight all occurrences of query in text. Returns JSX with <mark> tags. */
@@ -88,6 +88,26 @@ const getKindLabel = (kind: RuleKind): string => {
     command: 'command',
   };
   return labels[kind];
+};
+
+/** Card style by kind: glassmorphic + type tint (border + hover shadow) */
+const CARD_KIND_CLASSES: Record<RuleKind, { card: string; cta: string }> = {
+  rule: {
+    card: 'dark:border-l-sky-500/30 dark:hover:shadow-sky-500/10',
+    cta: 'bg-sky-700 hover:bg-sky-600 text-white dark:bg-sky-700 dark:hover:bg-sky-600',
+  },
+  solution: {
+    card: 'dark:border-l-emerald-500/30 dark:hover:shadow-emerald-500/10',
+    cta: 'bg-emerald-700 hover:bg-emerald-600 text-white dark:bg-emerald-700 dark:hover:bg-emerald-600',
+  },
+  skill: {
+    card: 'dark:border-l-violet-500/30 dark:hover:shadow-violet-500/10',
+    cta: 'bg-violet-700 hover:bg-violet-600 text-white dark:bg-violet-700 dark:hover:bg-violet-600',
+  },
+  command: {
+    card: 'dark:border-l-amber-500/30 dark:hover:shadow-amber-500/10',
+    cta: 'bg-amber-700 hover:bg-amber-600 text-white dark:bg-amber-700 dark:hover:bg-amber-600',
+  },
 };
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
@@ -158,12 +178,12 @@ export default function RulesPage() {
   const totalPages = Math.max(1, Math.ceil(total / RULES_PAGE_SIZE));
   const insertRule = useInsertRule();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Sync URL -> state when user navigates (e.g. back/forward)
   useEffect(() => {
     const k = searchParams.get(KIND_PARAM);
     const q = searchParams.get(Q_PARAM) ?? '';
-    const p = searchParams.get(PAGE_PARAM);
     const proj = searchParams.get(PROJECT_PARAM);
     if (k && VALID_KINDS.includes(k as RuleKind | 'all')) setKindFilter(k as RuleKind | 'all');
     setSearch(q);
@@ -443,125 +463,185 @@ export default function RulesPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {filtered.map((rule) => (
-            <Card
+          {filtered.map((rule) => {
+            const kindStyles = CARD_KIND_CLASSES[rule.kind];
+            return (
+            // Card is clickable; inner CTAs stop propagation so they don't trigger navigation. Using div + role="link" because <a> cannot wrap <button> (invalid HTML).
+            // biome-ignore lint/a11y/useSemanticElements: Card contains buttons; cannot use <a> wrapper.
+            <div
               key={rule.id}
-              className={cn('card-interactive', `card-kind-${rule.kind}`)}
+              role="link"
+              tabIndex={0}
+              onClick={() => navigate(`/rules/${rule.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate(`/rules/${rule.id}`);
+                }
+              }}
+              className="block cursor-pointer"
+              aria-label={`Open rule: ${rule.title}`}
             >
-              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                <CardTitle className="text-base">
-                  <Link to={`/rules/${rule.id}`} className="hover:underline">
-                    {search.trim() ? highlightText(rule.title, search) : rule.title}
-                  </Link>
-                </CardTitle>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge
-                    variant="secondary"
-                    className={cn(
-                      'text-xs font-normal capitalize',
-                      rule.kind === 'rule' && 'bg-primary/10 text-primary border-primary/20',
-                      rule.kind === 'solution' && 'bg-tag-green text-tag-green-text border-tag-green-text/20',
-                      rule.kind === 'skill' && 'bg-tag-purple text-tag-purple-text border-tag-purple-text/20',
-                      rule.kind === 'command' && 'bg-tag-orange text-tag-orange-text border-tag-orange-text/20'
+              <Card
+                className={cn(
+                  'card-interactive transition-all duration-300 border-l-4',
+                  'dark:bg-white/5 dark:backdrop-blur-xl dark:border dark:border-white/10',
+                  'dark:hover:-translate-y-1 dark:hover:shadow-2xl',
+                  kindStyles.card
+                )}
+              >
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                  <CardTitle className="text-base font-display font-bold">
+                    <span className="hover:underline text-foreground">
+                      {search.trim() ? highlightText(rule.title, search) : rule.title}
+                    </span>
+                  </CardTitle>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={cn(
+                        'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border capitalize',
+                        rule.kind === 'rule' && 'bg-sky-500/10 text-sky-400 border-sky-500/20',
+                        rule.kind === 'solution' && 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                        rule.kind === 'skill' && 'bg-violet-500/10 text-violet-400 border-violet-500/20',
+                        rule.kind === 'command' && 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      )}
+                    >
+                      {rule.kind}
+                    </span>
+                    {rule.project_id && (
+                      // biome-ignore lint/a11y: Wrapper stops propagation so project link doesn't trigger card navigation.
+                      <span
+                        className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border bg-white/5 text-zinc-400 dark:bg-white/5 dark:text-zinc-400 dark:border-white/10 border-border"
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            navigate(`/compass-projects/${rule.project_id}`);
+                          }}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          className="hover:underline bg-transparent border-0 p-0 text-inherit font-inherit cursor-pointer"
+                        >
+                          {projectIdToTitle[rule.project_id] ?? 'Project'}
+                        </button>
+                      </span>
                     )}
-                  >
-                    {rule.kind}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs font-normal">
-                    {rule.project_id ? (
-                      <Link to={`/compass-projects/${rule.project_id}`} className="hover:underline">
-                        {projectIdToTitle[rule.project_id] ?? 'Project'}
-                      </Link>
-                    ) : (
-                      <span>Global</span>
-                    )}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {search.trim()
-                    ? highlightText(rule.description || rule.body, search)
-                    : rule.description || rule.body}
-                </p>
-                
-                {/* Metadata section */}
-                <div className="mt-3 space-y-2">
-                  {/* Author and Version */}
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    {(rule.author_display_name ?? rule.user_id) && (
-                      <div className="flex items-center gap-1.5" aria-label="Author">
-                        <User className="h-3.5 w-3.5 shrink-0" />
-                        <span>{rule.author_display_name ?? 'Unknown author'}</span>
-                      </div>
-                    )}
-                    {rule.version && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-medium">v{rule.version}</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground dark:text-zinc-400 line-clamp-2">
+                    {search.trim()
+                      ? highlightText(rule.description || rule.body, search)
+                      : rule.description || rule.body}
+                  </p>
+
+                  {/* Metadata section */}
+                  <div className="mt-3 space-y-2">
+                    {/* Author and Version */}
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground dark:text-zinc-400">
+                      {(rule.author_display_name ?? rule.user_id) && (
+                        <div className="flex items-center gap-1.5">
+                          <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          <span>{rule.author_display_name ?? 'Unknown author'}</span>
+                        </div>
+                      )}
+                      {rule.version && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium">v{rule.version}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Technologies: neon-style badges */}
+                    {(rule.technologies && rule.technologies.length > 0) && (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {rule.technologies.slice(0, 5).map((tech) => {
+                          const style = getTechStyle(tech);
+                          return (
+                            <span
+                              key={tech}
+                              className={cn(
+                                'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border',
+                                style.bg,
+                                style.text,
+                                style.border
+                              )}
+                            >
+                              {search.trim() ? highlightText(tech, search) : tech}
+                            </span>
+                          );
+                        })}
+                        {rule.technologies.length > 5 && (
+                          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border bg-white/5 text-zinc-400 dark:bg-white/5 dark:text-zinc-400 dark:border-white/10">
+                            +{rule.technologies.length - 5}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
 
-                  {/* Technologies and Tags */}
-                  {(rule.technologies && rule.technologies.length > 0) && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {rule.technologies.slice(0, 5).map((tech) => (
-                        <Badge key={tech} variant="secondary" className="text-xs">
-                          {search.trim() ? highlightText(tech, search) : tech}
-                        </Badge>
-                      ))}
-                      {rule.technologies.length > 5 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{rule.technologies.length - 5}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </div>
+                  {/* Actions - stop propagation so card link does not fire */}
+                  {/* biome-ignore lint/a11y: Wrapper stops propagation so button clicks don't trigger card navigation. */}
+                  <div
+                    className="mt-4 flex flex-wrap items-center gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    {/* Main CTA: darker by kind */}
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void handleCopyPullCommand(rule, false);
+                      }}
+                      aria-label={`Use this ${rule.kind} (symlink)`}
+                      title={getPullCommand(rule.id, rule.kind, false)}
+                      className={cn('gap-1.5 border-0', kindStyles.cta)}
+                    >
+                      <Link2 className="h-4 w-4" />
+                      Use this {getKindLabel(rule.kind)}
+                    </Button>
 
-                {/* Actions */}
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to={`/rules/${rule.id}`}>View</Link>
-                  </Button>
-                  
-                  {/* Main action: Use this rule (symlink) */}
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => void handleCopyPullCommand(rule, false)}
-                    aria-label={`Use this ${rule.kind} (symlink)`}
-                    title={getPullCommand(rule.id, rule.kind, false)}
-                    className="gap-1.5"
-                  >
-                    <Link2 className="h-4 w-4" />
-                    Use this {getKindLabel(rule.kind)}
-                  </Button>
-                  
-                  {/* Secondary action: Clone with --copy flag */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void handleCopyPullCommand(rule, true)}
-                    aria-label={`Clone this ${rule.kind} (--copy flag)`}
-                    title={getPullCommand(rule.id, rule.kind, true)}
-                    className={copiedId === rule.id ? 'bg-muted' : ''}
-                  >
-                    <GitFork className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => downloadRule(rule, 'markdown')}
-                    aria-label="Download as Markdown"
-                  >
-                    <FileDown className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    {/* Secondary action: Clone with --copy flag */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void handleCopyPullCommand(rule, true);
+                      }}
+                      aria-label={`Clone this ${rule.kind} (--copy flag)`}
+                      title={getPullCommand(rule.id, rule.kind, true)}
+                      className={cn('dark:border-white/10 dark:bg-white/5', copiedId === rule.id ? 'bg-muted dark:bg-white/10' : '')}
+                    >
+                      <GitFork className="h-4 w-4" />
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        downloadRule(rule, 'markdown');
+                      }}
+                      aria-label="Download as Markdown"
+                      className="dark:text-zinc-400"
+                    >
+                      <FileDown className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          );
+          })}
         </div>
       )}
 

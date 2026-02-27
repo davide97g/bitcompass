@@ -54,6 +54,22 @@ const fetchRuleById = async (id: string): Promise<Rule | null> => {
   return data as Rule;
 };
 
+const RULES_SEARCH_LIMIT = 8;
+
+/** Search rules by title, description, body (for global header search). */
+export const fetchRulesSearch = async (query: string): Promise<Rule[]> => {
+  if (!supabase || !query.trim()) return [];
+  const q = query.trim();
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select('*')
+    .or(`title.ilike.%${q}%,description.ilike.%${q}%,body.ilike.%${q}%`)
+    .order('created_at', { ascending: false })
+    .limit(RULES_SEARCH_LIMIT);
+  if (error) throw error;
+  return (data ?? []) as Rule[];
+};
+
 export const useRules = (kind?: RuleKind) => {
   return useQuery({
     queryKey: ['rules', kind],
@@ -97,8 +113,16 @@ export const useRulesPaginated = ({
 export const useRule = (id: string | undefined) => {
   return useQuery({
     queryKey: ['rule', id],
-    queryFn: () => fetchRuleById(id!),
+    queryFn: () => (id ? fetchRuleById(id) : Promise.resolve(null)),
     enabled: Boolean(supabase && id),
+  });
+};
+
+export const useRulesSearch = (query: string) => {
+  return useQuery({
+    queryKey: ['rules-search', query.trim()],
+    queryFn: () => fetchRulesSearch(query),
+    enabled: Boolean(supabase && query.trim().length > 1),
   });
 };
 

@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -14,14 +12,17 @@ import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
 import {
   useCompassProjects,
+  useCompassProjectMemberCounts,
   useInsertCompassProject,
   useDeleteCompassProject,
 } from '@/hooks/use-compass-projects';
 import { useToast } from '@/hooks/use-toast';
-import { Layers, Plus, Trash2, Users } from 'lucide-react';
+import { CompassProjectCard } from '@/components/cards/CompassProjectCard';
+import { Layers, Plus } from 'lucide-react';
 
 export default function CompassProjectsPage() {
   const { data: projects = [], isLoading } = useCompassProjects();
+  const { data: memberCounts = {} } = useCompassProjectMemberCounts();
   const insertProject = useInsertCompassProject();
   const deleteProject = useDeleteCompassProject();
   const { toast } = useToast();
@@ -87,62 +88,32 @@ export default function CompassProjectsPage() {
       <PageHeader
         title="Compass projects"
         description="Scope rules, skills, and commands by project. Only members can see and push."
-      />
-      <div className="flex justify-end mb-6">
-        <Button onClick={() => setCreateOpen(true)} aria-label="New Compass project">
+      >
+        <Button
+          onClick={() => setCreateOpen(true)}
+          aria-label="New Compass project"
+          className="dark:bg-violet-500 dark:hover:bg-violet-600 dark:text-white dark:border-0"
+        >
           <Plus className="w-4 h-4 mr-2" />
           New project
         </Button>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      </PageHeader>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 stagger-children">
         {projects.map((project) => (
-          <Card key={project.id} className="flex flex-col">
-            <CardHeader className="pb-2">
-              <div className="flex items-start justify-between gap-2">
-                <Link
-                  to={`/compass-projects/${project.id}`}
-                  className="font-semibold text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded"
-                  tabIndex={0}
-                  aria-label={`Open project ${project.title}`}
-                >
-                  {project.title}
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
-                  onClick={() => setDeleteId(project.id)}
-                  aria-label={`Delete project ${project.title}`}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0 flex-1 flex flex-col">
-              {project.description ? (
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{project.description}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground italic mb-3">No description</p>
-              )}
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-auto">
-                <Users className="w-4 h-4 shrink-0" />
-                <span>Members</span>
-              </div>
-              <Link
-                to={`/compass-projects/${project.id}`}
-                className="inline-flex items-center gap-2 text-sm text-primary hover:underline mt-2"
-              >
-                Manage project
-              </Link>
-            </CardContent>
-          </Card>
+          <CompassProjectCard
+            key={project.id}
+            project={project}
+            memberCount={memberCounts[project.id] ?? 0}
+            onDelete={setDeleteId}
+            status="Active"
+          />
         ))}
       </div>
       {projects.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-12 text-muted-foreground dark:text-zinc-400">
           <Layers className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No Compass projects yet. Create one to scope rules and commands.</p>
-          <Button className="mt-4" onClick={() => setCreateOpen(true)}>
+          <Button className="mt-4 dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/10" onClick={() => setCreateOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             New project
           </Button>

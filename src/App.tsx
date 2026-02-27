@@ -15,7 +15,6 @@ import CLIPage from "./pages/CLIPage";
 import CompassProjectDetailPage from "./pages/CompassProjectDetailPage";
 import CompassProjectsPage from "./pages/CompassProjectsPage";
 import GlossaryPage from "./pages/GlossaryPage";
-import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import MCPPage from "./pages/MCPPage";
 import NotFound from "./pages/NotFound";
@@ -40,7 +39,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -55,7 +54,6 @@ const App = () => (
           
           {/* App routes with layout (auth required when Supabase configured) */}
           <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
-            <Route path="/home" element={<HomePage />} />
             <Route path="/topics" element={<TopicsPage />} />
             <Route path="/topics/:id" element={<TopicDetailPage />} />
             <Route path="/problems" element={<ProblemsPage />} />

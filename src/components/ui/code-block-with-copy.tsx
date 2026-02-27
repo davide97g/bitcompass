@@ -10,6 +10,9 @@ interface CodeBlockWithCopyProps {
   ariaLabel?: string;
 }
 
+/** Constrained width so copy CTA is easy to find; aligned with CommandBlock (min wide enough to not feel short) */
+const CODE_BLOCK_WIDTH = 'w-fit min-w-[32rem] max-w-2xl';
+
 const copyToClipboard = async (text: string): Promise<boolean> => {
   try {
     await navigator.clipboard.writeText(text);
@@ -43,7 +46,7 @@ export function CodeBlockWithCopy({ code, className, ariaLabel = 'Copy to clipbo
 
   return (
     <div
-      className={cn('relative rounded-lg border border-border bg-muted/50 overflow-hidden', className)}
+      className={cn(CODE_BLOCK_WIDTH, 'relative rounded-lg border border-border bg-muted/50 overflow-hidden', className)}
     >
       <pre className="p-4 text-sm font-mono overflow-x-auto whitespace-pre">
         {code}

@@ -8,6 +8,9 @@ interface CommandBlockProps {
   className?: string;
 }
 
+/** Constrained width so copy CTA is easy to find; consistent across app (min wide enough to not feel short) */
+const COMMAND_BLOCK_WIDTH = 'w-fit min-w-[32rem] max-w-2xl';
+
 const copyToClipboard = async (text: string): Promise<boolean> => {
   try {
     await navigator.clipboard.writeText(text);
@@ -36,13 +39,13 @@ export function CommandBlock({ commands, className }: CommandBlockProps) {
   };
 
   return (
-    <div className={cn('rounded-lg border border-border bg-muted/50 overflow-hidden', className)}>
+    <div className={cn(COMMAND_BLOCK_WIDTH, 'rounded-lg border border-border bg-muted/50 overflow-hidden', className)}>
       <div className="px-3 py-2 border-b border-border bg-muted/80 text-xs font-medium text-muted-foreground">
         Run in your terminal
       </div>
       <ul className="divide-y divide-border">
         {commands.map((cmd, index) => (
-          <li key={index} className="flex items-center gap-2 group">
+          <li key={`${index}-${cmd}`} className="flex items-center gap-2 group">
             <pre className="flex-1 overflow-x-auto p-3 text-sm font-mono whitespace-pre">
               <code>{cmd}</code>
             </pre>

@@ -335,7 +335,7 @@ export default function RuleDetailPage() {
             <p className="text-xs text-muted-foreground dark:text-zinc-400">
               Run this in your terminal to install this {getKindDescription(rule.kind).toLowerCase()} into your project (symbolic link). Copy the command with the button.
             </p>
-            <CommandBlock commands={[getPullCommand(id, rule.kind, false)]} className="max-w-2xl" />
+            <CommandBlock commands={[getPullCommand(id, rule.kind, false)]} />
             <p className="text-xs text-muted-foreground dark:text-zinc-400">
               To copy the file instead of a symlink, use:{' '}
               <code className="bg-muted dark:bg-white/10 px-1.5 py-0.5 rounded font-mono text-xs">

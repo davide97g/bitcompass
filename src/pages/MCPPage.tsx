@@ -1,9 +1,10 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { CodeBlockWithCopy } from '@/components/ui/code-block-with-copy';
 import { PageHeader } from '@/components/ui/page-header';
 import { useToast } from '@/hooks/use-toast';
-import { ExternalLink, Plus, Terminal } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { ExternalLink, Plus, Plug } from 'lucide-react';
 
 const MCP_CONFIG = `{
   "mcpServers": {
@@ -22,6 +23,9 @@ const MCP_INSTALL_CONFIG_BASE64 =
 const ADD_TO_CURSOR_DEEPLINK = `cursor://anysphere.cursor-deeplink/mcp/install?name=bitcompass&config=${encodeURIComponent(MCP_INSTALL_CONFIG_BASE64)}`;
 
 const CURSOR_MCP_DOCS_URL = 'https://cursor.com/docs/context/mcp';
+
+const CARD_RECAP = 'border-border dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-sm';
+const CARD_CONTENT = 'border-border dark:border-white/10';
 
 const copyToClipboard = async (text: string): Promise<boolean> => {
   try {
@@ -47,12 +51,11 @@ export default function MCPPage() {
   };
 
   const handleAddToAntigrativity = async () => {
-    // Copy MCP config to clipboard for Antigrativity setup
     const ok = await copyToClipboard(MCP_CONFIG);
     if (ok) {
-      toast({ 
-        title: 'MCP config copied', 
-        description: 'Paste this into Antigrativity → Settings → MCP → Add Server' 
+      toast({
+        title: 'MCP config copied',
+        description: 'Paste this into Antigrativity → Settings → MCP → Add Server',
       });
     } else {
       toast({ title: 'Copy failed', variant: 'destructive' });
@@ -67,110 +70,92 @@ export default function MCPPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="MCP Server"
         description="Use BitCompass in Cursor or Antigrativity via Model Context Protocol (MCP). Search rules, publish solutions, and create activity logs directly from your AI editor."
       >
         <div className="flex flex-wrap items-center gap-3">
-          <button
+          <Button
             type="button"
             onClick={handleAddToCursor}
             onKeyDown={handleAddToCursorKeyDown}
             aria-label="Add BitCompass MCP to Cursor (opens Cursor)"
             tabIndex={0}
-            className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background shadow-sm transition-all duration-ui ease-out hover:bg-foreground/90 hover:shadow-md focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="gap-2"
           >
             <Plus className="w-4 h-4 shrink-0" />
             Add to Cursor
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            onClick={handleAddToAntigrativity}
+            variant="secondary"
+            onClick={() => void handleAddToAntigrativity()}
             onKeyDown={handleAddToAntigrativityKeyDown}
             aria-label="Add BitCompass MCP to Antigrativity"
             tabIndex={0}
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white bg-[#7C3AED] shadow-sm transition-all duration-ui ease-out hover:opacity-90 hover:shadow-md focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #6D28D9 100%)' }}
+            className="gap-2 bg-violet-600 hover:bg-violet-700 text-white border-0"
           >
             <Plus className="w-4 h-4 shrink-0" />
             Add to Antigrativity
-          </button>
+          </Button>
         </div>
       </PageHeader>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">What is MCP?</h2>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground mb-3">
-              Model Context Protocol (MCP) allows AI editors like Cursor to interact with external tools and services. BitCompass provides an MCP server that gives your AI assistant access to rules, solutions, and activity logs.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              The MCP server reads the same project config as the CLI (<code className="bg-muted px-1.5 py-0.5 font-mono text-xs">.bitcompass/config.json</code>). If the project is not initialized, a one-line warning is shown and defaults are used (Cursor / <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">.cursor/rules</code>).
-            </p>
-          </CardContent>
-        </Card>
-      </section>
+      {/* ReCAP: Add to editor — config + copy + actions, always visible at top */}
+      <Card className={cn('border-l-4 dark:border-l-4 dark:border-l-violet-500/40', CARD_RECAP)}>
+        <CardContent className="p-5 space-y-4">
+          <p className="text-sm font-medium flex items-center gap-2">
+            <Plug className="h-4 w-4" aria-hidden />
+            Add to your editor
+          </p>
+          <p className="text-xs text-muted-foreground dark:text-zinc-400">
+            Paste this configuration into your editor's MCP settings. For Cursor: Settings → Features → MCP → Edit config (or <code className="rounded bg-muted dark:bg-white/10 px-1 py-0.5 font-mono text-xs">~/.cursor/mcp.json</code>). For Antigrativity: Settings → MCP → Add Server. Run <code className="rounded bg-muted dark:bg-white/10 px-1 py-0.5 font-mono text-xs">bitcompass login</code> first, then restart the MCP server if you added it before logging in.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="button" onClick={handleAddToCursor} onKeyDown={handleAddToCursorKeyDown} aria-label="Add BitCompass MCP to Cursor (opens Cursor)" tabIndex={0}>
+              Add to Cursor
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => void handleAddToAntigrativity()} onKeyDown={handleAddToAntigrativityKeyDown} aria-label="Add BitCompass MCP to Antigrativity" tabIndex={0} className="gap-2 bg-violet-600 hover:bg-violet-700 text-white border-0">
+              <Plus className="w-4 h-4 shrink-0" />
+              Add to Antigrativity
+            </Button>
+            <a
+              href={CURSOR_MCP_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground dark:text-zinc-400 hover:text-foreground underline underline-offset-2"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              MCP docs
+            </a>
+          </div>
+          <CodeBlockWithCopy code={MCP_CONFIG} ariaLabel="Copy MCP config" />
+        </CardContent>
+      </Card>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Setup</h2>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Terminal className="w-4 h-4" />
-              Add to Your Editor
-            </CardTitle>
-            <p className="text-sm text-muted-foreground font-normal">
-              Paste this configuration into your editor's MCP settings. For Cursor: Settings → Features → MCP → Edit config (or <code className="bg-muted px-1 py-0.5 font-mono text-xs">~/.cursor/mcp.json</code>). For Antigrativity: Settings → MCP → Add Server. Run <code className="bg-muted px-1 py-0.5 font-mono text-xs">bitcompass login</code> first, then restart the MCP server if you added it before logging in.
+        <h2 className="text-lg font-semibold">What is MCP?</h2>
+        <Card className={CARD_CONTENT}>
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground dark:text-zinc-400 mb-3">
+              Model Context Protocol (MCP) allows AI editors like Cursor to interact with external tools and services. BitCompass provides an MCP server that gives your AI assistant access to rules, solutions, and activity logs.
             </p>
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Button
-                type="button"
-                onClick={handleAddToCursor}
-                onKeyDown={handleAddToCursorKeyDown}
-                aria-label="Add BitCompass MCP to Cursor (opens Cursor)"
-                tabIndex={0}
-              >
-                Add to Cursor
-              </Button>
-              <button
-                type="button"
-                onClick={handleAddToAntigrativity}
-                onKeyDown={handleAddToAntigrativityKeyDown}
-                aria-label="Add BitCompass MCP to Antigrativity"
-                tabIndex={0}
-                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-ui ease-out hover:opacity-90 hover:shadow-md focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #6D28D9 100%)' }}
-              >
-                <Plus className="w-4 h-4 shrink-0" />
-                Add to Antigrativity
-              </button>
-              <a
-                href={CURSOR_MCP_DOCS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground underline underline-offset-2"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                MCP docs
-              </a>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-4">
-            <CodeBlockWithCopy code={MCP_CONFIG} ariaLabel="Copy MCP config" />
+            <p className="text-sm text-muted-foreground dark:text-zinc-400">
+              The MCP server reads the same project config as the CLI (<code className="bg-muted dark:bg-white/10 px-1.5 py-0.5 font-mono text-xs">.bitcompass/config.json</code>). If the project is not initialized, a one-line warning is shown and defaults are used (Cursor / <code className="bg-muted dark:bg-white/10 px-1.5 py-0.5 font-mono text-xs">.cursor/rules</code>).
+            </p>
           </CardContent>
         </Card>
       </section>
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">MCP Tools</h2>
-        <Card>
+        <Card className={CARD_CONTENT}>
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div>
                 <strong className="text-foreground text-sm font-semibold">Rules & Solutions:</strong>
-                <ul className="ml-4 mt-2 space-y-2 text-sm text-muted-foreground">
+                <ul className="ml-4 mt-2 space-y-2 text-sm text-muted-foreground dark:text-zinc-400">
                   <li>
                     <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">search-rules</code>
                     <span className="ml-2">Search rules by query</span>
@@ -207,7 +192,7 @@ export default function MCPPage() {
               </div>
               <div>
                 <strong className="text-foreground text-sm font-semibold">Activity Logs:</strong>
-                <ul className="ml-4 mt-2 space-y-2 text-sm text-muted-foreground">
+                <ul className="ml-4 mt-2 space-y-2 text-sm text-muted-foreground dark:text-zinc-400">
                   <li>
                     <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">create-activity-log</code>
                     <span className="ml-2">Create from git repo</span>
@@ -229,13 +214,13 @@ export default function MCPPage() {
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Authentication</h2>
-        <Card>
+        <Card className={CARD_CONTENT}>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground mb-3">
-              Most MCP tools require authentication (except <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">search-rules</code> and <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">search-solutions</code>).
+            <p className="text-sm text-muted-foreground dark:text-zinc-400 mb-3">
+              Most MCP tools require authentication (except <code className="bg-muted dark:bg-white/10 px-1.5 py-0.5 font-mono text-xs">search-rules</code> and <code className="bg-muted dark:bg-white/10 px-1.5 py-0.5 font-mono text-xs">search-solutions</code>).
             </p>
-            <p className="text-sm text-muted-foreground">
-              If you get an authentication error, run <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">bitcompass login</code> in your terminal and restart the MCP server in Cursor.
+            <p className="text-sm text-muted-foreground dark:text-zinc-400">
+              If you get an authentication error, run <code className="bg-muted dark:bg-white/10 px-1.5 py-0.5 font-mono text-xs">bitcompass login</code> in your terminal and restart the MCP server in Cursor.
             </p>
           </CardContent>
         </Card>
@@ -243,12 +228,12 @@ export default function MCPPage() {
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">CLI Commands</h2>
-        <Card>
+        <Card className={CARD_CONTENT}>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground mb-3">
+            <p className="text-sm text-muted-foreground dark:text-zinc-400 mb-3">
               You can also manage the MCP server from the command line:
             </p>
-            <ul className="space-y-2 text-sm font-mono text-muted-foreground">
+            <ul className="space-y-2 text-sm font-mono text-muted-foreground dark:text-zinc-400">
               <li>
                 <code className="bg-muted px-1.5 py-0.5 text-foreground">bitcompass mcp start</code>
                 <span className="ml-2 text-sm font-normal">Start MCP server (stdio mode for AI editors)</span>
@@ -258,8 +243,8 @@ export default function MCPPage() {
                 <span className="ml-2 text-sm font-normal">Show MCP server status</span>
               </li>
             </ul>
-            <p className="text-sm text-muted-foreground mt-3">
-              Usually configured automatically by the AI editor. Use <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">status</code> to verify MCP is working.
+            <p className="text-sm text-muted-foreground dark:text-zinc-400 mt-3">
+              Usually configured automatically by the AI editor. Use <code className="bg-muted dark:bg-white/10 px-1.5 py-0.5 font-mono text-xs">status</code> to verify MCP is working.
             </p>
           </CardContent>
         </Card>

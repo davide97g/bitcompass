@@ -18,6 +18,7 @@ import { runSolutionsList, runSolutionsPull, runSolutionsPush, runSolutionsSearc
 import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
 import { runCommandsList, runCommandsPull, runCommandsPush, runCommandsSearch } from './commands/commands.js';
 import { runGlossary } from './commands/glossary.js';
+import { runSharePush } from './commands/share.js';
 import { runWhoami } from './commands/whoami.js';
 
 // Disable chalk colors when NO_COLOR is set or --no-color is passed (must run before any command)
@@ -58,6 +59,29 @@ program
   .command('glossary')
   .description('Show glossary (rules, solutions, skills, commands)')
   .action(runGlossary);
+
+program
+  .command('share [file]')
+  .description('Share a rule, solution, skill, or command (prompts for type if not in file or --kind)')
+  .option('-k, --kind <kind>', 'Type: rule, solution, skill, or command (skips type prompt)')
+  .option('--project-id <uuid>', 'Scope to Compass project (UUID)')
+  .addHelpText(
+    'after',
+    `
+Examples:
+  bitcompass share
+  bitcompass share ./my-rule.mdc
+  bitcompass share ./doc.md --kind solution
+`
+  )
+  .action((file?: string, opts?: { kind?: string; projectId?: string }) => {
+    const kind = opts?.kind as 'rule' | 'solution' | 'skill' | 'command' | undefined;
+    if (opts?.kind && kind !== 'rule' && kind !== 'solution' && kind !== 'skill' && kind !== 'command') {
+      console.error(chalk.red('--kind must be one of: rule, solution, skill, command'));
+      process.exit(1);
+    }
+    return runSharePush(file, { kind, projectId: opts?.projectId }).catch(handleErr);
+  });
 
 program
   .command('init')

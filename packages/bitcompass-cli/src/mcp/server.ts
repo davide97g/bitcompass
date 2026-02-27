@@ -110,7 +110,7 @@ function createStdioServer(): {
               {
                 name: 'post-rules',
                 description:
-                  'Use when the user wants to publish or share a new rule, solution, skill, or command to BitCompass. Requires kind, title, and body. Returns the created id and title on success. User must be logged in (bitcompass login).',
+                  'Use when the user wants to publish or share a new rule, solution, skill, or command to BitCompass. Requires kind, title, and body. When the user says "share" without specifying type, first ask or infer: Rule (behaviors, docs), Solution (how we fixed something), Skill (how AI should behave for X), Command (workflows). Returns the created id and title on success. User must be logged in (bitcompass login).',
                 inputSchema: {
                   type: 'object',
                   properties: {
@@ -147,7 +147,7 @@ function createStdioServer(): {
                   type: 'object',
                   properties: {
                     id: { type: 'string', description: 'Rule/solution ID' },
-                    kind: { type: 'string', enum: ['rule', 'solution'], description: 'Optional: filter by kind' },
+                    kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'], description: 'Optional: filter by kind' },
                   },
                   required: ['id'],
                 },
@@ -155,11 +155,11 @@ function createStdioServer(): {
               {
                 name: 'list-rules',
                 description:
-                  'Use when the user wants to browse or list all rules and/or solutions without a search query. Optional kind filter (rule or solution) and limit. Returns an array of items with id, title, kind, description, author, snippet, created_at, plus total/returned counts.',
+                  'Use when the user wants to browse or list all rules, solutions, skills, or commands without a search query. Optional kind filter (rule, solution, skill, command) and limit. Returns an array of items with id, title, kind, description, author, snippet, created_at, plus total/returned counts.',
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    kind: { type: 'string', enum: ['rule', 'solution'], description: 'Optional: filter by kind' },
+                    kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'], description: 'Optional: filter by kind' },
                     limit: { type: 'number', description: 'Optional: maximum number of results (default: 50)' },
                   },
                 },
@@ -258,6 +258,7 @@ function createStdioServer(): {
           id,
           result: {
             prompts: [
+              { name: 'share', title: 'Share something', description: 'Guide to publish a rule, solution, skill, or command. Asks what you\'re sharing, then collects content and publishes.' },
               { name: 'share_new_rule', title: 'Share a new rule', description: 'Guide to collect and publish a reusable rule' },
               { name: 'share_problem_solution', title: 'Share a problem solution', description: 'Guide to collect and publish a problem solution' },
             ],
@@ -268,6 +269,30 @@ function createStdioServer(): {
       if (msg.method === 'prompts/get') {
         const params = msg.params as { name?: string };
         const name = params?.name ?? '';
+        if (name === 'share') {
+          send({
+            jsonrpc: '2.0',
+            id,
+            result: {
+              messages: [
+                {
+                  role: 'user',
+                  content: {
+                    type: 'text',
+                    text: `You are helping the user share something to BitCompass. First determine what they are sharing. If they already said (e.g. "share this rule", "share this workflow"), use that; otherwise ask with a single choice:
+- Rule: Behaviors, documentation, or how-to for the AI (e.g. i18n guide, coding standards).
+- Solution: How we fixed or implemented a specific problem.
+- Skill: How the AI should behave in a domain (e.g. front-end design, back-end implementation).
+- Command (workflow): A workflow or command (e.g. release checklist).
+
+Then collect: title, description, body (and optionally context, examples, technologies). Ask one question at a time. Then call post-rules with the chosen kind and the collected fields.`,
+                  },
+                },
+              ],
+            },
+          });
+          return;
+        }
         if (name === 'share_new_rule') {
           send({
             jsonrpc: '2.0',

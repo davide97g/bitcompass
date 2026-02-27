@@ -2,10 +2,10 @@ import inquirer from 'inquirer';
 import ora from 'ora';
 import chalk from 'chalk';
 import { loadCredentials } from '../auth/config.js';
-import { searchRules, fetchRules, getRuleById, insertRule } from '../api/client.js';
+import { searchRules, fetchRules, getRuleById } from '../api/client.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import { formatList, shouldUseTable } from '../lib/list-format.js';
-import type { RuleInsert } from '../types.js';
+import { runSharePush } from './share.js';
 
 export const runCommandsSearch = async (
   query?: string,
@@ -112,35 +112,5 @@ export const runCommandsPush = async (
   file?: string,
   options?: { projectId?: string }
 ): Promise<void> => {
-  if (!loadCredentials()) {
-    console.error(chalk.red('Not logged in. Run bitcompass login.'));
-    process.exit(1);
-  }
-  let payload: RuleInsert;
-  if (file) {
-    const { readFileSync } = await import('fs');
-    const raw = readFileSync(file, 'utf-8');
-    try {
-      payload = JSON.parse(raw) as RuleInsert;
-      payload.kind = 'command';
-    } catch {
-      const lines = raw.split('\n');
-      const title = lines[0].replace(/^#\s*/, '') || 'Untitled';
-      payload = { kind: 'command', title, description: '', body: raw };
-    }
-  } else {
-    const answers = await inquirer.prompt<{ title: string; description: string; body: string }>([
-      { name: 'title', message: 'Command title', type: 'input', default: 'Untitled' },
-      { name: 'description', message: 'Description', type: 'input', default: '' },
-      { name: 'body', message: 'Command content', type: 'editor', default: '' },
-    ]);
-    payload = { kind: 'command', title: answers.title, description: answers.description, body: answers.body };
-  }
-  if (options?.projectId) {
-    payload = { ...payload, project_id: options.projectId };
-  }
-  const spinner = ora('Publishing command…').start();
-  const created = await insertRule(payload);
-  spinner.succeed(chalk.green('Published command ') + created.id);
-  console.log(chalk.dim(created.title));
+  await runSharePush(file, { kind: 'command', projectId: options?.projectId });
 };

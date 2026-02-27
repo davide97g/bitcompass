@@ -234,10 +234,10 @@
 @layer base {
   :root {
     /* Base colors - Light mode with subtle warmth */
-    --background: 0 0% 98%;
+    --background: 220 12% 95%;
     --foreground: 222 47% 11%;
 
-    /* Card surfaces with subtle depth */
+    /* Card surfaces: clearly elevated from background */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
 
@@ -266,8 +266,8 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders and inputs */
-    --border: 220 13% 91%;
+    /* Borders and inputs - stronger for card separation */
+    --border: 220 13% 86%;
     --input: 220 13% 91%;
     --ring: 221 83% 53%;
 
@@ -316,7 +316,8 @@
     --shadow-sm: 0 1px 3px 0 hsl(220 13% 11% / 0.06), 0 1px 2px -1px hsl(220 13% 11% / 0.04);
     --shadow-md: 0 4px 6px -1px hsl(220 13% 11% / 0.06), 0 2px 4px -2px hsl(220 13% 11% / 0.04);
     --shadow-lg: 0 10px 15px -3px hsl(220 13% 11% / 0.08), 0 4px 6px -4px hsl(220 13% 11% / 0.04);
-    --shadow-card-hover: 0 8px 25px -5px hsl(220 13% 11% / 0.08), 0 8px 10px -6px hsl(220 13% 11% / 0.04);
+    --shadow-card: 0 2px 8px -2px hsl(220 13% 11% / 0.08), 0 4px 12px -4px hsl(220 13% 11% / 0.06);
+    --shadow-card-hover: 0 8px 25px -5px hsl(220 13% 11% / 0.12), 0 8px 10px -6px hsl(220 13% 11% / 0.06);
 
     /* Gradients: mood / hero / ambient (organic layer + optional UI accent) */
     --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(243 75% 59%) 100%);
@@ -328,10 +329,10 @@
     --background: 222 47% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 8%;
+    --card: 222 47% 10%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 8%;
+    --popover: 222 47% 10%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 217 91% 60%;
@@ -350,7 +351,7 @@
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 17%;
+    --border: 217 28% 22%;
     --input: 217 33% 17%;
     --ring: 217 91% 60%;
 
@@ -403,7 +404,7 @@
   /* Card hover: fluid, ambient (organic style) */
   .card-interactive {
     transition: box-shadow var(--duration-ui) ease-out, transform var(--duration-ui) ease-out;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-card);
   }
 
   .card-interactive:hover {
@@ -520,6 +521,20 @@
 
   .sidebar-item-active {
     @apply bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary;
+  }
+
+  /* Rule/Skill card kind accent - left border by type */
+  .card-kind-rule {
+    border-left: 3px solid hsl(var(--primary));
+  }
+  .card-kind-solution {
+    border-left: 3px solid hsl(var(--tag-green-text));
+  }
+  .card-kind-skill {
+    border-left: 3px solid hsl(var(--tag-purple-text));
+  }
+  .card-kind-command {
+    border-left: 3px solid hsl(var(--tag-orange-text));
   }
 }
 

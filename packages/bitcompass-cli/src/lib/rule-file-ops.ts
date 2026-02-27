@@ -5,8 +5,7 @@ import { getRuleById } from '../api/client.js';
 import { getProjectConfig } from '../auth/project-config.js';
 import { ruleFilename, solutionFilename, skillFilename, commandFilename } from './slug.js';
 import { ensureRuleCached } from './rule-cache.js';
-import { buildRuleMdcContent } from './mdc-format.js';
-import type { Rule } from '../types.js';
+import { buildRuleMdcContent, buildMarkdownWithKind } from './mdc-format.js';
 
 export interface PullRuleOptions {
   /** Install globally to ~/.cursor/rules/ for all projects */
@@ -91,13 +90,11 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
       }
     }
   } else {
-    // Fallback: copy file content (rules as .mdc with frontmatter, others as .md)
+    // Fallback: copy file content (rules as .mdc with full frontmatter, others as .md with kind in frontmatter for round-trip)
     const content =
       rule.kind === 'rule'
         ? buildRuleMdcContent(rule)
-        : rule.kind === 'solution'
-          ? `# ${rule.title}\n\n${rule.description}\n\n## Solution\n\n${rule.body}\n`
-          : `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
+        : buildMarkdownWithKind(rule);
     writeFileSync(filename, content);
   }
 

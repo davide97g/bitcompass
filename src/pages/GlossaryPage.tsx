@@ -36,7 +36,7 @@ export default function GlossaryPage() {
 
       <section className="space-y-4">
         {TERMS.map(({ term, definition }) => (
-          <Card key={term}>
+          <Card key={term} className="card-interactive">
             <CardContent className="pt-6">
               <h2 className="text-lg font-semibold mb-2">{term}</h2>
               <p className="text-muted-foreground text-sm leading-relaxed">{definition}</p>

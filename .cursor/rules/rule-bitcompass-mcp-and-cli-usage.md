@@ -13,7 +13,7 @@ Search BitCompass rules by query.
 
 **Parameters:**
 - `query` (required): Search query string
-- `kind` (optional): Filter by 'rule' or 'solution'
+- `kind` (optional): Filter by 'rule', 'solution', 'skill', or 'command'
 - `limit` (optional): Maximum number of results (default: 20)
 
 **Example:** Search for rules about "authentication" or "error handling"
@@ -30,20 +30,20 @@ Search BitCompass solutions by query.
 **Example:** Search for solutions about "database connection issues"
 
 ### post-rules
-Publish a new rule or solution to BitCompass.
+Publish a new rule, solution, skill, or command to BitCompass.
 
-**When to use:** When you've created a reusable pattern, best practice, or solution that should be shared with the team.
+**When to use:** When you've created a reusable pattern, best practice, solution, skill, or workflow that should be shared with the team.
 
 **Parameters:**
-- `kind` (required): 'rule' or 'solution'
-- `title` (required): Title of the rule/solution
-- `body` (required): Full content of the rule/solution
+- `kind` (required): 'rule', 'solution', 'skill', or 'command'
+- `title` (required): Title of the entry
+- `body` (required): Full content
 - `description` (optional): Short description
 - `context` (optional): Additional context
 - `examples` (optional): Array of example strings
 - `technologies` (optional): Array of technology tags
 
-**Example:** After implementing a new pattern, publish it as a rule so others can reuse it.
+**When the user says "share" without specifying type:** First ask or infer the type (see "What to share as what" below), then call post-rules with the chosen kind.
 
 ### create-activity-log
 Collect repository summary and git activity, then push to activity logs.
@@ -55,6 +55,17 @@ Collect repository summary and git activity, then push to activity logs.
 - `repo_path` (optional): Path to git repo (defaults to current directory)
 
 **Example:** User asks "log my work for this week" → call with time_frame: 'week'
+
+## What to share as what
+
+When the user wants to **share** something, determine the type (or ask with a single choice) using this mapping:
+
+- **Rule** – Documentation or behavior guidance for the AI (e.g. "how to do internationalization", coding standards, i18n guide).
+- **Solution** – How you fixed or implemented a specific problem (e.g. "how we fixed the login bug", "how we implemented feature X").
+- **Skill** – How the AI should behave in a domain (e.g. "front-end design", "back-end implementation", frontend-design skill).
+- **Command (workflow)** – A workflow or command (e.g. "share this workflow", "our release checklist").
+
+**Rule of thumb:** If the user says "share" without a clear type, ask for a single choice (rule / command / solution / skill) or infer from file frontmatter or filename (e.g. `rule-*.mdc`, `solution-*.md`), then use the mapping above.
 
 ## CLI Commands (Run via Terminal)
 
@@ -71,6 +82,13 @@ Use these commands when you need to interact with BitCompass from the terminal:
 - `bitcompass init` - Configure project: editor/AI provider and output folder
 
 **When to use:** Run once per project to set up BitCompass configuration.
+
+### Share (unified)
+- `bitcompass share [file]` – Share a rule, solution, skill, or command. Prompts for type if not in file or `--kind`.
+- `--kind <rule|solution|skill|command>` – Skip type prompt.
+- `--project-id <uuid>` – Scope to a Compass project.
+
+**When to use:** When the user wants to share something and you want one flow that asks what type, or when sharing a file that has `kind` in frontmatter (or a filename like `rule-*.mdc`).
 
 ### Rules Management
 - `bitcompass rules search [query]` - Search rules interactively
@@ -115,9 +133,9 @@ Use these commands when you need to interact with BitCompass from the terminal:
 ## Decision Guide
 
 **Use MCP tools when:**
-- You're working in the AI editor and need to search or publish rules/solutions
+- You're working in the AI editor and need to search or publish rules, solutions, skills, or commands
 - The user asks you to search for existing patterns or solutions
-- You've created something reusable and want to share it immediately
+- You've created something reusable and want to share it immediately (use post-rules with the right kind; see "What to share as what")
 - The user wants to log their activity
 
 **Use CLI commands when:**

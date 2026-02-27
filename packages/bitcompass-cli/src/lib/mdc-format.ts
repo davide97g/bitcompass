@@ -1,12 +1,14 @@
-import type { Rule } from '../types.js';
+import type { Rule, RuleKind } from '../types.js';
+import { isValidRuleKind } from './share-types.js';
 
 const FRONTMATTER_DELIM = '---';
 
 /**
- * Builds Cursor .mdc content for a rule: YAML frontmatter (description, globs, alwaysApply) then body.
+ * Builds Cursor .mdc content for a rule: YAML frontmatter (description, globs, alwaysApply, kind) then body.
  */
 export const buildRuleMdcContent = (rule: Rule): string => {
   const lines: string[] = [FRONTMATTER_DELIM];
+  lines.push(`kind: ${rule.kind}`);
   lines.push(`description: ${escapeYamlValue(rule.description ?? '')}`);
   if (rule.globs != null && String(rule.globs).trim() !== '') {
     lines.push(`globs: ${escapeYamlValue(String(rule.globs).trim())}`);
@@ -14,6 +16,36 @@ export const buildRuleMdcContent = (rule: Rule): string => {
   lines.push(`alwaysApply: ${rule.always_apply === true}`);
   lines.push(FRONTMATTER_DELIM);
   lines.push('');
+  lines.push(rule.body.trimEnd());
+  if (!rule.body.endsWith('\n')) {
+    lines.push('');
+  }
+  return lines.join('\n');
+};
+
+/**
+ * Builds .md content for solution, skill, or command with frontmatter (kind, description)
+ * so that bitcompass share can infer kind when re-pushing.
+ */
+export const buildMarkdownWithKind = (rule: Rule): string => {
+  if (rule.kind === 'rule') {
+    return buildRuleMdcContent(rule);
+  }
+  const lines: string[] = [FRONTMATTER_DELIM];
+  lines.push(`kind: ${rule.kind}`);
+  lines.push(`description: ${escapeYamlValue(rule.description ?? '')}`);
+  lines.push(FRONTMATTER_DELIM);
+  lines.push('');
+  lines.push(`# ${rule.title}`);
+  lines.push('');
+  if (rule.description) {
+    lines.push(rule.description);
+    lines.push('');
+  }
+  if (rule.kind === 'solution') {
+    lines.push('## Solution');
+    lines.push('');
+  }
   lines.push(rule.body.trimEnd());
   if (!rule.body.endsWith('\n')) {
     lines.push('');
@@ -30,6 +62,7 @@ export interface ParsedMdcFrontmatter {
   description: string;
   globs?: string;
   alwaysApply: boolean;
+  kind?: RuleKind;
   body: string;
 }
 
@@ -53,6 +86,7 @@ export const parseRuleMdcContent = (raw: string): ParsedMdcFrontmatter | null =>
   let description = '';
   let globs: string | undefined;
   let alwaysApply = false;
+  let kind: RuleKind | undefined;
 
   for (const line of frontmatterBlock.split('\n')) {
     const colonIdx = line.indexOf(':');
@@ -72,8 +106,20 @@ export const parseRuleMdcContent = (raw: string): ParsedMdcFrontmatter | null =>
       case 'alwaysApply':
         alwaysApply = value === 'true' || value === '1';
         break;
+      case 'kind':
+        if (isValidRuleKind(value)) kind = value;
+        break;
     }
   }
 
-  return { description, globs, alwaysApply, body };
+  return { description, globs, alwaysApply, kind, body };
+};
+
+/**
+ * Returns kind from the first frontmatter block if present and valid.
+ * Use for .md or .mdc files when you only need kind (e.g. solution/skill/command round-trip).
+ */
+export const parseFrontmatterKind = (raw: string): RuleKind | null => {
+  const parsed = parseRuleMdcContent(raw);
+  return parsed?.kind ?? null;
 };

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -443,7 +444,10 @@ export default function RulesPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {filtered.map((rule) => (
-            <Card key={rule.id}>
+            <Card
+              key={rule.id}
+              className={cn('card-interactive', `card-kind-${rule.kind}`)}
+            >
               <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                 <CardTitle className="text-base">
                   <Link to={`/rules/${rule.id}`} className="hover:underline">
@@ -451,7 +455,18 @@ export default function RulesPage() {
                   </Link>
                 </CardTitle>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-muted-foreground capitalize">{rule.kind}</span>
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      'text-xs font-normal capitalize',
+                      rule.kind === 'rule' && 'bg-primary/10 text-primary border-primary/20',
+                      rule.kind === 'solution' && 'bg-tag-green text-tag-green-text border-tag-green-text/20',
+                      rule.kind === 'skill' && 'bg-tag-purple text-tag-purple-text border-tag-purple-text/20',
+                      rule.kind === 'command' && 'bg-tag-orange text-tag-orange-text border-tag-orange-text/20'
+                    )}
+                  >
+                    {rule.kind}
+                  </Badge>
                   <Badge variant="outline" className="text-xs font-normal">
                     {rule.project_id ? (
                       <Link to={`/compass-projects/${rule.project_id}`} className="hover:underline">

@@ -2,11 +2,10 @@ import inquirer from 'inquirer';
 import ora from 'ora';
 import chalk from 'chalk';
 import { loadCredentials } from '../auth/config.js';
-import { searchRules, fetchRules, getRuleById, insertRule } from '../api/client.js';
+import { searchRules, fetchRules, getRuleById } from '../api/client.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
-import { parseRuleMdcContent } from '../lib/mdc-format.js';
 import { formatList, shouldUseTable } from '../lib/list-format.js';
-import type { RuleInsert } from '../types.js';
+import { runSharePush } from './share.js';
 
 export const runRulesSearch = async (
   query?: string,
@@ -113,47 +112,5 @@ export const runRulesPush = async (
   file?: string,
   options?: { projectId?: string }
 ): Promise<void> => {
-  if (!loadCredentials()) {
-    console.error(chalk.red('Not logged in. Run bitcompass login.'));
-    process.exit(1);
-  }
-  let payload: RuleInsert;
-  if (file) {
-    const { readFileSync } = await import('fs');
-    const raw = readFileSync(file, 'utf-8');
-    try {
-      payload = JSON.parse(raw) as RuleInsert;
-    } catch {
-      const parsed = parseRuleMdcContent(raw);
-      if (parsed) {
-        const titleFromBody = parsed.body.split('\n')[0]?.replace(/^#\s*/, '').trim() || 'Untitled';
-        payload = {
-          kind: 'rule',
-          title: titleFromBody,
-          description: parsed.description,
-          body: parsed.body,
-          globs: parsed.globs ?? undefined,
-          always_apply: parsed.alwaysApply,
-        };
-      } else {
-        const lines = raw.split('\n');
-        const title = lines[0].replace(/^#\s*/, '') || 'Untitled';
-        payload = { kind: 'rule', title, description: '', body: raw };
-      }
-    }
-  } else {
-    const answers = await inquirer.prompt<{ title: string; description: string; body: string }>([
-      { name: 'title', message: 'Rule title', type: 'input', default: 'Untitled' },
-      { name: 'description', message: 'Description', type: 'input', default: '' },
-      { name: 'body', message: 'Rule content', type: 'editor', default: '' },
-    ]);
-    payload = { kind: 'rule', title: answers.title, description: answers.description, body: answers.body };
-  }
-  if (options?.projectId) {
-    payload = { ...payload, project_id: options.projectId };
-  }
-  const spinner = ora('Publishing rule…').start();
-  const created = await insertRule(payload);
-  spinner.succeed(chalk.green('Published rule ') + created.id);
-  console.log(chalk.dim(created.title));
+  await runSharePush(file, { kind: 'rule', projectId: options?.projectId });
 };

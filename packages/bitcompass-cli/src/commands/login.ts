@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import chalk from 'chalk';
 import { createServer } from 'http';
 import open from 'open';
-import ora from 'ora';
+import { createSpinner } from '../lib/spinner.js';
 import { getTokenFilePath, loadConfig, saveCredentials } from '../auth/config.js';
 import { DEFAULT_SUPABASE_ANON_KEY, DEFAULT_SUPABASE_URL } from '../auth/defaults.js';
 import type { StoredCredentials } from '../types.js';
@@ -324,7 +324,7 @@ export const runLogin = async (): Promise<void> => {
     },
   });
 
-  const spinner = ora('Opening browser for Google login…').start();
+  const spinner = createSpinner('Opening browser for Google login…');
 
   return new Promise((resolve, reject) => {
     const server = createServer(async (req, res) => {

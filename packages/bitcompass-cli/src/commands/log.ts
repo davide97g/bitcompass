@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import ora from 'ora';
+import type { Ora } from 'ora';
+import { createSpinner } from '../lib/spinner.js';
 import { insertActivityLog } from '../api/client.js';
 import { loadCredentials } from '../auth/config.js';
 import type { TimeFrame } from '../lib/git-analysis.js';
@@ -114,7 +115,7 @@ const timeFrameForRange = (start: string, end: string): TimeFrame => {
 const runLogWithParsedDates = async (
   parsed: { start: string; end?: string },
   cwd: string,
-  spinner: ReturnType<typeof ora>,
+  spinner: Ora,
   onProgress: (step: LogProgressStep) => void
 ): Promise<void> => {
   if (!parseDate(parsed.start)) {
@@ -153,7 +154,7 @@ const runLogInteractive = async (
       ],
     },
   ]);
-  const spinner = ora('Analyzing repository…').start();
+  const spinner = createSpinner('Analyzing repository…');
   try {
     const result = await buildAndPushActivityLog(choice.time_frame, cwd, onProgress);
     spinner.succeed(chalk.green('Log saved.'));
@@ -177,7 +178,7 @@ export const runLog = async (args: string[] = []): Promise<void> => {
   }
 
   const parsed = parseLogArgs(args);
-  const spinner = ora('Analyzing repository…').start();
+  const spinner = createSpinner('Analyzing repository…');
   const onProgress = (step: LogProgressStep) => {
     spinner.text = step === 'analyzing' ? 'Analyzing repository…' : 'Pushing activity log…';
   };

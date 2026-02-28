@@ -1,5 +1,5 @@
 import inquirer from 'inquirer';
-import ora from 'ora';
+import { createSpinner } from '../lib/spinner.js';
 import chalk from 'chalk';
 import { loadCredentials } from '../auth/config.js';
 import { searchRules, fetchRules, getRuleById } from '../api/client.js';
@@ -16,7 +16,7 @@ export const runRulesSearch = async (
     process.exit(1);
   }
   const q = query ?? (await inquirer.prompt<{ q: string }>([{ name: 'q', message: 'Search query', type: 'input' }])).q;
-  const spinner = ora('Searching rules…').start();
+  const spinner = createSpinner('Searching rules…');
   const list = await searchRules(q, { kind: 'rule', limit: 20 });
   spinner.stop();
   if (list.length === 0) {
@@ -50,7 +50,7 @@ export const runRulesList = async (options?: { table?: boolean }): Promise<void>
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
     process.exit(1);
   }
-  const spinner = ora('Loading rules…').start();
+  const spinner = createSpinner('Loading rules…');
   const list = await fetchRules('rule');
   spinner.stop();
   if (list.length === 0) {
@@ -71,7 +71,7 @@ export const runRulesPull = async (id?: string, options?: { global?: boolean; co
   }
   let targetId = id;
   if (!targetId) {
-    const spinner = ora('Loading rules…').start();
+    const spinner = createSpinner('Loading rules…');
     const list = await fetchRules('rule');
     spinner.stop();
     if (list.length === 0) {
@@ -84,7 +84,7 @@ export const runRulesPull = async (id?: string, options?: { global?: boolean; co
     targetId = choice.id;
   }
   
-  const spinner = ora('Pulling rule…').start();
+  const spinner = createSpinner('Pulling rule…');
   try {
     const filename = await pullRuleToFile(targetId, {
       global: options?.global,

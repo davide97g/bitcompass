@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import inquirer from 'inquirer';
-import ora from 'ora';
+import { createSpinner } from '../lib/spinner.js';
 import chalk from 'chalk';
 import { loadCredentials } from '../auth/config.js';
 import { insertRule } from '../api/client.js';
@@ -145,7 +145,7 @@ export const runSharePush = async (
   }
 
   const label = KIND_LABELS[payload.kind];
-  const spinner = ora(`Publishing ${label}…`).start();
+  const spinner = createSpinner(`Publishing ${label}…`);
   const created = await insertRule(payload);
   spinner.succeed(chalk.green(`Published ${label} `) + created.id);
   console.log(chalk.dim(created.title));

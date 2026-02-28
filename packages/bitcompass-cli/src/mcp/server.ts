@@ -199,13 +199,13 @@ function createStdioServer(): {
               {
                 name: 'pull-rule',
                 description:
-                  'Use when the user wants to install a rule or solution into their project (e.g. "pull this rule to my project"). Writes the rule to the project rules directory or optional output_path; global installs to ~/.cursor/rules/. Returns the file path written or an error.',
+                  'Use when the user wants to install a rule, solution, skill, or command into their project (e.g. "pull this rule to my project"). Saves by kind: rules → .cursor/rules (.mdc), skills → .cursor/skills (.md), commands → .cursor/commands (.md, plain), solutions → .cursor/documentation (.md, plain). Uses project config from bitcompass init unless output_path is provided (base path); global installs to ~/.cursor/<folder>. Returns the file path written or an error.',
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    id: { type: 'string', description: 'Rule/solution ID to pull' },
-                    output_path: { type: 'string', description: 'Optional: custom output path' },
-                    global: { type: 'boolean', description: 'Install globally to ~/.cursor/rules/' },
+                    id: { type: 'string', description: 'Rule/solution/skill/command ID to pull' },
+                    output_path: { type: 'string', description: 'Optional: custom base path (kind subfolders created under it)' },
+                    global: { type: 'boolean', description: 'Install globally to ~/.cursor/rules|skills|commands|documentation' },
                   },
                   required: ['id'],
                 },

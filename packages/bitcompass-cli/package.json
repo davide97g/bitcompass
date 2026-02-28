@@ -1,6 +1,6 @@
 {
   "name": "bitcompass",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "BitCompass CLI - rules, solutions, and MCP server",
   "type": "module",
   "bin": {

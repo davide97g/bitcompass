@@ -1,11 +1,20 @@
 import { existsSync, mkdirSync, symlinkSync, unlinkSync, writeFileSync, lstatSync } from 'fs';
 import { join, relative, dirname } from 'path';
-import { homedir } from 'os';
 import { getRuleById } from '../api/client.js';
-import { getProjectConfig } from '../auth/project-config.js';
+import {
+  getProjectConfig,
+  getOutputDirForKind,
+  getGlobalOutputDirForKind,
+  KIND_SUBFOLDERS,
+} from '../auth/project-config.js';
 import { ruleFilename, solutionFilename, skillFilename, commandFilename } from './slug.js';
 import { ensureRuleCached } from './rule-cache.js';
-import { buildRuleMdcContent, buildMarkdownWithKind } from './mdc-format.js';
+import {
+  buildRuleMdcContent,
+  buildSkillContent,
+  buildCommandContent,
+  buildSolutionContent,
+} from './mdc-format.js';
 
 export interface PullRuleOptions {
   /** Install globally to ~/.cursor/rules/ for all projects */
@@ -31,17 +40,16 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
     throw new Error(`Rule or solution with ID ${id} not found.`);
   }
 
+  const config = getProjectConfig({ warnIfMissing: true });
   let outDir: string;
   if (options.outputPath) {
-    // Custom output path takes precedence
-    outDir = options.outputPath.startsWith('/') ? options.outputPath : join(process.cwd(), options.outputPath);
+    // Custom output path: treat as base, append kind subfolder
+    const base = options.outputPath.startsWith('/') ? options.outputPath : join(process.cwd(), options.outputPath);
+    outDir = join(base, KIND_SUBFOLDERS[rule.kind]);
   } else if (options.global) {
-    // Use global location: ~/.cursor/rules/
-    outDir = join(homedir(), '.cursor', 'rules');
+    outDir = getGlobalOutputDirForKind(rule.kind);
   } else {
-    // Use project config (default behavior)
-    const { outputPath } = getProjectConfig({ warnIfMissing: true });
-    outDir = join(process.cwd(), outputPath);
+    outDir = getOutputDirForKind(config, rule.kind);
   }
 
   mkdirSync(outDir, { recursive: true });
@@ -75,26 +83,31 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
     }
   }
 
-  if (useSymlink) {
-    // Create symbolic link to cached file
-    // Use relative path for portability
+  // Commands and solutions: always write plain .md (no frontmatter), never symlink
+  const useCopyForPlainMd = rule.kind === 'command' || rule.kind === 'solution';
+  const shouldSymlink = useSymlink && !useCopyForPlainMd;
+
+  if (shouldSymlink) {
     const relativePath = relative(dirname(filename), cachedPath);
     try {
       symlinkSync(relativePath, filename);
-    } catch (error: any) {
-      // Fallback to absolute path if relative fails (e.g., on Windows or cross-filesystem)
-      if (error.code === 'ENOENT' || error.code === 'EXDEV') {
+    } catch (error: unknown) {
+      const err = error as { code?: string };
+      if (err.code === 'ENOENT' || err.code === 'EXDEV') {
         symlinkSync(cachedPath, filename);
       } else {
         throw error;
       }
     }
   } else {
-    // Fallback: copy file content (rules as .mdc with full frontmatter, others as .md with kind in frontmatter for round-trip)
     const content =
       rule.kind === 'rule'
         ? buildRuleMdcContent(rule)
-        : buildMarkdownWithKind(rule);
+        : rule.kind === 'skill'
+          ? buildSkillContent(rule)
+          : rule.kind === 'command'
+            ? buildCommandContent(rule)
+            : buildSolutionContent(rule);
     writeFileSync(filename, content);
   }
 

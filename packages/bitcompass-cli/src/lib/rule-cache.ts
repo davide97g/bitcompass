@@ -3,7 +3,7 @@ import { join } from 'path';
 import { getConfigDir } from '../auth/config.js';
 import { getRuleById } from '../api/client.js';
 import { ruleFilename, solutionFilename, skillFilename, commandFilename } from './slug.js';
-import { buildRuleMdcContent, buildMarkdownWithKind } from './mdc-format.js';
+import { buildRuleMdcContent, buildMarkdownWithKind, buildSkillContent } from './mdc-format.js';
 import type { Rule } from '../types.js';
 
 /**
@@ -50,7 +50,9 @@ export const ensureRuleCached = async (id: string): Promise<string> => {
     const content =
       rule.kind === 'rule'
         ? buildRuleMdcContent(rule)
-        : buildMarkdownWithKind(rule);
+        : rule.kind === 'skill'
+          ? buildSkillContent(rule)
+          : buildMarkdownWithKind(rule);
     writeFileSync(cachedPath, content, 'utf-8');
   }
 

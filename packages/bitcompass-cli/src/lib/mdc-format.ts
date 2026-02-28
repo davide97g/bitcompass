@@ -1,5 +1,6 @@
 import type { Rule, RuleKind } from '../types.js';
 import { isValidRuleKind } from './share-types.js';
+import { titleToSlug } from './slug.js';
 
 const FRONTMATTER_DELIM = '---';
 
@@ -25,7 +26,7 @@ export const buildRuleMdcContent = (rule: Rule): string => {
 
 /**
  * Builds .md content for solution, skill, or command with frontmatter (kind, description)
- * so that bitcompass share can infer kind when re-pushing.
+ * so that bitcompass share can infer kind when re-pushing. Used for cache and round-trip.
  */
 export const buildMarkdownWithKind = (rule: Rule): string => {
   if (rule.kind === 'rule') {
@@ -51,6 +52,40 @@ export const buildMarkdownWithKind = (rule: Rule): string => {
     lines.push('');
   }
   return lines.join('\n');
+};
+
+/**
+ * Builds skill .md content for .cursor/skills: YAML frontmatter (name, description) then body.
+ * Matches create-skill SKILL.md format (name and description only, no alwaysApply/globs).
+ */
+export const buildSkillContent = (rule: Rule): string => {
+  const name = titleToSlug(rule.title) || rule.id;
+  const lines: string[] = [FRONTMATTER_DELIM];
+  lines.push(`name: ${name}`);
+  lines.push(`description: ${escapeYamlValue(rule.description ?? '')}`);
+  lines.push(FRONTMATTER_DELIM);
+  lines.push('');
+  lines.push(rule.body.trimEnd());
+  if (!rule.body.endsWith('\n')) {
+    lines.push('');
+  }
+  return lines.join('\n');
+};
+
+/**
+ * Builds command .md content for .cursor/commands: plain markdown, no frontmatter.
+ */
+export const buildCommandContent = (rule: Rule): string => {
+  const body = rule.body.trimEnd();
+  return body ? (body.endsWith('\n') ? body : body + '\n') : '\n';
+};
+
+/**
+ * Builds solution .md content for .cursor/documentation: plain markdown, no frontmatter.
+ */
+export const buildSolutionContent = (rule: Rule): string => {
+  const body = rule.body.trimEnd();
+  return body ? (body.endsWith('\n') ? body : body + '\n') : '\n';
 };
 
 const escapeYamlValue = (s: string): string => {

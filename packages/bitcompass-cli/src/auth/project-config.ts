@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import type { EditorProvider, ProjectConfig } from '../types.js';
+import { homedir } from 'os';
+import { join, dirname } from 'path';
+import type { EditorProvider, ProjectConfig, RuleKind } from '../types.js';
 
 const PROJECT_CONFIG_DIR = '.bitcompass';
 const PROJECT_CONFIG_FILE = 'config.json';
@@ -10,6 +11,14 @@ const EDITOR_DEFAULT_PATHS: Record<EditorProvider, string> = {
   cursor: '.cursor/rules',
   antigrativity: '.antigrativity/rules',
   claudecode: '.claude/rules',
+};
+
+/** Subfolder name per kind under the editor base path (e.g. .cursor/skills, .cursor/commands). */
+export const KIND_SUBFOLDERS: Record<RuleKind, string> = {
+  rule: 'rules',
+  skill: 'skills',
+  command: 'commands',
+  solution: 'documentation',
 };
 
 const DEFAULT_EDITOR: EditorProvider = 'cursor';
@@ -70,6 +79,25 @@ export const getProjectConfig = (options?: { warnIfMissing?: boolean }): Project
     );
   }
   return { editor: DEFAULT_EDITOR, outputPath: DEFAULT_OUTPUT_PATH };
+};
+
+/**
+ * Returns the project output directory for a given kind (rules, skills, commands, documentation).
+ * Derives base from config.outputPath (e.g. .cursor/rules → base .cursor) and appends the kind subfolder.
+ */
+export const getOutputDirForKind = (config: ProjectConfig, kind: RuleKind): string => {
+  const cwd = process.cwd();
+  const basePath = dirname(config.outputPath);
+  const fullBase = basePath.startsWith('/') ? basePath : join(cwd, basePath);
+  return join(fullBase, KIND_SUBFOLDERS[kind]);
+};
+
+/**
+ * Returns the global (user home) output directory for a kind (e.g. ~/.cursor/skills).
+ * Used when pull is run with --global.
+ */
+export const getGlobalOutputDirForKind = (kind: RuleKind): string => {
+  return join(homedir(), '.cursor', KIND_SUBFOLDERS[kind]);
 };
 
 export { EDITOR_DEFAULT_PATHS, DEFAULT_EDITOR, DEFAULT_OUTPUT_PATH };

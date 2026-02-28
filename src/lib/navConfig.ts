@@ -1,16 +1,11 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  AlertCircle,
   BookMarked,
   BookOpen,
-  FolderKanban,
   History,
   Layers,
-  Lightbulb,
   Plug,
   Terminal,
-  Users,
-  Workflow,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -41,17 +36,18 @@ export const navGroups: NavGroup[] = [
       { to: '/mcp', icon: Plug, label: 'MCP' },
     ],
   },
-  {
-    label: 'Mocked stuff',
-    mocked: true,
-    items: [
-      { to: '/topics', icon: Lightbulb, label: 'Topics' },
-      { to: '/problems', icon: AlertCircle, label: 'Problems' },
-      { to: '/projects', icon: FolderKanban, label: 'Projects' },
-      { to: '/people', icon: Users, label: 'People' },
-      { to: '/automations', icon: Workflow, label: 'Automations' },
-    ],
-  },
+  // Mocked sections – commented out until backed by real data
+  // {
+  //   label: 'Mocked stuff',
+  //   mocked: true,
+  //   items: [
+  //     { to: '/topics', icon: Lightbulb, label: 'Topics' },
+  //     { to: '/problems', icon: AlertCircle, label: 'Problems' },
+  //     { to: '/projects', icon: FolderKanban, label: 'Projects' },
+  //     { to: '/people', icon: Users, label: 'People' },
+  //     { to: '/automations', icon: Workflow, label: 'Automations' },
+  //   ],
+  // },
   {
     label: 'Help',
     items: [

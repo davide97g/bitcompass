@@ -5,11 +5,15 @@ import { titleToSlug } from './slug.js';
 const FRONTMATTER_DELIM = '---';
 
 /**
- * Builds Cursor .mdc content for a rule: YAML frontmatter (description, globs, alwaysApply, kind) then body.
+ * Builds Cursor .mdc content for a rule: YAML frontmatter (id, version, description, globs, alwaysApply, kind) then body.
  */
 export const buildRuleMdcContent = (rule: Rule): string => {
   const lines: string[] = [FRONTMATTER_DELIM];
   lines.push(`kind: ${rule.kind}`);
+  lines.push(`id: ${rule.id}`);
+  if (rule.version != null && String(rule.version).trim() !== '') {
+    lines.push(`version: ${escapeYamlValue(String(rule.version).trim())}`);
+  }
   lines.push(`description: ${escapeYamlValue(rule.description ?? '')}`);
   if (rule.globs != null && String(rule.globs).trim() !== '') {
     lines.push(`globs: ${escapeYamlValue(String(rule.globs).trim())}`);
@@ -25,7 +29,7 @@ export const buildRuleMdcContent = (rule: Rule): string => {
 };
 
 /**
- * Builds .md content for solution, skill, or command with frontmatter (kind, description)
+ * Builds .md content for solution, skill, or command with frontmatter (kind, id, version, description)
  * so that bitcompass share can infer kind when re-pushing. Used for cache and round-trip.
  */
 export const buildMarkdownWithKind = (rule: Rule): string => {
@@ -34,6 +38,10 @@ export const buildMarkdownWithKind = (rule: Rule): string => {
   }
   const lines: string[] = [FRONTMATTER_DELIM];
   lines.push(`kind: ${rule.kind}`);
+  lines.push(`id: ${rule.id}`);
+  if (rule.version != null && String(rule.version).trim() !== '') {
+    lines.push(`version: ${escapeYamlValue(String(rule.version).trim())}`);
+  }
   lines.push(`description: ${escapeYamlValue(rule.description ?? '')}`);
   lines.push(FRONTMATTER_DELIM);
   lines.push('');
@@ -55,13 +63,17 @@ export const buildMarkdownWithKind = (rule: Rule): string => {
 };
 
 /**
- * Builds skill .md content for .cursor/skills: YAML frontmatter (name, description) then body.
+ * Builds skill .md content for .cursor/skills: YAML frontmatter (name, id, version, description) then body.
  * Matches create-skill SKILL.md format (name and description only, no alwaysApply/globs).
  */
 export const buildSkillContent = (rule: Rule): string => {
   const name = titleToSlug(rule.title) || rule.id;
   const lines: string[] = [FRONTMATTER_DELIM];
   lines.push(`name: ${name}`);
+  lines.push(`id: ${rule.id}`);
+  if (rule.version != null && String(rule.version).trim() !== '') {
+    lines.push(`version: ${escapeYamlValue(String(rule.version).trim())}`);
+  }
   lines.push(`description: ${escapeYamlValue(rule.description ?? '')}`);
   lines.push(FRONTMATTER_DELIM);
   lines.push('');
@@ -73,19 +85,37 @@ export const buildSkillContent = (rule: Rule): string => {
 };
 
 /**
- * Builds command .md content for .cursor/commands: plain markdown, no frontmatter.
+ * Builds command .md content for .cursor/commands: minimal frontmatter (id, version, kind) then body.
  */
 export const buildCommandContent = (rule: Rule): string => {
+  const lines: string[] = [FRONTMATTER_DELIM];
+  lines.push(`kind: command`);
+  lines.push(`id: ${rule.id}`);
+  if (rule.version != null && String(rule.version).trim() !== '') {
+    lines.push(`version: ${escapeYamlValue(String(rule.version).trim())}`);
+  }
+  lines.push(FRONTMATTER_DELIM);
+  lines.push('');
   const body = rule.body.trimEnd();
-  return body ? (body.endsWith('\n') ? body : body + '\n') : '\n';
+  lines.push(body ? (body.endsWith('\n') ? body : body + '\n') : '\n');
+  return lines.join('\n');
 };
 
 /**
- * Builds solution .md content for .cursor/documentation: plain markdown, no frontmatter.
+ * Builds solution .md content for .cursor/documentation: minimal frontmatter (id, version, kind) then body.
  */
 export const buildSolutionContent = (rule: Rule): string => {
+  const lines: string[] = [FRONTMATTER_DELIM];
+  lines.push(`kind: solution`);
+  lines.push(`id: ${rule.id}`);
+  if (rule.version != null && String(rule.version).trim() !== '') {
+    lines.push(`version: ${escapeYamlValue(String(rule.version).trim())}`);
+  }
+  lines.push(FRONTMATTER_DELIM);
+  lines.push('');
   const body = rule.body.trimEnd();
-  return body ? (body.endsWith('\n') ? body : body + '\n') : '\n';
+  lines.push(body ? (body.endsWith('\n') ? body : body + '\n') : '\n');
+  return lines.join('\n');
 };
 
 const escapeYamlValue = (s: string): string => {
@@ -98,6 +128,8 @@ export interface ParsedMdcFrontmatter {
   globs?: string;
   alwaysApply: boolean;
   kind?: RuleKind;
+  id?: string;
+  version?: string | null;
   body: string;
 }
 
@@ -122,6 +154,8 @@ export const parseRuleMdcContent = (raw: string): ParsedMdcFrontmatter | null =>
   let globs: string | undefined;
   let alwaysApply = false;
   let kind: RuleKind | undefined;
+  let id: string | undefined;
+  let version: string | null | undefined;
 
   for (const line of frontmatterBlock.split('\n')) {
     const colonIdx = line.indexOf(':');
@@ -144,10 +178,16 @@ export const parseRuleMdcContent = (raw: string): ParsedMdcFrontmatter | null =>
       case 'kind':
         if (isValidRuleKind(value)) kind = value;
         break;
+      case 'id':
+        id = value;
+        break;
+      case 'version':
+        version = value;
+        break;
     }
   }
 
-  return { description, globs, alwaysApply, kind, body };
+  return { description, globs, alwaysApply, kind, id, version, body };
 };
 
 /**

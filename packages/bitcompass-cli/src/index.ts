@@ -19,6 +19,7 @@ import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './comm
 import { runSharePush } from './commands/share.js';
 import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
 import { runSolutionsList, runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
+import { runUpdate } from './commands/update.js';
 import { runWhoami } from './commands/whoami.js';
 
 // Disable chalk colors when NO_COLOR is set or --no-color is passed (must run before any command)
@@ -88,6 +89,39 @@ program
   .command('init')
   .description('Configure project: editor/AI provider and output folder for rules/docs/commands')
   .action(() => runInit().catch(handleErr));
+
+program
+  .command('update')
+  .description('Check for and apply updates to installed rules, skills, commands, and solutions')
+  .option('--check', 'List available updates only; do not apply')
+  .option('--all', 'Select all updatable items')
+  .option('-y, --yes', 'Apply updates without confirmation (use with --all for non-interactive)')
+  .option('--global', 'Operate on global installs (~/.cursor/...) instead of project')
+  .option('--kind <kind>', 'Limit to one kind: rule, skill, command, or solution')
+  .addHelpText(
+    'after',
+    `
+Examples:
+  bitcompass update
+  bitcompass update --check
+  bitcompass update --all -y
+  bitcompass update --global --kind rule
+`
+  )
+  .action((opts?: { check?: boolean; all?: boolean; yes?: boolean; global?: boolean; kind?: string }) => {
+    const kind = opts?.kind as 'rule' | 'skill' | 'command' | 'solution' | undefined;
+    if (opts?.kind && kind !== 'rule' && kind !== 'skill' && kind !== 'command' && kind !== 'solution') {
+      console.error(chalk.red('--kind must be one of: rule, skill, command, solution'));
+      process.exit(1);
+    }
+    return runUpdate({
+      check: opts?.check,
+      all: opts?.all,
+      yes: opts?.yes,
+      global: opts?.global,
+      kind,
+    }).catch(handleErr);
+  });
 
 program
   .command('log [dates...]')

@@ -1,6 +1,8 @@
+import { execSync } from 'child_process';
 import chalk from 'chalk';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import inquirer from 'inquirer';
+import { homedir } from 'os';
 import { join } from 'path';
 import {
     getEditorDefaultPath,
@@ -26,6 +28,21 @@ const EDITOR_CHOICES: { name: string; value: EditorProvider }[] = [
 
 const GITIGNORE_ENTRY = '.bitcompass';
 
+const GLOBAL_GITIGNORE_AI_BLOCK = `##################################
+# AI editors / assistants
+##################################
+.cursor/
+.cursor-cache/
+.cursor-rules/
+.cursor.json
+
+.claude/
+
+# Add other AI tool folders as needed, e.g.:
+# .codex/
+# .windsurf/
+`;
+
 const ensureGitignoreEntry = (): void => {
   const gitignorePath = join(process.cwd(), '.gitignore');
   if (!existsSync(gitignorePath)) {
@@ -41,11 +58,56 @@ const ensureGitignoreEntry = (): void => {
   writeFileSync(gitignorePath, `${trimmed}${suffix}\n${GITIGNORE_ENTRY}\n`, 'utf-8');
 };
 
+/** One-time setup: create/update ~/.gitignore_global with AI patterns and set git config. Returns true if file was written (and optionally config set). */
+const setupGlobalGitignore = (): boolean => {
+  const globalPath = join(homedir(), '.gitignore_global');
+  try {
+    if (!existsSync(globalPath)) {
+      writeFileSync(globalPath, GLOBAL_GITIGNORE_AI_BLOCK + '\n', 'utf-8');
+    } else {
+      const content = readFileSync(globalPath, 'utf-8');
+      const hasAiSection =
+        content.includes('.cursor/') || content.includes('# AI editors / assistants');
+      if (!hasAiSection) {
+        const trimmed = content.trimEnd();
+        const suffix = trimmed ? '\n\n' : '';
+        writeFileSync(
+          globalPath,
+          `${trimmed}${suffix}${GLOBAL_GITIGNORE_AI_BLOCK}\n`,
+          'utf-8'
+        );
+      }
+    }
+  } catch (err) {
+    console.error(
+      chalk.red('Could not write ~/.gitignore_global:'),
+      err instanceof Error ? err.message : err
+    );
+    return false;
+  }
+  try {
+    execSync(`git config --global core.excludesFile ${JSON.stringify(globalPath)}`, {
+      encoding: 'utf-8',
+    });
+  } catch {
+    console.log(
+      chalk.dim(
+        'Could not set global git config. Run manually: git config --global core.excludesFile ~/.gitignore_global'
+      )
+    );
+  }
+  return true;
+};
+
 export const runInit = async (): Promise<void> => {
   await printBanner();
 
   const existing = loadProjectConfig();
-  const answers = await inquirer.prompt<{ editor: EditorProvider; outputPath: string }>([
+  const answers = await inquirer.prompt<{
+    editor: EditorProvider;
+    outputPath: string;
+    setupGlobalGitignore: boolean;
+  }>([
     {
       name: 'editor',
       message: 'Editor / AI provider',
@@ -58,6 +120,12 @@ export const runInit = async (): Promise<void> => {
       message: 'Folder for rules/docs/commands output',
       type: 'input',
       default: ({ editor }: { editor: EditorProvider }) => getEditorDefaultPath(editor),
+    },
+    {
+      name: 'setupGlobalGitignore',
+      message: 'Set up global gitignore for AI editor folders? (one-time: ~/.gitignore_global)',
+      type: 'confirm',
+      default: false,
     },
   ]);
 
@@ -254,12 +322,21 @@ Use these commands when you need to interact with BitCompass from the terminal:
 
   writeFileSync(rulePath, ruleContent, 'utf-8');
 
+  const globalGitignoreOk =
+    answers.setupGlobalGitignore && setupGlobalGitignore();
+
   console.log(gradient('Project configured.', cyan, magenta));
   console.log(INDENT + chalk.bold('Config:'), join(getProjectConfigDir(), 'config.json'));
   console.log(INDENT + chalk.bold('Editor:'), config.editor);
   console.log(INDENT + chalk.bold('Output path:'), config.outputPath);
   console.log(INDENT + chalk.bold('Folders:'), 'rules, skills, commands, documentation');
   console.log(INDENT + chalk.bold('.gitignore:'), GITIGNORE_ENTRY, 'added or already present.');
+  if (globalGitignoreOk) {
+    console.log(
+      INDENT + chalk.bold('Global gitignore:'),
+      '~/.gitignore_global configured (AI editor folders).'
+    );
+  }
   console.log(INDENT + chalk.bold('Usage rule:'), rulePath);
 
   const email = getCurrentUserEmail();

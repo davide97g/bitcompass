@@ -25,6 +25,28 @@ export const useProfilesSearch = (query: string) => {
   });
 };
 
+const fetchProfileById = async (id: string): Promise<Profile | null> => {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+  return data as Profile;
+};
+
+export const useProfile = (id: string | undefined) => {
+  return useQuery({
+    queryKey: ['profile', id],
+    queryFn: () => (id ? fetchProfileById(id) : Promise.resolve(null)),
+    enabled: Boolean(supabase && id),
+  });
+};
+
 const fetchProfilesByIds = async (ids: string[]): Promise<Profile[]> => {
   if (!supabase || ids.length === 0) return [];
   const { data, error } = await supabase

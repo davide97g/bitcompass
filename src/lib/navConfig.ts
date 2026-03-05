@@ -6,6 +6,7 @@ import {
   Layers,
   Plug,
   Terminal,
+  Users,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -26,6 +27,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { to: '/rules', icon: BookMarked, label: 'Rules & solutions' },
       { to: '/compass-projects', icon: Layers, label: 'Compass projects' },
+      { to: '/users', icon: Users, label: 'Users' },
       { to: '/logs', icon: History, label: 'Activity logs' },
     ],
   },

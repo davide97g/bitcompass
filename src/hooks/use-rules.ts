@@ -22,13 +22,15 @@ export interface FetchRulesPaginatedOptions {
   projectId?: string | null;
   /** Filter by visibility ('private' or 'public'). Omit for all. */
   visibility?: RuleVisibility;
+  /** Filter by author user_id. */
+  userId?: string;
 }
 
 const fetchRulesPaginated = async (
   options: FetchRulesPaginatedOptions
 ): Promise<{ data: Rule[]; total: number }> => {
   if (!supabase) return { data: [], total: 0 };
-  const { kind, limit, offset, search, projectId, visibility } = options;
+  const { kind, limit, offset, search, projectId, visibility, userId } = options;
   let query = supabase
     .from(TABLE)
     .select('*', { count: 'exact' })
@@ -39,6 +41,9 @@ const fetchRulesPaginated = async (
   }
   if (visibility) {
     query = query.eq('visibility', visibility);
+  }
+  if (userId) {
+    query = query.eq('user_id', userId);
   }
   if (search?.trim()) {
     const q = search.trim();
@@ -92,6 +97,7 @@ export interface UseRulesPaginatedParams {
   pageSize?: number;
   projectId?: string | null;
   visibility?: RuleVisibility;
+  userId?: string;
 }
 
 export const useRulesPaginated = ({
@@ -101,10 +107,11 @@ export const useRulesPaginated = ({
   pageSize = RULES_PAGE_SIZE,
   projectId,
   visibility,
+  userId,
 }: UseRulesPaginatedParams) => {
   const offset = (page - 1) * pageSize;
   return useQuery({
-    queryKey: ['rules-paginated', kind, page, search.trim(), pageSize, projectId ?? 'all', visibility ?? 'all'],
+    queryKey: ['rules-paginated', kind, page, search.trim(), pageSize, projectId ?? 'all', visibility ?? 'all', userId ?? 'all'],
     queryFn: () =>
       fetchRulesPaginated({
         kind,
@@ -113,6 +120,7 @@ export const useRulesPaginated = ({
         search: search.trim() || undefined,
         projectId,
         visibility,
+        userId,
       }),
     enabled: Boolean(supabase),
   });

@@ -26,6 +26,8 @@ import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import RuleDetailPage from "./pages/RuleDetailPage";
 import RulesPage from "./pages/RulesPage";
+import UserDetailPage from "./pages/UserDetailPage";
+import UsersPage from "./pages/UsersPage";
 import TopicDetailPage from "./pages/TopicDetailPage";
 import TopicsPage from "./pages/TopicsPage";
 import WelcomePage from "./pages/WelcomePage";
@@ -73,6 +75,8 @@ const App = () => (
             <Route path="/automations/:id" element={<AutomationDetailPage />} />
             <Route path="/rules" element={<RulesPage />} />
             <Route path="/rules/:id" element={<RuleDetailPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/users/:id" element={<UserDetailPage />} />
             <Route path="/compass-projects" element={<CompassProjectsPage />} />
             <Route path="/compass-projects/:id" element={<CompassProjectDetailPage />} />
             <Route path="/logs" element={<ActivityLogsPage />} />

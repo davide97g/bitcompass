@@ -287,7 +287,11 @@ export default function RuleDetailPage() {
             )}
             <div className="flex items-center gap-1.5 text-muted-foreground dark:text-zinc-400">
               <User className="h-4 w-4 shrink-0" aria-hidden />
-              <span>Author: <span className="text-foreground">{authorName}</span></span>
+              <span>Author:{' '}
+                <Link to={`/users/${rule.user_id}`} className="text-foreground hover:underline">
+                  {authorName}
+                </Link>
+              </span>
             </div>
             {isOwner ? (
               <label className="inline-flex items-center gap-2 cursor-pointer select-none">

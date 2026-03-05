@@ -615,9 +615,23 @@ export default function RulesPage() {
                   <div className="mt-3 space-y-2">
                     {/* Author and Version */}
                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground dark:text-zinc-400">
-                      <div className="flex items-center gap-1.5">
+                      <div
+                        className="flex items-center gap-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                      >
                         <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                        <span>{getAuthorName(rule)}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            navigate(`/users/${rule.user_id}`);
+                          }}
+                          className="hover:underline bg-transparent border-0 p-0 text-inherit font-inherit cursor-pointer"
+                        >
+                          {getAuthorName(rule)}
+                        </button>
                       </div>
                       {rule.version && (
                         <div className="flex items-center gap-1.5">

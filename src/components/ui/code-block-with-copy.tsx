@@ -11,7 +11,7 @@ interface CodeBlockWithCopyProps {
 }
 
 /** Constrained width so copy CTA is easy to find; aligned with CommandBlock (min wide enough to not feel short) */
-const CODE_BLOCK_WIDTH = 'w-fit min-w-[32rem] max-w-2xl';
+const CODE_BLOCK_WIDTH = 'w-full';
 
 const copyToClipboard = async (text: string): Promise<boolean> => {
   try {

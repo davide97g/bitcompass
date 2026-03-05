@@ -158,10 +158,15 @@ configCmd.command('get <key>').description('Get a config value').action((key: st
 const projectCmd = program.command('project').description('Compass project for this folder (see bitcompass init)');
 projectCmd
   .command('pull')
-  .description('Pull all rules, skills, commands, and solutions from the Compass project configured for this folder')
+  .description(
+    'Pull selected (or all with --all) rules, skills, commands, and solutions from the Compass project'
+  )
   .option('-g, --global', 'Install globally to ~/.cursor/...')
   .option('--copy', 'Copy files instead of symbolic links')
-  .action((opts?: { global?: boolean; copy?: boolean }) => runProjectPull(opts).catch(handleErr));
+  .option('-a, --all', 'Pull all items without prompting (non-interactive)')
+  .action((opts?: { global?: boolean; copy?: boolean; all?: boolean }) =>
+    runProjectPull(opts).catch(handleErr)
+  );
 projectCmd
   .command('sync')
   .description('Sync local rules/skills/commands/solutions with the configured Compass project (pull new, update changed, optionally prune removed)')

@@ -1,25 +1,29 @@
 import chalk from 'chalk';
 import { unlinkSync } from 'fs';
-import { loadCredentials } from '../auth/config.js';
-import { getProjectConfig } from '../auth/project-config.js';
+import inquirer from 'inquirer';
 import {
   fetchRules,
   getCompassProjectById,
 } from '../api/client.js';
-import { pullRuleToFile } from '../lib/rule-file-ops.js';
+import { loadCredentials } from '../auth/config.js';
+import { getProjectConfig } from '../auth/project-config.js';
 import { scanInstalled } from '../lib/installed-scan.js';
-import { getGroupedUpdatable, flattenUpdatable } from '../lib/update-check.js';
+import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import { createSpinner } from '../lib/spinner.js';
-import type { RuleKind } from '../types.js';
-
-const KINDS: RuleKind[] = ['rule', 'solution', 'skill', 'command'];
+import { flattenUpdatable, getGroupedUpdatable } from '../lib/update-check.js';
+import type { Rule, RuleKind } from '../types.js';
 
 const NO_PROJECT_MSG =
   'Nessun Compass project configurato. Esegui bitcompass init e scegli un progetto.';
 
+const kindLabel = (k: RuleKind): string =>
+  k === 'rule' ? 'rule' : k === 'solution' ? 'solution' : k === 'skill' ? 'skill' : 'command';
+
 export const runProjectPull = async (options?: {
   global?: boolean;
   copy?: boolean;
+  /** When true, skip multiselect and pull all (non-interactive). */
+  all?: boolean;
 }): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
@@ -33,25 +37,45 @@ export const runProjectPull = async (options?: {
   }
 
   const spinner = createSpinner('Loading project rules…');
-  const allRules: { id: string; kind: RuleKind }[] = [];
-  for (const kind of KINDS) {
-    const list = await fetchRules(kind, { projectId });
-    for (const r of list) {
-      allRules.push({ id: r.id, kind: r.kind });
-    }
-  }
+  const projectRules: Rule[] = await fetchRules(undefined, { projectId });
   spinner.stop();
 
-  if (allRules.length === 0) {
+  if (projectRules.length === 0) {
     console.log(chalk.yellow('No rules, skills, commands, or solutions in this project.'));
     return;
   }
 
+  let toPull: Rule[];
+  if (options?.all) {
+    toPull = projectRules;
+  } else {
+    const choices = projectRules.map((r) => ({
+      name: `[${kindLabel(r.kind)}] ${r.title}`,
+      value: r.id,
+      short: r.title,
+    }));
+    const { selectedIds } = await inquirer.prompt<{ selectedIds: string[] }>([
+      {
+        name: 'selectedIds',
+        message: 'Select items to pull (space to toggle, enter to confirm)',
+        type: 'checkbox',
+        choices,
+        pageSize: Math.min(15, Math.max(5, choices.length)),
+      },
+    ]);
+    if (selectedIds.length === 0) {
+      console.log(chalk.dim('Nothing selected. Exiting.'));
+      return;
+    }
+    const idSet = new Set(selectedIds);
+    toPull = projectRules.filter((r) => idSet.has(r.id));
+  }
+
   const useSymlink = !options?.copy;
-  for (const { id } of allRules) {
-    const s = createSpinner(`Pulling ${id}…`);
+  for (const rule of toPull) {
+    const s = createSpinner(`Pulling ${rule.title}…`);
     try {
-      await pullRuleToFile(id, {
+      await pullRuleToFile(rule.id, {
         global: options?.global,
         useSymlink,
       });
@@ -61,7 +85,7 @@ export const runProjectPull = async (options?: {
       console.error(chalk.red(e instanceof Error ? e.message : String(e)));
     }
   }
-  console.log(chalk.green(`Pulled ${allRules.length} item(s) from the Compass project.`));
+  console.log(chalk.green(`Pulled ${toPull.length} item(s) from the Compass project.`));
 };
 
 export const runProjectSync = async (options?: {

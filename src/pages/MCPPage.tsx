@@ -22,6 +22,17 @@ const MCP_INSTALL_CONFIG_BASE64 =
 
 const ADD_TO_CURSOR_DEEPLINK = `cursor://anysphere.cursor-deeplink/mcp/install?name=bitcompass&config=${encodeURIComponent(MCP_INSTALL_CONFIG_BASE64)}`;
 
+const CLAUDE_MCP_CONFIG = `{
+  "mcpServers": {
+    "bitcompass": {
+      "command": "bitcompass",
+      "args": ["mcp", "start"]
+    }
+  }
+}`;
+
+const CLAUDE_CODE_COMMAND = 'claude mcp add bitcompass -- bitcompass mcp start';
+
 const CURSOR_MCP_DOCS_URL = 'https://cursor.com/docs/context/mcp';
 
 const CARD_RECAP = 'border-border dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-sm';
@@ -69,11 +80,30 @@ export default function MCPPage() {
     }
   };
 
+  const handleAddToClaude = async () => {
+    const ok = await copyToClipboard(CLAUDE_MCP_CONFIG);
+    if (ok) {
+      toast({
+        title: 'Claude config copied',
+        description: 'Paste into ~/Library/Application Support/Claude/claude_desktop_config.json — or run: claude mcp add bitcompass -- bitcompass mcp start',
+      });
+    } else {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
+  };
+
+  const handleAddToClaudeKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      void handleAddToClaude();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="MCP Server"
-        description="Use BitCompass in Cursor or Antigrativity via Model Context Protocol (MCP). Search rules, publish solutions, and create activity logs directly from your AI editor."
+        description="Use BitCompass in Cursor, Claude, or Antigrativity via Model Context Protocol (MCP). Search rules, publish solutions, and create activity logs directly from your AI editor."
       >
         <div className="flex flex-wrap items-center gap-3">
           <Button
@@ -86,6 +116,18 @@ export default function MCPPage() {
           >
             <Plus className="w-4 h-4 shrink-0" />
             Add to Cursor
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void handleAddToClaude()}
+            onKeyDown={handleAddToClaudeKeyDown}
+            aria-label="Add BitCompass MCP to Claude"
+            tabIndex={0}
+            className="gap-2 bg-orange-600 hover:bg-orange-700 text-white border-0"
+          >
+            <Plus className="w-4 h-4 shrink-0" />
+            Add to Claude
           </Button>
           <Button
             type="button"
@@ -110,11 +152,15 @@ export default function MCPPage() {
             Add to your editor
           </p>
           <p className="text-xs text-muted-foreground dark:text-zinc-400">
-            Paste this configuration into your editor's MCP settings. For Cursor: Settings → Features → MCP → Edit config (or <code className="rounded bg-muted dark:bg-white/10 px-1 py-0.5 font-mono text-xs">~/.cursor/mcp.json</code>). For Antigrativity: Settings → MCP → Add Server. Run <code className="rounded bg-muted dark:bg-white/10 px-1 py-0.5 font-mono text-xs">bitcompass login</code> first, then restart the MCP server if you added it before logging in.
+            Paste this configuration into your editor's MCP settings. For Cursor: Settings → Features → MCP → Edit config (or <code className="rounded bg-muted dark:bg-white/10 px-1 py-0.5 font-mono text-xs">~/.cursor/mcp.json</code>). For Claude Desktop: paste into <code className="rounded bg-muted dark:bg-white/10 px-1 py-0.5 font-mono text-xs">~/Library/Application Support/Claude/claude_desktop_config.json</code>. For Claude Code: run <code className="rounded bg-muted dark:bg-white/10 px-1 py-0.5 font-mono text-xs">claude mcp add bitcompass -- bitcompass mcp start</code>. For Antigrativity: Settings → MCP → Add Server. Run <code className="rounded bg-muted dark:bg-white/10 px-1 py-0.5 font-mono text-xs">bitcompass login</code> first, then restart the MCP server if you added it before logging in.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Button type="button" onClick={handleAddToCursor} onKeyDown={handleAddToCursorKeyDown} aria-label="Add BitCompass MCP to Cursor (opens Cursor)" tabIndex={0}>
               Add to Cursor
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => void handleAddToClaude()} onKeyDown={handleAddToClaudeKeyDown} aria-label="Add BitCompass MCP to Claude" tabIndex={0} className="gap-2 bg-orange-600 hover:bg-orange-700 text-white border-0">
+              <Plus className="w-4 h-4 shrink-0" />
+              Add to Claude
             </Button>
             <Button type="button" variant="secondary" onClick={() => void handleAddToAntigrativity()} onKeyDown={handleAddToAntigrativityKeyDown} aria-label="Add BitCompass MCP to Antigrativity" tabIndex={0} className="gap-2 bg-violet-600 hover:bg-violet-700 text-white border-0">
               <Plus className="w-4 h-4 shrink-0" />

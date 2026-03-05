@@ -16,6 +16,7 @@ import { runLogin } from './commands/login.js';
 import { runLogout } from './commands/logout.js';
 import { runMcpStart, runMcpStatus } from './commands/mcp.js';
 import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './commands/rules.js';
+import { runGroupList, runGroupPull, runGroupSync } from './commands/group.js';
 import { runProjectList, runProjectPull, runProjectSync } from './commands/project.js';
 import { runSharePush } from './commands/share.js';
 import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
@@ -177,6 +178,30 @@ projectCmd
   .command('list')
   .description('Show the Compass project configured for this folder')
   .action(() => runProjectList().catch(handleErr));
+
+// group (knowledge groups: pull, sync, list)
+const groupCmd = program.command('group').description('Pull/sync rules by knowledge group');
+groupCmd
+  .command('pull <id>')
+  .description('Pull all rules in a group (and sub-groups)')
+  .option('-g, --global', 'Install globally to ~/.cursor/...')
+  .option('--copy', 'Copy files instead of symbolic links')
+  .option('-a, --all', 'Pull all items without prompting (non-interactive)')
+  .action((id: string, opts?: { global?: boolean; copy?: boolean; all?: boolean }) =>
+    runGroupPull(id, opts).catch(handleErr)
+  );
+groupCmd
+  .command('sync <id>')
+  .description('Sync local rules with a group (pull new, optionally prune)')
+  .option('--prune', 'Remove local files that are no longer in the group')
+  .option('-g, --global', 'Operate on global installs')
+  .action((id: string, opts?: { prune?: boolean; global?: boolean }) =>
+    runGroupSync(id, opts).catch(handleErr)
+  );
+groupCmd
+  .command('list')
+  .description('List available groups')
+  .action(() => runGroupList().catch(handleErr));
 
 // rules
 const rules = program.command('rules').description('Manage rules');

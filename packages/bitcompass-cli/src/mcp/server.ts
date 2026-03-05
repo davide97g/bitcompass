@@ -11,6 +11,8 @@ import {
   deleteRule,
   fetchActivityLogs,
   getActivityLogById,
+  fetchRulesByGroupId,
+  getRuleGroupById,
 } from '../api/client.js';
 import { buildAndPushActivityLog } from '../commands/log.js';
 import { loadCredentials } from '../auth/config.js';
@@ -232,6 +234,20 @@ function createStdioServer(): {
                   type: 'object',
                   properties: {
                     id: { type: 'string', description: 'Activity log ID' },
+                  },
+                  required: ['id'],
+                },
+              },
+              {
+                name: 'pull-group',
+                description:
+                  'Use when the user wants to pull all rules from a knowledge group (and its sub-groups) into their project. Returns the list of pulled rule titles. Groups are curated collections of rules that can be synced in bulk.',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', description: 'Group ID to pull' },
+                    output_path: { type: 'string', description: 'Optional: custom base path for output' },
+                    global: { type: 'boolean', description: 'Install globally to ~/.cursor/...' },
                   },
                   required: ['id'],
                 },
@@ -574,6 +590,31 @@ Then collect: title, description, body (and optionally context, examples, techno
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to list activity logs.';
       return { error: msg };
+    }
+  });
+  handlers.set('pull-group', async (args: ToolArgs) => {
+    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
+    const id = args.id as string;
+    if (!id) return { error: 'id is required' };
+    const global = Boolean(args.global);
+    const outputPath = typeof args.output_path === 'string' ? args.output_path : undefined;
+    try {
+      const group = await getRuleGroupById(id);
+      if (!group) return { error: `Group with ID ${id} not found.` };
+      const rules = await fetchRulesByGroupId(id);
+      if (rules.length === 0) return { success: true, group_title: group.title, pulled: [], message: 'No rules in this group.' };
+      const pulled: string[] = [];
+      for (const rule of rules) {
+        try {
+          await pullRuleToFile(rule.id, { global, outputPath });
+          pulled.push(rule.title);
+        } catch {
+          // skip individual failures
+        }
+      }
+      return { success: true, group_title: group.title, pulled, total: rules.length };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : 'Failed to pull group.' };
     }
   });
   handlers.set('get-activity-log', async (args: ToolArgs) => {

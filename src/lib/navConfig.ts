@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   BookMarked,
   BookOpen,
+  FolderTree,
   History,
   Layers,
   Plug,
@@ -27,6 +28,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { to: '/rules', icon: BookMarked, label: 'Rules & solutions' },
       { to: '/compass-projects', icon: Layers, label: 'Compass projects' },
+      { to: '/groups', icon: FolderTree, label: 'Groups' },
       { to: '/users', icon: Users, label: 'Users' },
       { to: '/logs', icon: History, label: 'Activity logs' },
     ],

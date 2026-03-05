@@ -16,12 +16,18 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useRule, useUpdateRule, useDeleteRule } from '@/hooks/use-rules';
 import { useCompassProjects } from '@/hooks/use-compass-projects';
+import {
+  useRuleGroupsForRule,
+  useRuleGroups,
+  useAddRuleToGroup,
+  useRemoveRuleFromGroup,
+} from '@/hooks/use-rule-groups';
 import { useAuth } from '@/hooks/use-auth';
 import { useProfilesByIds } from '@/hooks/use-profiles';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import type { Rule, RuleKind, RuleVisibility } from '@/types/bitcompass';
-import { ArrowLeft, FileDown, Layers, Pencil, Trash2, User, Link2, Lock, Globe } from 'lucide-react';
+import { ArrowLeft, FileDown, FolderTree, Layers, Pencil, Trash2, User, Link2, Lock, Globe, X, Plus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,7 +103,13 @@ export default function RuleDetailPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: compassProjects = [] } = useCompassProjects();
+  const { data: ruleGroups = [] } = useRuleGroupsForRule(id);
+  const { data: allGroups = [] } = useRuleGroups();
+  const addToGroup = useAddRuleToGroup();
+  const removeFromGroup = useRemoveRuleFromGroup();
   const isOwner = Boolean(user && rule && user.id === rule.user_id);
+  const assignedGroupIds = new Set(ruleGroups.map((g) => g.id));
+  const availableGroups = allGroups.filter((g) => !assignedGroupIds.has(g.id));
   const authorUserId = rule?.user_id ? [rule.user_id] : [];
   const { data: authorProfiles = [] } = useProfilesByIds(authorUserId);
   const authorName = rule?.author_display_name
@@ -372,6 +384,58 @@ export default function RuleDetailPage() {
                       onClick={() => handleProjectChange(p.id)}
                     >
                       {p.title}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+
+          {/* Groups */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted-foreground dark:text-zinc-400 flex items-center gap-1.5">
+              <FolderTree className="h-4 w-4 shrink-0" aria-hidden />
+              Groups:
+            </span>
+            {ruleGroups.length === 0 && (
+              <span className="text-sm text-muted-foreground">None</span>
+            )}
+            {ruleGroups.map((g) => (
+              <Badge key={g.id} variant="outline" className="text-xs font-normal gap-1">
+                <Link to={`/groups/${g.id}`} className="hover:underline">
+                  {g.title}
+                </Link>
+                {isOwner && (
+                  <button
+                    type="button"
+                    className="ml-1 hover:text-destructive"
+                    onClick={() => {
+                      if (id) void removeFromGroup.mutateAsync({ groupId: g.id, ruleId: id });
+                    }}
+                    aria-label={`Remove from ${g.title}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </Badge>
+            ))}
+            {isOwner && !editing && availableGroups.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add to group
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
+                  {availableGroups.map((g) => (
+                    <DropdownMenuItem
+                      key={g.id}
+                      onClick={() => {
+                        if (id) void addToGroup.mutateAsync({ groupId: g.id, ruleId: id });
+                      }}
+                    >
+                      {g.title}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>

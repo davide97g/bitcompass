@@ -6,6 +6,7 @@ import type {
   ActivityLogInsert,
   CompassProject,
   Rule,
+  RuleGroup,
   RuleInsert,
   RuleKind,
   RuleVisibility,
@@ -252,4 +253,45 @@ export const getActivityLogById = async (id: string): Promise<ActivityLog | null
     throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
   }
   return data as ActivityLog;
+};
+
+export const getRuleGroupById = async (id: string): Promise<RuleGroup | null> => {
+  const client = getSupabaseClient();
+  if (!client) throw new Error(NOT_CONFIGURED_MSG);
+  const { data, error } = await client
+    .from('rule_groups')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
+  }
+  return data as RuleGroup;
+};
+
+export const fetchRuleGroups = async (): Promise<RuleGroup[]> => {
+  const client = getSupabaseClient();
+  if (!client) throw new Error(NOT_CONFIGURED_MSG);
+  const { data, error } = await client
+    .from('rule_groups')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
+  return (data ?? []) as RuleGroup[];
+};
+
+/**
+ * Fetches all rules in a group, recursively including sub-groups.
+ * Uses the `get_group_rule_ids` Postgres function for efficiency.
+ */
+export const fetchRulesByGroupId = async (groupId: string): Promise<Rule[]> => {
+  const client = getSupabaseClient();
+  if (!client) throw new Error(NOT_CONFIGURED_MSG);
+  const { data: ruleIds, error: rpcErr } = await client
+    .rpc('get_group_rule_ids', { root_group_id: groupId });
+  if (rpcErr) throw new Error(isAuthError(rpcErr) ? AUTH_REQUIRED_MSG : rpcErr.message);
+  const ids = ((ruleIds ?? []) as string[]);
+  if (ids.length === 0) return [];
+  return fetchRulesByIds(ids);
 };

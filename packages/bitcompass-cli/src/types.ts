@@ -73,6 +73,22 @@ export interface BitcompassConfig {
   supabaseAnonKey?: string;
 }
 
+export interface RuleGroup {
+  id: string;
+  title: string;
+  description: string;
+  parent_id: string | null;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RuleGroupItem {
+  group_id: string;
+  rule_id: string;
+  added_at: string;
+}
+
 export type ActivityLogTimeFrame = 'day' | 'week' | 'month';
 
 export interface ActivityLogInsert {

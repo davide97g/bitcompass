@@ -173,6 +173,21 @@ export const getRuleById = async (id: string): Promise<Rule | null> => {
   return data as Rule;
 };
 
+/**
+ * Fetches rules by IDs only (e.g. IDs from local folder). Use this when the sink is the folder.
+ */
+export const fetchRulesByIds = async (ids: string[]): Promise<Rule[]> => {
+  if (ids.length === 0) return [];
+  const client = getSupabaseClientForRead();
+  if (!client) throw new Error(NOT_CONFIGURED_MSG);
+  const { data, error } = await client
+    .from('rules')
+    .select('*')
+    .in('id', ids);
+  if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
+  return (data ?? []) as Rule[];
+};
+
 export const insertRule = async (rule: RuleInsert): Promise<Rule> => {
   const client = getSupabaseClient();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);

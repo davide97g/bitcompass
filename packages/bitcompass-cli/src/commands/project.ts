@@ -109,7 +109,7 @@ export const runProjectSync = async (options?: {
   spinner.stop();
 
   const installed = scanInstalled({ global: options?.global });
-  const grouped = await getGroupedUpdatable(installed, { projectId });
+  const { grouped } = await getGroupedUpdatable(installed, { projectId });
   const updatable = flattenUpdatable(grouped);
   const updatableIds = new Set(updatable.map((u) => u.id));
 

@@ -3,7 +3,11 @@ import chalk from 'chalk';
 import { loadCredentials } from '../auth/config.js';
 import { getProjectConfig } from '../auth/project-config.js';
 import { scanInstalled } from '../lib/installed-scan.js';
-import { getGroupedUpdatable, flattenUpdatable, type UpdatableItem } from '../lib/update-check.js';
+import {
+  getGroupedUpdatable,
+  flattenUpdatable,
+  type UpdatableItem,
+} from '../lib/update-check.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import { createSpinner } from '../lib/spinner.js';
 
@@ -19,31 +23,32 @@ function formatVersion(v: string | null): string {
   return v != null && v !== '' ? v : '(none)';
 }
 
-function printGroupedTable(items: UpdatableItem[]): void {
+/** Single table: kind (rule/skill/command/solution), name, version as-is, version to-be. */
+function printUpdatesTable(items: UpdatableItem[]): void {
   if (items.length === 0) return;
-  const kind = items[0].kind;
-  const label = kind.charAt(0).toUpperCase() + kind.slice(1) + 's';
-  console.log(chalk.bold(label));
-  const titleWidth = Math.min(50, Math.max(20, ...items.map((i) => i.title.length)));
+  const kindWidth = 8;
+  const titleWidth = Math.min(40, Math.max(16, ...items.map((i) => i.title.length)));
+  const vWidth = 12;
   console.log(
     '  ' +
-      chalk.dim('Title'.padEnd(titleWidth)) +
+      chalk.dim('Kind'.padEnd(kindWidth)) +
       '  ' +
-      chalk.dim('Current') +
-      '  →  ' +
-      chalk.dim('Available')
+      chalk.dim('Name'.padEnd(titleWidth)) +
+      '  ' +
+      chalk.dim('As is'.padEnd(vWidth)) +
+      '  ' +
+      chalk.dim('To be')
   );
-  console.log('  ' + '-'.repeat(titleWidth + 20));
+  console.log('  ' + '-'.repeat(kindWidth + titleWidth + vWidth + 16));
   for (const u of items) {
-    const title = u.title.length > titleWidth ? u.title.slice(0, titleWidth - 1) + '…' : u.title.padEnd(titleWidth);
-    console.log(
-      '  ' +
-        chalk.cyan(title) +
-        '  ' +
-        formatVersion(u.currentVersion).padEnd(10) +
-        '  →  ' +
-        formatVersion(u.availableVersion)
-    );
+    const kind = u.kind.padEnd(kindWidth);
+    const title =
+      u.title.length > titleWidth
+        ? u.title.slice(0, titleWidth - 1) + '…'
+        : u.title.padEnd(titleWidth);
+    const asIs = formatVersion(u.currentVersion).padEnd(vWidth);
+    const toBe = formatVersion(u.availableVersion);
+    console.log('  ' + chalk.dim(kind) + '  ' + chalk.cyan(title) + '  ' + asIs + '  ' + toBe);
   }
   console.log('');
 }
@@ -60,21 +65,30 @@ export const runUpdate = async (options: UpdateOptions): Promise<void> => {
 
   const spinner = createSpinner('Checking for updates…');
   const installed = scanInstalled({ global: options.global });
-  const grouped = await getGroupedUpdatable(installed, { kind: options.kind });
+  const { grouped, upToDateCount, totalCount } = await getGroupedUpdatable(installed, {
+    kind: options.kind,
+  });
   spinner.stop();
 
-  const allUpdatable = flattenUpdatable(grouped);
-  if (allUpdatable.length === 0) {
-    console.log(chalk.green('No updates available.'));
+  const toUpdateCount = flattenUpdatable(grouped).length;
+  if (totalCount === 0) {
+    console.log(chalk.dim('No BitCompass items in folder.'));
     return;
   }
+  const recap =
+    toUpdateCount === 0
+      ? chalk.green(`All ${totalCount} up to date.`)
+      : chalk.cyan(
+          `${upToDateCount} up to date, ${toUpdateCount} to be updated.`
+        );
+  console.log(recap);
 
+  if (toUpdateCount === 0) return;
+
+  const allUpdatable = flattenUpdatable(grouped);
   if (options.check) {
-    console.log(chalk.cyan('Available updates:\n'));
-    if (grouped.rules.length) printGroupedTable(grouped.rules);
-    if (grouped.skills.length) printGroupedTable(grouped.skills);
-    if (grouped.commands.length) printGroupedTable(grouped.commands);
-    if (grouped.solutions.length) printGroupedTable(grouped.solutions);
+    console.log(chalk.cyan('Available updates (version as is → to be):\n'));
+    printUpdatesTable(allUpdatable);
     return;
   }
 

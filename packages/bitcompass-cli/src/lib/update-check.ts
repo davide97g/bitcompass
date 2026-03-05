@@ -1,4 +1,4 @@
-import { fetchRules } from '../api/client.js';
+import { fetchRulesByIds } from '../api/client.js';
 import type { Rule, RuleKind } from '../types.js';
 import type { InstalledItem } from './installed-scan.js';
 
@@ -16,6 +16,15 @@ export interface GroupedUpdatable {
   skills: UpdatableItem[];
   commands: UpdatableItem[];
   solutions: UpdatableItem[];
+}
+
+export interface UpdateCheckResult {
+  /** Items that have a newer version available (only differences). */
+  grouped: GroupedUpdatable;
+  /** Count of installed items that are already up to date. */
+  upToDateCount: number;
+  /** Total installed items considered (folder sink). */
+  totalCount: number;
 }
 
 /**
@@ -48,31 +57,33 @@ function isNewerByTime(remoteUpdatedAt: string, fileMtimeMs: number): boolean {
 }
 
 /**
- * Fetches remote rules and computes which installed items have updates.
- * Optionally filter by kind and/or by Compass project.
+ * Uses folder as sink: fetches from DB only the IDs present in installed list,
+ * then computes which are up to date vs need update. Returns only the differences (to update) plus counts.
  */
 export const getGroupedUpdatable = async (
   installed: InstalledItem[],
   options?: { kind?: RuleKind; projectId?: string | null }
-): Promise<GroupedUpdatable> => {
-  const remoteList = await fetchRules(options?.kind, {
-    projectId: options?.projectId,
-  });
+): Promise<UpdateCheckResult> => {
+  const kindFilter = options?.kind;
+  const installedFiltered = kindFilter
+    ? installed.filter((i) => i.kind === kindFilter)
+    : installed;
+  const ids = installedFiltered.map((i) => i.id);
+  const remoteList = await fetchRulesByIds(ids);
   const byId = new Map<string, Rule>();
   for (const r of remoteList) {
     byId.set(r.id, r);
   }
 
-  const result: GroupedUpdatable = {
+  const grouped: GroupedUpdatable = {
     rules: [],
     skills: [],
     commands: [],
     solutions: [],
   };
+  let upToDateCount = 0;
 
-  const kindFilter = options?.kind;
-  for (const item of installed) {
-    if (kindFilter && item.kind !== kindFilter) continue;
+  for (const item of installedFiltered) {
     const remote = byId.get(item.id);
     if (!remote) continue;
 
@@ -82,28 +93,34 @@ export const getGroupedUpdatable = async (
         ? isNewerByVersion(item.currentVersion, availableVersion)
         : isNewerByTime(remote.updated_at, item.mtimeMs);
 
-    if (!hasNewerVersion) continue;
-
-    const entry: UpdatableItem = {
-      id: item.id,
-      kind: item.kind,
-      title: remote.title,
-      currentVersion: item.currentVersion,
-      availableVersion,
-      path: item.path,
-    };
-    const key: keyof GroupedUpdatable =
-      item.kind === 'rule'
-        ? 'rules'
-        : item.kind === 'skill'
-          ? 'skills'
-          : item.kind === 'command'
-            ? 'commands'
-            : 'solutions';
-    result[key].push(entry);
+    if (hasNewerVersion) {
+      const entry: UpdatableItem = {
+        id: item.id,
+        kind: item.kind,
+        title: remote.title,
+        currentVersion: item.currentVersion,
+        availableVersion,
+        path: item.path,
+      };
+      const key: keyof GroupedUpdatable =
+        item.kind === 'rule'
+          ? 'rules'
+          : item.kind === 'skill'
+            ? 'skills'
+            : item.kind === 'command'
+              ? 'commands'
+              : 'solutions';
+      grouped[key].push(entry);
+    } else {
+      upToDateCount++;
+    }
   }
 
-  return result;
+  return {
+    grouped,
+    upToDateCount,
+    totalCount: installedFiltered.length,
+  };
 }
 
 /**

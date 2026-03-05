@@ -11,9 +11,12 @@ import {
     loadProjectConfig,
     saveProjectConfig,
 } from '../auth/project-config.js';
+import { fetchCompassProjectsForCurrentUser } from '../api/client.js';
 import { getCurrentUserEmail, isLoggedIn } from '../auth/config.js';
 import { gradient, printBanner } from '../lib/banner.js';
 import type { EditorProvider, ProjectConfig } from '../types.js';
+
+const COMPASS_PROJECT_NONE = '';
 
 const cyan: [number, number, number] = [0, 212, 255];
 const magenta: [number, number, number] = [255, 64, 200];
@@ -28,20 +31,42 @@ const EDITOR_CHOICES: { name: string; value: EditorProvider }[] = [
 
 const GITIGNORE_ENTRY = '.bitcompass';
 
-const GLOBAL_GITIGNORE_AI_BLOCK = `##################################
-# AI editors / assistants
-##################################
+type GlobalGitignoreChoice = 'all' | 'cursor' | 'claude' | 'bitcompass';
+
+const GLOBAL_GITIGNORE_CHECKBOX_CHOICES: { name: string; value: GlobalGitignoreChoice; checked: boolean }[] = [
+  { name: 'All (Cursor, Claude, BitCompass)', value: 'all', checked: true },
+  { name: 'Cursor', value: 'cursor', checked: true },
+  { name: 'Claude', value: 'claude', checked: true },
+  { name: 'BitCompass', value: 'bitcompass', checked: true },
+];
+
+const GLOBAL_GITIGNORE_BLOCKS: Record<Exclude<GlobalGitignoreChoice, 'all'>, string> = {
+  cursor: `# Cursor
 .cursor/
 .cursor-cache/
 .cursor-rules/
 .cursor.json
-
+`,
+  claude: `# Claude
 .claude/
+`,
+  bitcompass: `# BitCompass
+.bitcompass/
+.bitcompass
+`,
+};
 
-# Add other AI tool folders as needed, e.g.:
-# .codex/
-# .windsurf/
+function buildGlobalGitignoreContent(selected: GlobalGitignoreChoice[]): string {
+  const include: readonly ('cursor' | 'claude' | 'bitcompass')[] = selected.includes('all')
+    ? (['cursor', 'claude', 'bitcompass'] as const)
+    : selected.filter((v): v is Exclude<GlobalGitignoreChoice, 'all'> => v !== 'all');
+  const header = `##################################
+# AI editors / assistants
+##################################
 `;
+  const blocks = include.map((key) => GLOBAL_GITIGNORE_BLOCKS[key].trim()).join('\n\n');
+  return (header + blocks).trim() + '\n';
+}
 
 const ensureGitignoreEntry = (): void => {
   const gitignorePath = join(process.cwd(), '.gitignore');
@@ -59,23 +84,19 @@ const ensureGitignoreEntry = (): void => {
 };
 
 /** One-time setup: create/update ~/.gitignore_global with AI patterns and set git config. Returns true if file was written (and optionally config set). */
-const setupGlobalGitignore = (): boolean => {
+const setupGlobalGitignore = (selected: GlobalGitignoreChoice[]): boolean => {
   const globalPath = join(homedir(), '.gitignore_global');
+  const contentToWrite = buildGlobalGitignoreContent(selected);
   try {
     if (!existsSync(globalPath)) {
-      writeFileSync(globalPath, GLOBAL_GITIGNORE_AI_BLOCK + '\n', 'utf-8');
+      writeFileSync(globalPath, contentToWrite, 'utf-8');
     } else {
       const content = readFileSync(globalPath, 'utf-8');
-      const hasAiSection =
-        content.includes('.cursor/') || content.includes('# AI editors / assistants');
+      const hasAiSection = content.includes('# AI editors / assistants');
       if (!hasAiSection) {
         const trimmed = content.trimEnd();
         const suffix = trimmed ? '\n\n' : '';
-        writeFileSync(
-          globalPath,
-          `${trimmed}${suffix}${GLOBAL_GITIGNORE_AI_BLOCK}\n`,
-          'utf-8'
-        );
+        writeFileSync(globalPath, `${trimmed}${suffix}${contentToWrite}`, 'utf-8');
       }
     }
   } catch (err) {
@@ -129,9 +150,37 @@ export const runInit = async (): Promise<void> => {
     },
   ]);
 
+  let compassProjectId: string | null = null;
+  if (isLoggedIn()) {
+    const projects = await fetchCompassProjectsForCurrentUser();
+    const choices: { name: string; value: string }[] = [
+      { name: 'Nessuno / solo personale', value: COMPASS_PROJECT_NONE },
+      ...projects.map((p) => ({
+        name: p.description ? `${p.title} – ${p.description}` : p.title,
+        value: p.id,
+      })),
+    ];
+    const { compassProject } = await inquirer.prompt<{ compassProject: string }>([
+      {
+        name: 'compassProject',
+        message: 'A quale Compass project stai lavorando in questa cartella?',
+        type: 'list',
+        choices,
+      },
+    ]);
+    compassProjectId = compassProject === COMPASS_PROJECT_NONE ? null : compassProject;
+  } else {
+    console.log(
+      chalk.dim(
+        'Non sei loggato. Esegui bitcompass login e poi bitcompass init per associare un Compass project.'
+      )
+    );
+  }
+
   const config: ProjectConfig = {
     editor: answers.editor,
     outputPath: answers.outputPath.trim() || getEditorDefaultPath(answers.editor),
+    compassProjectId,
   };
 
   saveProjectConfig(config);
@@ -322,13 +371,27 @@ Use these commands when you need to interact with BitCompass from the terminal:
 
   writeFileSync(rulePath, ruleContent, 'utf-8');
 
+  let globalGitignoreSelected: GlobalGitignoreChoice[] = [];
+  if (answers.setupGlobalGitignore) {
+    const { whatToGitignore } = await inquirer.prompt<{ whatToGitignore: GlobalGitignoreChoice[] }>({
+      name: 'whatToGitignore',
+      message: 'What should be gitignored?',
+      type: 'checkbox',
+      choices: GLOBAL_GITIGNORE_CHECKBOX_CHOICES,
+    });
+    globalGitignoreSelected = whatToGitignore.length > 0 ? whatToGitignore : ['all'];
+  }
   const globalGitignoreOk =
-    answers.setupGlobalGitignore && setupGlobalGitignore();
+    answers.setupGlobalGitignore && setupGlobalGitignore(globalGitignoreSelected);
 
   console.log(gradient('Project configured.', cyan, magenta));
   console.log(INDENT + chalk.bold('Config:'), join(getProjectConfigDir(), 'config.json'));
   console.log(INDENT + chalk.bold('Editor:'), config.editor);
   console.log(INDENT + chalk.bold('Output path:'), config.outputPath);
+  console.log(
+    INDENT + chalk.bold('Compass project:'),
+    config.compassProjectId ?? 'none (personal only)'
+  );
   console.log(INDENT + chalk.bold('Folders:'), 'rules, skills, commands, documentation');
   console.log(INDENT + chalk.bold('.gitignore:'), GITIGNORE_ENTRY, 'added or already present.');
   if (globalGitignoreOk) {

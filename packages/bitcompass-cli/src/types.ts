@@ -45,10 +45,20 @@ export interface StoredCredentials {
 
 export type EditorProvider = 'vscode' | 'cursor' | 'antigrativity' | 'claudecode';
 
+export interface CompassProject {
+  id: string;
+  title: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ProjectConfig {
   editor: EditorProvider;
   /** Folder for rules/docs/commands output (e.g. .cursor/rules/) */
   outputPath: string;
+  /** Compass project this folder is associated with (null = personal only). */
+  compassProjectId?: string | null;
 }
 
 export interface BitcompassConfig {

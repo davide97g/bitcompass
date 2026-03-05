@@ -49,13 +49,15 @@ function isNewerByTime(remoteUpdatedAt: string, fileMtimeMs: number): boolean {
 
 /**
  * Fetches remote rules and computes which installed items have updates.
- * Optionally filter by kind.
+ * Optionally filter by kind and/or by Compass project.
  */
 export const getGroupedUpdatable = async (
   installed: InstalledItem[],
-  options?: { kind?: RuleKind }
+  options?: { kind?: RuleKind; projectId?: string | null }
 ): Promise<GroupedUpdatable> => {
-  const remoteList = await fetchRules();
+  const remoteList = await fetchRules(options?.kind, {
+    projectId: options?.projectId,
+  });
   const byId = new Map<string, Rule>();
   for (const r of remoteList) {
     byId.set(r.id, r);

@@ -38,11 +38,21 @@ export const loadProjectConfig = (): ProjectConfig | null => {
   if (!existsSync(path)) return null;
   try {
     const raw = readFileSync(path, 'utf-8');
-    const data = JSON.parse(raw) as { editor?: string; outputPath?: string };
+    const data = JSON.parse(raw) as {
+      editor?: string;
+      outputPath?: string;
+      compassProjectId?: string | null;
+    };
     const editor = data.editor as EditorProvider | undefined;
     const outputPath = typeof data.outputPath === 'string' ? data.outputPath : undefined;
     if (editor && Object.keys(EDITOR_DEFAULT_PATHS).includes(editor) && outputPath) {
-      return { editor, outputPath };
+      const compassProjectId =
+        data.compassProjectId === undefined || data.compassProjectId === null
+          ? null
+          : typeof data.compassProjectId === 'string'
+            ? data.compassProjectId
+            : null;
+      return { editor, outputPath, compassProjectId };
     }
     return null;
   } catch {
@@ -78,7 +88,7 @@ export const getProjectConfig = (options?: { warnIfMissing?: boolean }): Project
       '[bitcompass] No project config found (.bitcompass/config.json). Using defaults. Run "bitcompass init" to configure.\n'
     );
   }
-  return { editor: DEFAULT_EDITOR, outputPath: DEFAULT_OUTPUT_PATH };
+  return { editor: DEFAULT_EDITOR, outputPath: DEFAULT_OUTPUT_PATH, compassProjectId: null };
 };
 
 /**

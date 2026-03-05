@@ -16,6 +16,7 @@ import { runLogin } from './commands/login.js';
 import { runLogout } from './commands/logout.js';
 import { runMcpStart, runMcpStatus } from './commands/mcp.js';
 import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './commands/rules.js';
+import { runProjectList, runProjectPull, runProjectSync } from './commands/project.js';
 import { runSharePush } from './commands/share.js';
 import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
 import { runSolutionsList, runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
@@ -152,6 +153,25 @@ configCmd.action(runConfigList);
 configCmd.command('list').description('List config values').action(runConfigList);
 configCmd.command('set <key> <value>').description('Set supabaseUrl, supabaseAnonKey, or apiUrl').action((key: string, value: string) => runConfigSet(key, value));
 configCmd.command('get <key>').description('Get a config value').action((key: string) => runConfigGet(key));
+
+// project (Compass project for this folder: pull, sync, list)
+const projectCmd = program.command('project').description('Compass project for this folder (see bitcompass init)');
+projectCmd
+  .command('pull')
+  .description('Pull all rules, skills, commands, and solutions from the Compass project configured for this folder')
+  .option('-g, --global', 'Install globally to ~/.cursor/...')
+  .option('--copy', 'Copy files instead of symbolic links')
+  .action((opts?: { global?: boolean; copy?: boolean }) => runProjectPull(opts).catch(handleErr));
+projectCmd
+  .command('sync')
+  .description('Sync local rules/skills/commands/solutions with the configured Compass project (pull new, update changed, optionally prune removed)')
+  .option('--prune', 'Remove local files that are no longer in the project')
+  .option('-g, --global', 'Operate on global installs')
+  .action((opts?: { prune?: boolean; global?: boolean }) => runProjectSync(opts).catch(handleErr));
+projectCmd
+  .command('list')
+  .description('Show the Compass project configured for this folder')
+  .action(() => runProjectList().catch(handleErr));
 
 // rules
 const rules = program.command('rules').description('Manage rules');

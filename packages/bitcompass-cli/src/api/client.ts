@@ -1,7 +1,14 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { loadConfig, loadCredentials } from '../auth/config.js';
 import { DEFAULT_SUPABASE_ANON_KEY, DEFAULT_SUPABASE_URL } from '../auth/defaults.js';
-import type { ActivityLog, ActivityLogInsert, Rule, RuleInsert, RuleKind } from '../types.js';
+import type {
+  ActivityLog,
+  ActivityLogInsert,
+  CompassProject,
+  Rule,
+  RuleInsert,
+  RuleKind,
+} from '../types.js';
 
 /** Shown when MCP is used before logging in; instructs user to login and restart MCP. */
 export const AUTH_REQUIRED_MSG =
@@ -54,12 +61,81 @@ export const getSupabaseClient = (): SupabaseClient | null => {
 /** Client for public read-only (rules/solutions). Works without login when RLS allows public select. */
 export const getSupabaseClientForRead = getSupabaseClient;
 
-export const fetchRules = async (kind?: RuleKind): Promise<Rule[]> => {
+/**
+ * Returns the current user id (JWT sub) if logged in, otherwise null.
+ * Decodes the access_token payload without verification (local read-only).
+ */
+export const getCurrentUserId = (): string | null => {
+  const creds = loadCredentials();
+  const token = creds?.access_token;
+  if (!token) return null;
+  const parts = token.split('.');
+  const payloadPart = parts[1];
+  if (parts.length !== 3 || !payloadPart) return null;
+  try {
+    const payload = JSON.parse(
+      Buffer.from(payloadPart, 'base64url').toString('utf-8')
+    ) as { sub?: string };
+    return typeof payload.sub === 'string' ? payload.sub : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Returns Compass projects the current user is a member of (visibility for init choice).
+ */
+export const fetchCompassProjectsForCurrentUser = async (): Promise<CompassProject[]> => {
+  const userId = getCurrentUserId();
+  if (!userId) return [];
+  const client = getSupabaseClient();
+  if (!client) return [];
+  const { data: members, error: membersError } = await client
+    .from('compass_project_members')
+    .select('project_id')
+    .eq('user_id', userId);
+  if (membersError || !members?.length) return [];
+  const projectIds = [...new Set((members as { project_id: string }[]).map((m) => m.project_id))];
+  const { data: projects, error: projectsError } = await client
+    .from('compass_projects')
+    .select('id, title, description, created_at, updated_at')
+    .in('id', projectIds)
+    .order('title', { ascending: true });
+  if (projectsError) return [];
+  return (projects ?? []) as CompassProject[];
+};
+
+export const getCompassProjectById = async (id: string): Promise<CompassProject | null> => {
+  const client = getSupabaseClient();
+  if (!client) return null;
+  const { data, error } = await client
+    .from('compass_projects')
+    .select('id, title, description, created_at, updated_at')
+    .eq('id', id)
+    .single();
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    return null;
+  }
+  return data as CompassProject;
+};
+
+export interface FetchRulesOptions {
+  projectId?: string | null;
+}
+
+export const fetchRules = async (
+  kind?: RuleKind,
+  options?: FetchRulesOptions
+): Promise<Rule[]> => {
   const client = getSupabaseClientForRead();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   let query = client.from('rules').select('*').order('created_at', { ascending: false });
   if (kind) {
     query = query.eq('kind', kind);
+  }
+  if (options?.projectId != null && options.projectId !== '') {
+    query = query.eq('project_id', options.projectId);
   }
   const { data, error } = await query;
   if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);

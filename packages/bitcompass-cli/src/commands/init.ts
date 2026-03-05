@@ -1,18 +1,18 @@
-import { execSync } from 'child_process';
 import chalk from 'chalk';
+import { execSync } from 'child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import inquirer from 'inquirer';
 import { homedir } from 'os';
 import { join } from 'path';
+import { fetchCompassProjectsForCurrentUser } from '../api/client.js';
+import { getCurrentUserEmail, isLoggedIn } from '../auth/config.js';
 import {
     getEditorDefaultPath,
-    getProjectConfigDir,
     getOutputDirForKind,
+    getProjectConfigDir,
     loadProjectConfig,
     saveProjectConfig,
 } from '../auth/project-config.js';
-import { fetchCompassProjectsForCurrentUser } from '../api/client.js';
-import { getCurrentUserEmail, isLoggedIn } from '../auth/config.js';
 import { gradient, printBanner } from '../lib/banner.js';
 import type { EditorProvider, ProjectConfig } from '../types.js';
 
@@ -28,8 +28,6 @@ const EDITOR_CHOICES: { name: string; value: EditorProvider }[] = [
   { name: 'Antigrativity', value: 'antigrativity' },
   { name: 'Claude Code', value: 'claudecode' },
 ];
-
-const GITIGNORE_ENTRY = '.bitcompass';
 
 type GlobalGitignoreChoice = 'all' | 'cursor' | 'claude' | 'bitcompass';
 
@@ -67,21 +65,6 @@ function buildGlobalGitignoreContent(selected: GlobalGitignoreChoice[]): string 
   const blocks = include.map((key) => GLOBAL_GITIGNORE_BLOCKS[key].trim()).join('\n\n');
   return (header + blocks).trim() + '\n';
 }
-
-const ensureGitignoreEntry = (): void => {
-  const gitignorePath = join(process.cwd(), '.gitignore');
-  if (!existsSync(gitignorePath)) {
-    writeFileSync(gitignorePath, `${GITIGNORE_ENTRY}\n`, 'utf-8');
-    return;
-  }
-  const content = readFileSync(gitignorePath, 'utf-8');
-  const lines = content.split(/\r?\n/);
-  const hasEntry = lines.some((line) => line.trim() === GITIGNORE_ENTRY);
-  if (hasEntry) return;
-  const trimmed = content.trimEnd();
-  const suffix = trimmed ? '\n' : '';
-  writeFileSync(gitignorePath, `${trimmed}${suffix}\n${GITIGNORE_ENTRY}\n`, 'utf-8');
-};
 
 /** One-time setup: create/update ~/.gitignore_global with AI patterns and set git config. Returns true if file was written (and optionally config set). */
 const setupGlobalGitignore = (selected: GlobalGitignoreChoice[]): boolean => {
@@ -184,7 +167,6 @@ export const runInit = async (): Promise<void> => {
   };
 
   saveProjectConfig(config);
-  ensureGitignoreEntry();
 
   // Create all four output folders (rules, skills, commands, documentation)
   const rulesDir = getOutputDirForKind(config, 'rule');
@@ -393,7 +375,6 @@ Use these commands when you need to interact with BitCompass from the terminal:
     config.compassProjectId ?? 'none (personal only)'
   );
   console.log(INDENT + chalk.bold('Folders:'), 'rules, skills, commands, documentation');
-  console.log(INDENT + chalk.bold('.gitignore:'), GITIGNORE_ENTRY, 'added or already present.');
   if (globalGitignoreOk) {
     console.log(
       INDENT + chalk.bold('Global gitignore:'),

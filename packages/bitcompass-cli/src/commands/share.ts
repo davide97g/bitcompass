@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { loadCredentials } from '../auth/config.js';
 import { insertRule } from '../api/client.js';
 import { parseRuleMdcContent, parseFrontmatterKind } from '../lib/mdc-format.js';
+import { bumpRuleVersionMajor } from '../lib/version-bump.js';
 import { SHARE_KIND_CHOICES, inferKindFromFilename } from '../lib/share-types.js';
 import type { RuleInsert, RuleKind } from '../types.js';
 
@@ -38,7 +39,7 @@ export const parseFileToPayload = (
 
   try {
     const parsed = JSON.parse(rawContent) as Record<string, unknown>;
-    const payload: RuleInsert = {
+    const payload: Omit<RuleInsert, 'kind'> & { kind?: RuleKind } = {
       kind: (parsed.kind as RuleKind) ?? kind ?? 'rule',
       title: (parsed.title as string) ?? 'Untitled',
       description: (parsed.description as string) ?? '',
@@ -48,6 +49,7 @@ export const parseFileToPayload = (
       technologies: Array.isArray(parsed.technologies) ? (parsed.technologies as string[]) : undefined,
       globs: typeof parsed.globs === 'string' ? parsed.globs : undefined,
       always_apply: Boolean(parsed.always_apply),
+      version: typeof parsed.version === 'string' ? parsed.version : undefined,
     };
     if (explicitKind) payload.kind = explicitKind;
     else if (kind) payload.kind = kind;
@@ -66,6 +68,7 @@ export const parseFileToPayload = (
       body: mdc.body,
       globs: mdc.globs ?? undefined,
       always_apply: mdc.alwaysApply,
+      version: mdc.version ?? undefined,
     };
   }
 
@@ -123,6 +126,7 @@ export const runSharePush = async (
       project_id: options?.projectId,
       globs: parsed.globs,
       always_apply: parsed.always_apply,
+      version: parsed.version ? bumpRuleVersionMajor(parsed.version) : '1.0.0',
     };
   } else {
     const kind = options?.kind ?? (await promptForKind());
@@ -137,6 +141,7 @@ export const runSharePush = async (
       description: answers.description,
       body: answers.body,
       project_id: options?.projectId,
+      version: '1.0.0',
     };
   }
 

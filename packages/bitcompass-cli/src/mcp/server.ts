@@ -16,6 +16,7 @@ import { buildAndPushActivityLog } from '../commands/log.js';
 import { loadCredentials } from '../auth/config.js';
 import { getProjectConfig } from '../auth/project-config.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
+import { bumpRuleVersionMajor } from '../lib/version-bump.js';
 import type { RuleInsert, RuleKind } from '../types.js';
 import type { TimeFrame } from '../lib/git-analysis.js';
 
@@ -509,6 +510,8 @@ Then collect: title, description, body (and optionally context, examples, techno
     if (args.globs !== undefined) updates.globs = (args.globs as string) || null;
     if (args.always_apply !== undefined) updates.always_apply = Boolean(args.always_apply);
     try {
+      const existing = await getRuleById(id);
+      if (existing) updates.version = bumpRuleVersionMajor(existing.version);
       const updated = await updateRule(id, updates);
       return {
         id: updated.id,

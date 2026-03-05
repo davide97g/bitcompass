@@ -29,7 +29,7 @@ import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { PageHeader } from '@/components/ui/page-header';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { CommandBlock } from '@/components/ui/CommandBlock';
-import { ruleDownloadBasename, cn } from '@/lib/utils';
+import { ruleDownloadBasename, cn, bumpRuleVersionMajor } from '@/lib/utils';
 import { getTechStyle } from '@/lib/tech-styles';
 import { Badge } from '@/components/ui/badge';
 import { RuleDetailSkeleton } from '@/components/skeletons';
@@ -111,7 +111,7 @@ export default function RuleDetailPage() {
         title: rule.title,
         description: rule.description,
         body: rule.body,
-        version: rule.version || '1.0.0',
+        version: bumpRuleVersionMajor(rule.version),
         technologies: rule.technologies || [],
         project_id: rule.project_id ?? undefined,
       });
@@ -120,15 +120,16 @@ export default function RuleDetailPage() {
   };
 
   const handleSaveEdit = async () => {
-    if (!id) return;
+    if (!id || !rule) return;
     try {
+      const newVersion = bumpRuleVersionMajor(rule.version);
       await updateRule.mutateAsync({
         id,
         updates: {
           title: editForm.title,
           description: editForm.description,
           body: editForm.body,
-          version: editForm.version,
+          version: newVersion,
           technologies: editForm.technologies,
           project_id: editForm.project_id ?? undefined,
         },
@@ -365,11 +366,13 @@ export default function RuleDetailPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Version</Label>
+                <Label>Version (auto-bumped on save)</Label>
                 <Input
                   value={editForm.version}
-                  onChange={(e) => setEditForm((p) => ({ ...p, version: e.target.value }))}
+                  readOnly
+                  className="bg-muted"
                   placeholder="1.0.0"
+                  aria-label="Version, automatically set on save"
                 />
               </div>
               <div className="space-y-2">

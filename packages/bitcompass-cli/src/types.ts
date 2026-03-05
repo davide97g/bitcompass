@@ -1,5 +1,7 @@
 export type RuleKind = 'rule' | 'solution' | 'skill' | 'command';
 
+export type RuleVisibility = 'private' | 'public';
+
 export interface Rule {
   id: string;
   kind: RuleKind;
@@ -18,6 +20,8 @@ export interface Rule {
   globs?: string | null;
   /** If true, Cursor applies this rule globally. Default false. Used in .mdc frontmatter. */
   always_apply?: boolean;
+  /** 'private' = only visible to owner, 'public' = visible to everyone. Default 'private'. */
+  visibility: RuleVisibility;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +38,8 @@ export interface RuleInsert {
   version?: string;
   globs?: string | null;
   always_apply?: boolean;
+  /** Default 'private'. */
+  visibility?: RuleVisibility;
 }
 
 export interface StoredCredentials {

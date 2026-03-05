@@ -17,8 +17,8 @@ import {
 import { useRule, useUpdateRule, useDeleteRule } from '@/hooks/use-rules';
 import { useCompassProjects } from '@/hooks/use-compass-projects';
 import { useToast } from '@/hooks/use-toast';
-import type { Rule, RuleKind } from '@/types/bitcompass';
-import { ArrowLeft, FileDown, Layers, Pencil, Trash2, User, Link2 } from 'lucide-react';
+import type { Rule, RuleKind, RuleVisibility } from '@/types/bitcompass';
+import { ArrowLeft, FileDown, Layers, Pencil, Trash2, User, Link2, Lock, Globe } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,6 +102,7 @@ export default function RuleDetailPage() {
     version: '1.0.0',
     technologies: [] as string[],
     project_id: undefined as string | null | undefined,
+    visibility: 'private' as RuleVisibility,
   });
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -114,6 +115,8 @@ export default function RuleDetailPage() {
         version: bumpRuleVersionMajor(rule.version),
         technologies: rule.technologies || [],
         project_id: rule.project_id ?? undefined,
+        // If a public rule is edited, the newer version starts as private
+        visibility: rule.visibility === 'public' ? 'private' : rule.visibility,
       });
       setEditing(true);
     }
@@ -132,6 +135,7 @@ export default function RuleDetailPage() {
           version: newVersion,
           technologies: editForm.technologies,
           project_id: editForm.project_id ?? undefined,
+          visibility: editForm.visibility,
         },
       });
       toast({ title: 'Updated' });
@@ -266,6 +270,15 @@ export default function RuleDetailPage() {
                 <span>Author: {rule.author_display_name ?? 'Unknown author'}</span>
               </div>
             )}
+            <span className={cn(
+              'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border',
+              rule.visibility === 'public'
+                ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+            )}>
+              {rule.visibility === 'public' ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+              {rule.visibility === 'public' ? 'Public' : 'Private'}
+            </span>
             {rule.technologies && rule.technologies.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5">
                 {rule.technologies.map((tech) => {
@@ -392,6 +405,24 @@ export default function RuleDetailPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Visibility</Label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                  value={editForm.visibility}
+                  onChange={(e) =>
+                    setEditForm((p) => ({ ...p, visibility: e.target.value as RuleVisibility }))
+                  }
+                >
+                  <option value="private">Private (only you)</option>
+                  <option value="public">Public (everyone)</option>
+                </select>
+                {rule.visibility === 'public' && editForm.visibility === 'private' && (
+                  <p className="text-xs text-muted-foreground">
+                    This rule was public. The updated version will be saved as private.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Technologies (comma-separated)</Label>

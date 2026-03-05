@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import type { Rule, RuleInsert, RuleKind } from '@/types/bitcompass';
+import type { Rule, RuleInsert, RuleKind, RuleVisibility } from '@/types/bitcompass';
 
 const TABLE = 'rules';
 
@@ -20,13 +20,15 @@ export interface FetchRulesPaginatedOptions {
   search?: string;
   /** When set, only rules in this Compass project (or global if null). Omit for all visible rules. */
   projectId?: string | null;
+  /** Filter by visibility ('private' or 'public'). Omit for all. */
+  visibility?: RuleVisibility;
 }
 
 const fetchRulesPaginated = async (
   options: FetchRulesPaginatedOptions
 ): Promise<{ data: Rule[]; total: number }> => {
   if (!supabase) return { data: [], total: 0 };
-  const { kind, limit, offset, search, projectId } = options;
+  const { kind, limit, offset, search, projectId, visibility } = options;
   let query = supabase
     .from(TABLE)
     .select('*', { count: 'exact' })
@@ -34,6 +36,9 @@ const fetchRulesPaginated = async (
   if (kind && kind !== 'all') query = query.eq('kind', kind);
   if (projectId !== undefined && projectId !== null) {
     query = query.eq('project_id', projectId);
+  }
+  if (visibility) {
+    query = query.eq('visibility', visibility);
   }
   if (search?.trim()) {
     const q = search.trim();
@@ -86,6 +91,7 @@ export interface UseRulesPaginatedParams {
   search?: string;
   pageSize?: number;
   projectId?: string | null;
+  visibility?: RuleVisibility;
 }
 
 export const useRulesPaginated = ({
@@ -94,10 +100,11 @@ export const useRulesPaginated = ({
   search = '',
   pageSize = RULES_PAGE_SIZE,
   projectId,
+  visibility,
 }: UseRulesPaginatedParams) => {
   const offset = (page - 1) * pageSize;
   return useQuery({
-    queryKey: ['rules-paginated', kind, page, search.trim(), pageSize, projectId ?? 'all'],
+    queryKey: ['rules-paginated', kind, page, search.trim(), pageSize, projectId ?? 'all', visibility ?? 'all'],
     queryFn: () =>
       fetchRulesPaginated({
         kind,
@@ -105,6 +112,7 @@ export const useRulesPaginated = ({
         offset,
         search: search.trim() || undefined,
         projectId,
+        visibility,
       }),
     enabled: Boolean(supabase),
   });

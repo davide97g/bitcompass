@@ -123,6 +123,7 @@ function createStdioServer(): {
                     examples: { type: 'array', items: { type: 'string' } },
                     technologies: { type: 'array', items: { type: 'string' } },
                     project_id: { type: 'string', description: 'Optional: Compass project UUID to scope this rule to' },
+                    visibility: { type: 'string', enum: ['private', 'public'], description: "Optional: 'private' (default, only you) or 'public' (everyone)" },
                   },
                   required: ['kind', 'title', 'body'],
                 },
@@ -409,6 +410,7 @@ Then collect: title, description, body (and optionally context, examples, techno
       examples: Array.isArray(args.examples) ? (args.examples as string[]) : undefined,
       technologies: Array.isArray(args.technologies) ? (args.technologies as string[]) : undefined,
       project_id: typeof args.project_id === 'string' ? args.project_id : undefined,
+      visibility: args.visibility === 'public' ? 'public' : 'private',
     };
     try {
       const created = await insertRule(payload);

@@ -29,15 +29,12 @@ export const isValidRuleKind = (s: string): s is RuleKind =>
   VALID_KINDS.includes(s as RuleKind);
 
 /**
- * Infers RuleKind from filename prefix (rule-*.mdc, solution-*.md, skill-*.md, command-*.md).
- * Returns null if the basename does not match a known prefix.
+ * Infers RuleKind from file extension (.mdc -> rule, .md -> null since kind is ambiguous).
+ * Returns null if the kind cannot be determined from the filename alone.
  */
 export const inferKindFromFilename = (filePath: string): RuleKind | null => {
   const base = filePath.split(/[/\\]/).pop() ?? '';
   const lower = base.toLowerCase();
-  if (lower.startsWith('rule-') && (lower.endsWith('.mdc') || lower.endsWith('.md'))) return 'rule';
-  if (lower.startsWith('solution-') && (lower.endsWith('.md') || lower.endsWith('.mdc'))) return 'solution';
-  if (lower.startsWith('skill-') && (lower.endsWith('.md') || lower.endsWith('.mdc'))) return 'skill';
-  if (lower.startsWith('command-') && (lower.endsWith('.md') || lower.endsWith('.mdc'))) return 'command';
+  if (lower.endsWith('.mdc')) return 'rule';
   return null;
 };

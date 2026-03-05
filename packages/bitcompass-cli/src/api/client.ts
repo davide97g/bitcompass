@@ -8,6 +8,7 @@ import type {
   Rule,
   RuleInsert,
   RuleKind,
+  RuleVisibility,
 } from '../types.js';
 
 /** Shown when MCP is used before logging in; instructs user to login and restart MCP. */
@@ -122,6 +123,7 @@ export const getCompassProjectById = async (id: string): Promise<CompassProject 
 
 export interface FetchRulesOptions {
   projectId?: string | null;
+  visibility?: RuleVisibility;
 }
 
 export const fetchRules = async (
@@ -136,6 +138,9 @@ export const fetchRules = async (
   }
   if (options?.projectId != null && options.projectId !== '') {
     query = query.eq('project_id', options.projectId);
+  }
+  if (options?.visibility) {
+    query = query.eq('visibility', options.visibility);
   }
   const { data, error } = await query;
   if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);

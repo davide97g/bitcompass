@@ -127,6 +127,7 @@ export const runSharePush = async (
       globs: parsed.globs,
       always_apply: parsed.always_apply,
       version: parsed.version ? bumpRuleVersionMajor(parsed.version) : '1.0.0',
+      visibility: 'private',
     };
   } else {
     const kind = options?.kind ?? (await promptForKind());
@@ -142,6 +143,7 @@ export const runSharePush = async (
       body: answers.body,
       project_id: options?.projectId,
       version: '1.0.0',
+      visibility: 'private',
     };
   }
 

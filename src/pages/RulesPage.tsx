@@ -28,8 +28,8 @@ import { useRulesPaginated, useInsertRule } from '@/hooks/use-rules';
 import { useCompassProjects } from '@/hooks/use-compass-projects';
 import { useToast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
-import type { Rule, RuleInsert, RuleKind } from '@/types/bitcompass';
-import { BookMarked, FileDown, Plus, Search, User, Link2, GitFork } from 'lucide-react';
+import type { Rule, RuleInsert, RuleKind, RuleVisibility } from '@/types/bitcompass';
+import { BookMarked, FileDown, Plus, Search, User, Link2, GitFork, Lock, Globe } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { ruleDownloadBasename } from '@/lib/utils';
 import { getTechStyle } from '@/lib/tech-styles';
@@ -136,8 +136,10 @@ const KIND_PARAM = 'kind';
 const Q_PARAM = 'q';
 const PAGE_PARAM = 'page';
 const PROJECT_PARAM = 'project';
+const VIS_PARAM = 'vis';
 
 const VALID_KINDS: Array<RuleKind | 'all'> = ['all', 'rule', 'solution', 'skill', 'command'];
+const VALID_VISIBILITY: Array<RuleVisibility | 'all'> = ['all', 'private', 'public'];
 const RULES_PAGE_SIZE = 20;
 
 export default function RulesPage() {
@@ -146,11 +148,15 @@ export default function RulesPage() {
   const qFromUrl = searchParams.get(Q_PARAM) ?? '';
   const pageFromUrl = searchParams.get(PAGE_PARAM);
   const projectFromUrl = searchParams.get(PROJECT_PARAM);
+  const visFromUrl = searchParams.get(VIS_PARAM);
   const [kindFilter, setKindFilter] = useState<RuleKind | 'all'>(() =>
     kindFromUrl && VALID_KINDS.includes(kindFromUrl as RuleKind | 'all') ? (kindFromUrl as RuleKind | 'all') : 'all'
   );
   const [search, setSearch] = useState(() => qFromUrl);
   const [projectFilter, setProjectFilter] = useState<string | null>(() => projectFromUrl || null);
+  const [visibilityFilter, setVisibilityFilter] = useState<RuleVisibility | 'all'>(() =>
+    visFromUrl && VALID_VISIBILITY.includes(visFromUrl as RuleVisibility | 'all') ? (visFromUrl as RuleVisibility | 'all') : 'all'
+  );
   const page = Math.max(1, parseInt(pageFromUrl ?? '1', 10) || 1);
   const [createOpen, setCreateOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -161,6 +167,7 @@ export default function RulesPage() {
     body: '',
     version: '1.0.0',
     technologies: [],
+    visibility: 'private',
   });
 
   const { data: compassProjects = [] } = useCompassProjects();
@@ -172,6 +179,7 @@ export default function RulesPage() {
     search,
     pageSize: RULES_PAGE_SIZE,
     projectId: projectFilter ?? undefined,
+    visibility: visibilityFilter === 'all' ? undefined : visibilityFilter,
   });
   const rules = paginatedResult?.data ?? [];
   const total = paginatedResult?.total ?? 0;
@@ -185,16 +193,20 @@ export default function RulesPage() {
     const k = searchParams.get(KIND_PARAM);
     const q = searchParams.get(Q_PARAM) ?? '';
     const proj = searchParams.get(PROJECT_PARAM);
+    const vis = searchParams.get(VIS_PARAM);
     if (k && VALID_KINDS.includes(k as RuleKind | 'all')) setKindFilter(k as RuleKind | 'all');
     setSearch(q);
     setProjectFilter(proj || null);
+    if (vis && VALID_VISIBILITY.includes(vis as RuleVisibility | 'all')) setVisibilityFilter(vis as RuleVisibility | 'all');
+    else setVisibilityFilter('all');
   }, [searchParams]);
 
   const updateUrl = (
     kind: RuleKind | 'all',
     q: string,
     pageNum: number = 1,
-    projectId: string | null = null
+    projectId: string | null = null,
+    vis: RuleVisibility | 'all' = visibilityFilter
   ) => {
     const next = new URLSearchParams(searchParams);
     if (kind === 'all') next.delete(KIND_PARAM);
@@ -205,27 +217,35 @@ export default function RulesPage() {
     else next.set(PAGE_PARAM, String(pageNum));
     if (!projectId) next.delete(PROJECT_PARAM);
     else next.set(PROJECT_PARAM, projectId);
+    if (vis === 'all') next.delete(VIS_PARAM);
+    else next.set(VIS_PARAM, vis);
     setSearchParams(next, { replace: true });
   };
 
   const handleKindChange = (v: string) => {
     const value = v as RuleKind | 'all';
     setKindFilter(value);
-    updateUrl(value, search, 1, projectFilter);
+    updateUrl(value, search, 1, projectFilter, visibilityFilter);
   };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    updateUrl(kindFilter, value, 1, projectFilter);
+    updateUrl(kindFilter, value, 1, projectFilter, visibilityFilter);
   };
 
   const handleProjectFilterChange = (projectId: string | null) => {
     setProjectFilter(projectId);
-    updateUrl(kindFilter, search, 1, projectId);
+    updateUrl(kindFilter, search, 1, projectId, visibilityFilter);
+  };
+
+  const handleVisibilityChange = (v: string) => {
+    const value = v as RuleVisibility | 'all';
+    setVisibilityFilter(value);
+    updateUrl(kindFilter, search, 1, projectFilter, value);
   };
 
   const handlePageChange = (pageNum: number) => {
-    updateUrl(kindFilter, search, pageNum, projectFilter);
+    updateUrl(kindFilter, search, pageNum, projectFilter, visibilityFilter);
   };
 
   const filtered = rules;
@@ -259,6 +279,7 @@ export default function RulesPage() {
         version: '1.0.0',
         technologies: [],
         project_id: undefined,
+        visibility: 'private',
       });
     } catch (e) {
       toast({ title: e instanceof Error ? e.message : 'Failed', variant: 'destructive' });
@@ -286,6 +307,21 @@ export default function RulesPage() {
         title="Rules & solutions"
         description="Manage rules and problem solutions. Same data as CLI and MCP."
       />
+      {/* Visibility tabs */}
+      <Tabs value={visibilityFilter} onValueChange={handleVisibilityChange}>
+        <TabsList>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="private" className="gap-1.5">
+            <Lock className="h-3.5 w-3.5" />
+            Private
+          </TabsTrigger>
+          <TabsTrigger value="public" className="gap-1.5">
+            <Globe className="h-3.5 w-3.5" />
+            Public
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <div className="flex flex-wrap items-center gap-4">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -347,6 +383,19 @@ export default function RulesPage() {
                   <option value="solution">Solution</option>
                   <option value="skill">Skill</option>
                   <option value="command">Command</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Visibility</Label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                  value={newRule.visibility ?? 'private'}
+                  onChange={(e) =>
+                    setNewRule((p) => ({ ...p, visibility: e.target.value as RuleVisibility }))
+                  }
+                >
+                  <option value="private">Private (only you)</option>
+                  <option value="public">Public (everyone)</option>
                 </select>
               </div>
               <div className="space-y-2">
@@ -507,6 +556,17 @@ export default function RulesPage() {
                       )}
                     >
                       {rule.kind}
+                    </span>
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border',
+                        rule.visibility === 'public'
+                          ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                          : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+                      )}
+                    >
+                      {rule.visibility === 'public' ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                      {rule.visibility}
                     </span>
                     {rule.project_id && (
                       // biome-ignore lint/a11y: Wrapper stops propagation so project link doesn't trigger card navigation.

@@ -19,8 +19,7 @@ export const titleToSlug = (title: string): string => {
 
 /** Rule download base name (without extension). Falls back to id if slug is empty. */
 export const ruleDownloadBasename = (title: string, id: string): string => {
-  const slug = titleToSlug(title);
-  return slug ? `rule-${slug}` : `rule-${id}`;
+  return titleToSlug(title) || id;
 };
 
 /**

@@ -14,41 +14,37 @@ export const titleToSlug = (title: string): string => {
 };
 
 /**
- * Returns the rule filename in Cursor .mdc format (e.g. rule-strava-api-authentication-flow.mdc).
+ * Returns the rule filename in Cursor .mdc format (e.g. strava-api-authentication-flow.mdc).
  * Falls back to id if slug is empty.
  */
 export const ruleFilename = (title: string, id: string): string => {
-  const slug = titleToSlug(title);
-  const base = slug ? `rule-${slug}` : `rule-${id}`;
+  const base = titleToSlug(title) || id;
   return `${base}.mdc`;
 };
 
 /**
- * Returns the solution filename (e.g. solution-strava-api-authentication-flow.md).
+ * Returns the solution filename (e.g. strava-api-authentication-flow.md).
  * Falls back to id if slug is empty.
  */
 export const solutionFilename = (title: string, id: string): string => {
-  const slug = titleToSlug(title);
-  const base = slug ? `solution-${slug}` : `solution-${id}`;
+  const base = titleToSlug(title) || id;
   return `${base}.md`;
 };
 
 /**
- * Returns the skill filename (e.g. skill-strava-api-authentication-flow.md).
+ * Returns the skill filename (e.g. strava-api-authentication-flow.md).
  * Falls back to id if slug is empty.
  */
 export const skillFilename = (title: string, id: string): string => {
-  const slug = titleToSlug(title);
-  const base = slug ? `skill-${slug}` : `skill-${id}`;
+  const base = titleToSlug(title) || id;
   return `${base}.md`;
 };
 
 /**
- * Returns the command filename (e.g. command-strava-api-authentication-flow.md).
+ * Returns the command filename (e.g. strava-api-authentication-flow.md).
  * Falls back to id if slug is empty.
  */
 export const commandFilename = (title: string, id: string): string => {
-  const slug = titleToSlug(title);
-  const base = slug ? `command-${slug}` : `command-${id}`;
+  const base = titleToSlug(title) || id;
   return `${base}.md`;
 };

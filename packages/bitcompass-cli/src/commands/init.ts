@@ -1,10 +1,10 @@
 import chalk from 'chalk';
 import { execSync } from 'child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import inquirer from 'inquirer';
 import { homedir } from 'os';
-import { join } from 'path';
-import { fetchCompassProjectsForCurrentUser } from '../api/client.js';
+import { basename, join, relative } from 'path';
+import { fetchCompassProjectsForCurrentUser, insertRule } from '../api/client.js';
 import { getCurrentUserEmail, isLoggedIn } from '../auth/config.js';
 import {
     getEditorDefaultPath,
@@ -14,7 +14,7 @@ import {
     saveProjectConfig,
 } from '../auth/project-config.js';
 import { gradient, printBanner } from '../lib/banner.js';
-import type { EditorProvider, ProjectConfig } from '../types.js';
+import type { EditorProvider, ProjectConfig, RuleInsert, RuleKind } from '../types.js';
 
 const COMPASS_PROJECT_NONE = '';
 
@@ -103,6 +103,98 @@ const setupGlobalGitignore = (selected: GlobalGitignoreChoice[]): boolean => {
   return true;
 };
 
+/** Well-known AI rule/config file patterns to scan for. */
+interface DiscoveredRule {
+  title: string;
+  path: string;
+  kind: RuleKind;
+}
+
+const discoverLocalRules = (cwd: string): DiscoveredRule[] => {
+  const found: DiscoveredRule[] = [];
+
+  const tryFile = (relPath: string, title: string, kind: RuleKind) => {
+    const abs = join(cwd, relPath);
+    if (existsSync(abs)) {
+      found.push({ title, path: relPath, kind });
+    }
+  };
+
+  const tryDir = (relDir: string, ext: string, kind: RuleKind, prefix: string) => {
+    const abs = join(cwd, relDir);
+    if (!existsSync(abs)) return;
+    try {
+      const entries = readdirSync(abs, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isFile() && entry.name.endsWith(ext)) {
+          const name = entry.name.replace(/\.[^.]+$/, '');
+          found.push({
+            title: `${prefix}: ${name}`,
+            path: join(relDir, entry.name),
+            kind,
+          });
+        }
+      }
+    } catch { /* ignore permission errors */ }
+  };
+
+  // Claude Code
+  tryFile('CLAUDE.md', 'Claude Code rules (CLAUDE.md)', 'rule');
+  tryDir('.claude/commands', '.md', 'command', 'Claude command');
+
+  // Cursor
+  tryFile('.cursorrules', 'Cursor rules (.cursorrules)', 'rule');
+  tryDir('.cursor/rules', '.mdc', 'rule', 'Cursor rule');
+  tryDir('.cursor/rules', '.md', 'rule', 'Cursor rule');
+
+  // GitHub Copilot
+  tryFile('.github/copilot-instructions.md', 'GitHub Copilot instructions', 'rule');
+
+  // Windsurf
+  tryFile('.windsurfrules', 'Windsurf rules (.windsurfrules)', 'rule');
+
+  // Aider
+  tryFile('.aider.conf.yml', 'Aider config (.aider.conf.yml)', 'rule');
+  tryFile('.aiderignore', 'Aider ignore (.aiderignore)', 'rule');
+
+  // Continue
+  tryFile('.continue/config.json', 'Continue config', 'rule');
+  tryFile('.continuerules', 'Continue rules (.continuerules)', 'rule');
+
+  return found;
+};
+
+const importDiscoveredRules = async (
+  rules: DiscoveredRule[],
+  cwd: string,
+  compassProjectId: string | null
+): Promise<number> => {
+  let imported = 0;
+  for (const rule of rules) {
+    const absPath = join(cwd, rule.path);
+    const body = readFileSync(absPath, 'utf-8');
+    const payload: RuleInsert = {
+      kind: rule.kind,
+      title: rule.title,
+      description: `Imported from ${rule.path}`,
+      body,
+      project_id: compassProjectId,
+      version: '1.0.0',
+      visibility: 'private',
+    };
+    try {
+      await insertRule(payload);
+      imported++;
+    } catch (err) {
+      console.log(
+        chalk.yellow(`  Could not import ${rule.path}: `) +
+        chalk.dim(err instanceof Error ? err.message : String(err))
+      );
+    }
+  }
+  return imported;
+};
+
 export const runInit = async (): Promise<void> => {
   await printBanner();
 
@@ -177,6 +269,33 @@ export const runInit = async (): Promise<void> => {
   mkdirSync(skillsDir, { recursive: true });
   mkdirSync(commandsDir, { recursive: true });
   mkdirSync(documentationDir, { recursive: true });
+
+  // Discover local AI rules/configs and offer to import them
+  let importedCount = 0;
+  if (isLoggedIn()) {
+    const discovered = discoverLocalRules(process.cwd());
+    if (discovered.length > 0) {
+      console.log('');
+      console.log(chalk.bold('Found local AI rules/configs:'));
+      const { toImport } = await inquirer.prompt<{ toImport: DiscoveredRule[] }>([
+        {
+          name: 'toImport',
+          message: 'Import into your private BitCompass database?',
+          type: 'checkbox',
+          choices: discovered.map((r) => ({
+            name: `${r.title}  ${chalk.dim(`(${r.path})`)}`,
+            value: r,
+            checked: false,
+          })),
+        },
+      ]);
+      if (toImport.length > 0) {
+        console.log(chalk.dim('Importing…'));
+        importedCount = await importDiscoveredRules(toImport, process.cwd(), compassProjectId);
+        console.log(chalk.green(`Imported ${importedCount} rule(s) as private.`));
+      }
+    }
+  }
 
   const rulePath = join(rulesDir, 'rule-bitcompass-mcp-and-cli-usage.md');
   const ruleContent = `# BitCompass MCP and CLI Usage

@@ -1,36 +1,32 @@
-import type React from 'react';
-import { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CodeBlockWithCopy } from '@/components/ui/code-block-with-copy';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CodeBlockWithCopy } from '@/components/ui/code-block-with-copy';
-import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-  PaginationEllipsis,
 } from '@/components/ui/pagination';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/use-auth';
 import {
+  useAddCompassProjectMember,
   useCompassProject,
   useCompassProjectMembers,
-  useUpdateCompassProject,
-  useAddCompassProjectMember,
   useRemoveCompassProjectMember,
+  useUpdateCompassProject,
 } from '@/hooks/use-compass-projects';
+import { useProfilesByIds, useProfilesSearch } from '@/hooks/use-profiles';
 import { useRulesPaginated } from '@/hooks/use-rules';
-import { useProfilesSearch, useProfilesByIds } from '@/hooks/use-profiles';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { ruleDownloadBasename } from '@/lib/utils';
 import { getTechStyle } from '@/lib/tech-styles';
-import { cn } from '@/lib/utils';
+import { cn, ruleDownloadBasename } from '@/lib/utils';
 import type { Rule, RuleKind } from '@/types/bitcompass';
 import {
   ArrowLeft,
@@ -45,6 +41,9 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react';
+import type React from 'react';
+import { useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
@@ -269,7 +268,7 @@ export default function CompassProjectDetailPage() {
   const showDescriptionEdit = editingDescription;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="space-y-6">
       <PageBreadcrumb
         items={[
           { label: 'Compass projects', href: '/compass-projects' },
@@ -279,7 +278,7 @@ export default function CompassProjectDetailPage() {
       <Button
         variant="ghost"
         size="sm"
-        className="mb-4 -ml-2"
+        className="-ml-2"
         onClick={() => navigate('/compass-projects')}
         aria-label="Back to Compass projects"
       >
@@ -288,7 +287,7 @@ export default function CompassProjectDetailPage() {
       </Button>
 
       {/* Title */}
-      <div className="mb-6">
+      <div>
         {showTitleEdit ? (
           <div className="flex flex-wrap items-center gap-2">
             <Input
@@ -324,7 +323,7 @@ export default function CompassProjectDetailPage() {
       </div>
 
       {/* Description */}
-      <div className="mb-6">
+      <div>
         {showDescriptionEdit ? (
           <div className="space-y-2">
             <Label htmlFor="project-description">Description</Label>
@@ -371,445 +370,446 @@ export default function CompassProjectDetailPage() {
         )}
       </div>
 
-      {/* Members */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Users className="w-5 h-5" />
-            Members ({members.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Add member: search */}
-          <div className="space-y-2">
-            <Label htmlFor="member-search">Add member</Label>
-            <div className="flex gap-2 flex-wrap">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="member-search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by email or name"
-                  className="pl-9"
-                  aria-label="Search users to add as member"
-                />
+      {/* Two-column layout: knowledge left, sidebar right (sticky) */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* LEFT: Knowledge list */}
+        <div className="flex-1 min-w-0">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Linked rules, commands, solutions & skills</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="relative flex-1 min-w-[200px] max-w-sm">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search…"
+                    value={rulesSearch}
+                    onChange={(e) => {
+                      setRulesSearch(e.target.value);
+                      setRulesPage(1);
+                    }}
+                    className="pl-9"
+                    aria-label="Search linked items"
+                  />
+                </div>
+                <Tabs
+                  value={rulesKindFilter}
+                  onValueChange={(v) => {
+                    setRulesKindFilter(v as RuleKind | 'all');
+                    setRulesPage(1);
+                  }}
+                >
+                  <TabsList>
+                    <TabsTrigger value="all">All</TabsTrigger>
+                    <TabsTrigger value="rule">Rules</TabsTrigger>
+                    <TabsTrigger value="solution">Solutions</TabsTrigger>
+                    <TabsTrigger value="skill">Skills</TabsTrigger>
+                    <TabsTrigger value="command">Commands</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
-            </div>
-            {searchQuery.trim() && (
-              <div className="border rounded-md divide-y max-h-48 overflow-y-auto">
-                {searchLoading && <div className="p-2 text-sm text-muted-foreground">Searching…</div>}
-                {!searchLoading && addableProfiles.length === 0 && (
-                  <div className="p-2 text-sm text-muted-foreground">
-                    No users found or already members
-                  </div>
-                )}
-                {addableProfiles.map((profile) => (
-                  <div
-                    key={profile.id}
-                    className="flex items-center justify-between gap-2 p-2 hover:bg-muted/50"
-                  >
-                    <div>
-                      <span className="font-medium">
-                        {profile.full_name || profile.email || profile.id}
-                      </span>
-                      {profile.email && profile.full_name && (
-                        <span className="text-muted-foreground text-sm ml-2">{profile.email}</span>
-                      )}
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleAddMember(profile.id)}
-                      disabled={addMember.isPending}
-                      aria-label={`Add ${profile.full_name || profile.email} as member`}
-                    >
-                      <UserPlus className="w-4 h-4 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* Member list */}
-          <div className="space-y-2">
-            <Label>Current members</Label>
-            {membersLoading && <div className="text-sm text-muted-foreground">Loading members…</div>}
-            {!membersLoading && members.length === 0 && (
-              <p className="text-sm text-muted-foreground">No members yet.</p>
-            )}
-            <ul className="divide-y rounded-md border">
-              {members.map((member) => {
-                const profile = profileMap[member.user_id];
-                const isCurrentUser = member.user_id === currentUser?.id;
-                const displayName =
-                  profile?.full_name || profile?.email || member.user_id.slice(0, 8);
-                return (
-                  <li
-                    key={member.user_id}
-                    className="flex items-center justify-between gap-2 p-3"
-                  >
-                    <div>
-                      <span className="font-medium">{displayName}</span>
-                      {profile?.email && (
-                        <span className="text-muted-foreground text-sm ml-2">{profile.email}</span>
-                      )}
-                      {isCurrentUser && (
-                        <span className="text-muted-foreground text-xs ml-2">(you)</span>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-muted-foreground hover:text-destructive"
-                      onClick={() =>
-                        isCurrentUser ? handleLeaveProject() : handleRemoveMember(member.user_id)
-                      }
-                      disabled={removeMember.isPending}
-                      aria-label={
-                        isCurrentUser
-                          ? 'Leave project'
-                          : `Remove ${displayName} from project`
-                      }
-                    >
-                      {isCurrentUser ? (
-                        <>
-                          <LogOut className="w-4 h-4 mr-1" />
-                          Leave
-                        </>
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Pull all via CLI */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">Pull all content via CLI</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Link your project folder to this Compass project, then pull all shared rules, skills,
-            commands, and solutions in one go.
-          </p>
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-sm">
-              1. In your repo folder, run init and choose “{project.title}” when prompted
-            </Label>
-            <CodeBlockWithCopy code="bitcompass init" ariaLabel="Copy bitcompass init command" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-sm">
-              2. Pull all linked content into your project
-            </Label>
-            <CodeBlockWithCopy
-              code="bitcompass project pull"
-              ariaLabel="Copy bitcompass project pull command"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Linked rules, commands, solutions, skills */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">Linked rules, commands, solutions & skills</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="relative flex-1 min-w-[200px] max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search…"
-                value={rulesSearch}
-                onChange={(e) => {
-                  setRulesSearch(e.target.value);
-                  setRulesPage(1);
-                }}
-                className="pl-9"
-                aria-label="Search linked items"
-              />
-            </div>
-            <Tabs
-              value={rulesKindFilter}
-              onValueChange={(v) => {
-                setRulesKindFilter(v as RuleKind | 'all');
-                setRulesPage(1);
-              }}
-            >
-              <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="rule">Rules</TabsTrigger>
-                <TabsTrigger value="solution">Solutions</TabsTrigger>
-                <TabsTrigger value="skill">Skills</TabsTrigger>
-                <TabsTrigger value="command">Commands</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-
-          {rulesLoading ? (
-            <div className="text-muted-foreground py-8 text-center">Loading…</div>
-          ) : linkedRules.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <BookMarked className="h-12 w-12 text-muted-foreground mb-4" />
-              {linkedTotal === 0 ? (
-                <>
-                  <h3 className="font-semibold mb-1">No linked items yet</h3>
-                  <p className="text-sm text-muted-foreground max-w-sm">
-                    Rules, skills, commands, and solutions scoped to this project will appear here.
-                    Add them from the Rules page and set this project as scope.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => navigate('/rules')}
-                  >
-                    Go to Rules & solutions
-                  </Button>
-                </>
-              ) : (
-                <p className="text-muted-foreground">No matches for this search or filter.</p>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="grid gap-4 md:grid-cols-2">
-                {linkedRules.map((rule) => {
-                  const kindStyles = CARD_KIND_CLASSES[rule.kind];
-                  return (
-                    // Card contains buttons; cannot use <a> wrapper. Same pattern as RulesPage.
-                    // biome-ignore lint/a11y/useSemanticElements: Card contains buttons; div + role="link" for keyboard nav.
-                    <div
-                      key={rule.id}
-                      role="link"
-                      tabIndex={0}
-                      onClick={() => navigate(`/rules/${rule.id}`)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          navigate(`/rules/${rule.id}`);
-                        }
-                      }}
-                      className="block cursor-pointer"
-                      aria-label={`Open ${rule.kind}: ${rule.title}`}
-                    >
-                      <Card
-                        className={cn(
-                          'card-interactive transition-all duration-300 border-l-4',
-                          'dark:bg-white/5 dark:backdrop-blur-xl dark:border dark:border-white/10',
-                          'dark:hover:-translate-y-1 dark:hover:shadow-2xl',
-                          kindStyles.card
-                        )}
+              {rulesLoading ? (
+                <div className="text-muted-foreground py-8 text-center">Loading…</div>
+              ) : linkedRules.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <BookMarked className="h-12 w-12 text-muted-foreground mb-4" />
+                  {linkedTotal === 0 ? (
+                    <>
+                      <h3 className="font-semibold mb-1">No linked items yet</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm">
+                        Rules, skills, commands, and solutions scoped to this project will appear here.
+                        Add them from the Rules page and set this project as scope.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="mt-4"
+                        onClick={() => navigate('/rules')}
                       >
-                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                          <CardTitle className="text-base font-display font-bold">
-                            <span className="hover:underline text-foreground">
-                              {rulesSearch.trim()
-                                ? highlightText(rule.title, rulesSearch)
-                                : rule.title}
-                            </span>
-                          </CardTitle>
-                          <span
+                        Go to Rules & solutions
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">No matches for this search or filter.</p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {linkedRules.map((rule) => {
+                      const kindStyles = CARD_KIND_CLASSES[rule.kind];
+                      return (
+                        // Card contains buttons; cannot use <a> wrapper. Same pattern as RulesPage.
+                        // biome-ignore lint/a11y/useSemanticElements: Card contains buttons; div + role="link" for keyboard nav.
+                        <div
+                          key={rule.id}
+                          role="link"
+                          tabIndex={0}
+                          onClick={() => navigate(`/rules/${rule.id}`)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              navigate(`/rules/${rule.id}`);
+                            }
+                          }}
+                          className="block cursor-pointer"
+                          aria-label={`Open ${rule.kind}: ${rule.title}`}
+                        >
+                          <Card
                             className={cn(
-                              'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border capitalize',
-                              rule.kind === 'rule' &&
-                                'bg-sky-500/10 text-sky-400 border-sky-500/20',
-                              rule.kind === 'solution' &&
-                                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-                              rule.kind === 'skill' &&
-                                'bg-violet-500/10 text-violet-400 border-violet-500/20',
-                              rule.kind === 'command' &&
-                                'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                              'card-interactive transition-all duration-300 border-l-4',
+                              'dark:bg-white/5 dark:backdrop-blur-xl dark:border dark:border-white/10',
+                              'dark:hover:-translate-y-1 dark:hover:shadow-2xl',
+                              kindStyles.card
                             )}
                           >
-                            {rule.kind}
-                          </span>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground dark:text-zinc-400 line-clamp-2">
-                            {rulesSearch.trim()
-                              ? highlightText(
-                                  rule.description || rule.body,
-                                  rulesSearch
-                                )
-                              : rule.description || rule.body}
-                          </p>
-                          <div className="mt-3 space-y-2">
-                            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground dark:text-zinc-400">
-                              {(rule.author_display_name ?? rule.user_id) && (
-                                <div className="flex items-center gap-1.5">
-                                  <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                                  <span>
-                                    {rule.author_display_name ?? 'Unknown author'}
-                                  </span>
+                            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                              <CardTitle className="text-base font-display font-bold">
+                                <span className="hover:underline text-foreground">
+                                  {rulesSearch.trim()
+                                    ? highlightText(rule.title, rulesSearch)
+                                    : rule.title}
+                                </span>
+                              </CardTitle>
+                              <span
+                                className={cn(
+                                  'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border capitalize',
+                                  rule.kind === 'rule' &&
+                                  'bg-sky-500/10 text-sky-400 border-sky-500/20',
+                                  rule.kind === 'solution' &&
+                                  'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                                  rule.kind === 'skill' &&
+                                  'bg-violet-500/10 text-violet-400 border-violet-500/20',
+                                  rule.kind === 'command' &&
+                                  'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                )}
+                              >
+                                {rule.kind}
+                              </span>
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-sm text-muted-foreground dark:text-zinc-400 line-clamp-2">
+                                {rulesSearch.trim()
+                                  ? highlightText(
+                                    rule.description || rule.body,
+                                    rulesSearch
+                                  )
+                                  : rule.description || rule.body}
+                              </p>
+                              <div className="mt-3 space-y-2">
+                                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground dark:text-zinc-400">
+                                  {(rule.author_display_name ?? rule.user_id) && (
+                                    <div className="flex items-center gap-1.5">
+                                      <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                      <span>
+                                        {rule.author_display_name ?? 'Unknown author'}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {rule.version && (
+                                    <span className="font-medium">v{rule.version}</span>
+                                  )}
                                 </div>
-                              )}
-                              {rule.version && (
-                                <span className="font-medium">v{rule.version}</span>
-                              )}
-                            </div>
-                            {(rule.technologies?.length ?? 0) > 0 && (
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                {(rule.technologies ?? []).slice(0, 5).map((tech) => {
-                                  const style = getTechStyle(tech);
-                                  return (
-                                    <span
-                                      key={tech}
-                                      className={cn(
-                                        'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border',
-                                        style.bg,
-                                        style.text,
-                                        style.border
-                                      )}
-                                    >
-                                      {rulesSearch.trim()
-                                        ? highlightText(tech, rulesSearch)
-                                        : tech}
-                                    </span>
-                                  );
-                                })}
-                                {(rule.technologies?.length ?? 0) > 5 && (
-                                  <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border bg-white/5 text-zinc-400 dark:bg-white/5 dark:text-zinc-400 dark:border-white/10">
-                                    +{(rule.technologies?.length ?? 0) - 5}
-                                  </span>
+                                {(rule.technologies?.length ?? 0) > 0 && (
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    {(rule.technologies ?? []).slice(0, 5).map((tech) => {
+                                      const style = getTechStyle(tech);
+                                      return (
+                                        <span
+                                          key={tech}
+                                          className={cn(
+                                            'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border',
+                                            style.bg,
+                                            style.text,
+                                            style.border
+                                          )}
+                                        >
+                                          {rulesSearch.trim()
+                                            ? highlightText(tech, rulesSearch)
+                                            : tech}
+                                        </span>
+                                      );
+                                    })}
+                                    {(rule.technologies?.length ?? 0) > 5 && (
+                                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border bg-white/5 text-zinc-400 dark:bg-white/5 dark:text-zinc-400 dark:border-white/10">
+                                        +{(rule.technologies?.length ?? 0) - 5}
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
                               </div>
-                            )}
-                          </div>
-                          {/* biome-ignore lint/a11y/noStaticElementInteractions: Wrapper only stops propagation so button clicks don't trigger card nav. */}
-                          <div
-                            className="mt-4 flex flex-wrap items-center gap-2"
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                          >
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                void handleCopyPullCommand(rule, false);
-                              }}
-                              aria-label={`Use this ${rule.kind} (symlink)`}
-                              title={getPullCommand(rule.id, rule.kind, false)}
-                              className={cn('gap-1.5 border-0', kindStyles.cta)}
-                            >
-                              <Link2 className="h-4 w-4" />
-                              Use this {getKindLabel(rule.kind)}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                void handleCopyPullCommand(rule, true);
-                              }}
-                              aria-label={`Clone this ${rule.kind} (--copy)`}
-                              className={cn(
-                                'dark:border-white/10 dark:bg-white/5',
-                                copiedRuleId === rule.id
-                                  ? 'bg-muted dark:bg-white/10'
-                                  : ''
-                              )}
-                            >
-                              <GitFork className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                downloadRule(rule, 'markdown');
-                              }}
-                              aria-label="Download as Markdown"
-                              className="dark:text-zinc-400"
-                            >
-                              <FileDown className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  );
-                })}
-              </div>
+                              {/* biome-ignore lint/a11y/noStaticElementInteractions: Wrapper only stops propagation so button clicks don't trigger card nav. */}
+                              <div
+                                className="mt-4 flex flex-wrap items-center gap-2"
+                                onClick={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => e.stopPropagation()}
+                              >
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    void handleCopyPullCommand(rule, false);
+                                  }}
+                                  aria-label={`Use this ${rule.kind} (symlink)`}
+                                  title={getPullCommand(rule.id, rule.kind, false)}
+                                  className={cn('gap-1.5 border-0', kindStyles.cta)}
+                                >
+                                  <Link2 className="h-4 w-4" />
+                                  Use this {getKindLabel(rule.kind)}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    void handleCopyPullCommand(rule, true);
+                                  }}
+                                  aria-label={`Clone this ${rule.kind} (--copy)`}
+                                  className={cn(
+                                    'dark:border-white/10 dark:bg-white/5',
+                                    copiedRuleId === rule.id
+                                      ? 'bg-muted dark:bg-white/10'
+                                      : ''
+                                  )}
+                                >
+                                  <GitFork className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    downloadRule(rule, 'markdown');
+                                  }}
+                                  aria-label="Download as Markdown"
+                                  className="dark:text-zinc-400"
+                                >
+                                  <FileDown className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      );
+                    })}
+                  </div>
 
-              {linkedTotalPages > 1 && (
-                <Pagination aria-label="Linked items pagination">
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (rulesPage > 1) setRulesPage((p) => p - 1);
-                        }}
-                        aria-disabled={rulesPage <= 1}
-                        className={
-                          rulesPage <= 1 ? 'pointer-events-none opacity-50' : ''
-                        }
-                      />
-                    </PaginationItem>
-                    {(() => {
-                      const pages: number[] = [1];
-                      if (rulesPage - 1 > 1) pages.push(rulesPage - 1);
-                      if (rulesPage > 1 && rulesPage !== linkedTotalPages)
-                        pages.push(rulesPage);
-                      if (rulesPage + 1 < linkedTotalPages) pages.push(rulesPage + 1);
-                      if (linkedTotalPages > 1) pages.push(linkedTotalPages);
-                      const unique = [...new Set(pages)].sort((a, b) => a - b);
-                      return unique.map((n, idx) => (
-                        <PaginationItem key={n}>
-                          {idx > 0 && unique[idx - 1] !== n - 1 && (
-                            <PaginationEllipsis aria-hidden />
-                          )}
-                          <PaginationLink
+                  {linkedTotalPages > 1 && (
+                    <Pagination aria-label="Linked items pagination">
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
                             href="#"
                             onClick={(e) => {
                               e.preventDefault();
-                              setRulesPage(n);
+                              if (rulesPage > 1) setRulesPage((p) => p - 1);
                             }}
-                            isActive={n === rulesPage}
-                          >
-                            {n}
-                          </PaginationLink>
+                            aria-disabled={rulesPage <= 1}
+                            className={
+                              rulesPage <= 1 ? 'pointer-events-none opacity-50' : ''
+                            }
+                          />
                         </PaginationItem>
-                      ));
-                    })()}
-                    <PaginationItem>
-                      <PaginationNext
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (rulesPage < linkedTotalPages)
-                            setRulesPage((p) => p + 1);
-                        }}
-                        aria-disabled={rulesPage >= linkedTotalPages}
-                        className={
-                          rulesPage >= linkedTotalPages
-                            ? 'pointer-events-none opacity-50'
-                            : ''
-                        }
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                        {(() => {
+                          const pages: number[] = [1];
+                          if (rulesPage - 1 > 1) pages.push(rulesPage - 1);
+                          if (rulesPage > 1 && rulesPage !== linkedTotalPages)
+                            pages.push(rulesPage);
+                          if (rulesPage + 1 < linkedTotalPages) pages.push(rulesPage + 1);
+                          if (linkedTotalPages > 1) pages.push(linkedTotalPages);
+                          const unique = [...new Set(pages)].sort((a, b) => a - b);
+                          return unique.map((n, idx) => (
+                            <PaginationItem key={n}>
+                              {idx > 0 && unique[idx - 1] !== n - 1 && (
+                                <PaginationEllipsis aria-hidden />
+                              )}
+                              <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setRulesPage(n);
+                                }}
+                                isActive={n === rulesPage}
+                              >
+                                {n}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ));
+                        })()}
+                        <PaginationItem>
+                          <PaginationNext
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (rulesPage < linkedTotalPages)
+                                setRulesPage((p) => p + 1);
+                            }}
+                            aria-disabled={rulesPage >= linkedTotalPages}
+                            className={
+                              rulesPage >= linkedTotalPages
+                                ? 'pointer-events-none opacity-50'
+                                : ''
+                            }
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* RIGHT: Sidebar (Members + Dev instructions) — sticky */}
+        <aside className="w-full lg:w-[340px] shrink-0 lg:sticky lg:top-6 space-y-6">
+          {/* Members */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Users className="w-5 h-5" />
+                Members ({members.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Add member: search */}
+              <div className="space-y-2">
+                <Label htmlFor="member-search">Add member</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="member-search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by email or name"
+                    className="pl-9"
+                    aria-label="Search users to add as member"
+                  />
+                </div>
+                {searchQuery.trim() && (
+                  <div className="border rounded-md divide-y max-h-48 overflow-y-auto">
+                    {searchLoading && <div className="p-2 text-sm text-muted-foreground">Searching…</div>}
+                    {!searchLoading && addableProfiles.length === 0 && (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        No users found or already members
+                      </div>
+                    )}
+                    {addableProfiles.map((profile) => (
+                      <div
+                        key={profile.id}
+                        className="flex items-center justify-between gap-2 p-2 hover:bg-muted/50"
+                      >
+                        <div className="min-w-0">
+                          <span className="font-medium text-sm truncate block">
+                            {profile.full_name || profile.email || profile.id}
+                          </span>
+                          {profile.email && profile.full_name && (
+                            <span className="text-muted-foreground text-xs block truncate">{profile.email}</span>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAddMember(profile.id)}
+                          disabled={addMember.isPending}
+                          aria-label={`Add ${profile.full_name || profile.email} as member`}
+                          className="shrink-0"
+                        >
+                          <UserPlus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Member list */}
+              <div className="space-y-1">
+                {membersLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
+                {!membersLoading && members.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No members yet.</p>
+                )}
+                <ul className="divide-y rounded-md border">
+                  {members.map((member) => {
+                    const profile = profileMap[member.user_id];
+                    const isCurrentUser = member.user_id === currentUser?.id;
+                    const displayName =
+                      profile?.full_name || profile?.email || member.user_id.slice(0, 8);
+                    return (
+                      <li
+                        key={member.user_id}
+                        className="flex items-center justify-between gap-2 px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <span className="font-medium text-sm block truncate">{displayName}</span>
+                          {profile?.email && (
+                            <span className="text-muted-foreground text-xs block truncate">{profile.email}</span>
+                          )}
+                          {isCurrentUser && (
+                            <span className="text-muted-foreground text-xs">(you)</span>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-destructive shrink-0 h-8 w-8 p-0"
+                          onClick={() =>
+                            isCurrentUser ? handleLeaveProject() : handleRemoveMember(member.user_id)
+                          }
+                          disabled={removeMember.isPending}
+                          aria-label={
+                            isCurrentUser
+                              ? 'Leave project'
+                              : `Remove ${displayName} from project`
+                          }
+                        >
+                          {isCurrentUser ? (
+                            <LogOut className="w-4 h-4" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Dev instructions (Pull all via CLI) */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Dev instructions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Link your project folder, then pull all shared rules, skills, commands, and solutions.
+              </p>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">
+                  1. Run init and choose &ldquo;{project.title}&rdquo;
+                </Label>
+                <CodeBlockWithCopy code="bitcompass init" ariaLabel="Copy bitcompass init command" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">
+                  2. Pull all linked content
+                </Label>
+                <CodeBlockWithCopy
+                  code="bitcompass project pull"
+                  ariaLabel="Copy bitcompass project pull command"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </aside>
+      </div>
     </div>
   );
 }

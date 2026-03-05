@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/pagination';
 import { useRulesPaginated, useInsertRule } from '@/hooks/use-rules';
 import { useCompassProjects } from '@/hooks/use-compass-projects';
+import { useProfilesByIds } from '@/hooks/use-profiles';
 import { useToast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Rule, RuleInsert, RuleKind, RuleVisibility } from '@/types/bitcompass';
@@ -184,6 +185,18 @@ export default function RulesPage() {
   const rules = paginatedResult?.data ?? [];
   const total = paginatedResult?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / RULES_PAGE_SIZE));
+
+  // Batch-fetch profiles for rules missing author_display_name
+  const missingAuthorIds = [...new Set(
+    rules.filter((r) => !r.author_display_name).map((r) => r.user_id)
+  )];
+  const { data: authorProfiles = [] } = useProfilesByIds(missingAuthorIds);
+  const profileNameById = Object.fromEntries(
+    authorProfiles.map((p) => [p.id, p.full_name || p.email || null])
+  );
+  const getAuthorName = (rule: Rule): string =>
+    rule.author_display_name || profileNameById[rule.user_id] || 'Unknown author';
+
   const insertRule = useInsertRule();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -602,12 +615,10 @@ export default function RulesPage() {
                   <div className="mt-3 space-y-2">
                     {/* Author and Version */}
                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground dark:text-zinc-400">
-                      {(rule.author_display_name ?? rule.user_id) && (
-                        <div className="flex items-center gap-1.5">
-                          <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                          <span>{rule.author_display_name ?? 'Unknown author'}</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        <span>{getAuthorName(rule)}</span>
+                      </div>
                       {rule.version && (
                         <div className="flex items-center gap-1.5">
                           <span className="font-medium">v{rule.version}</span>

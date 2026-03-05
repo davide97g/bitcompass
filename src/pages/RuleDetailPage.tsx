@@ -16,7 +16,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useRule, useUpdateRule, useDeleteRule } from '@/hooks/use-rules';
 import { useCompassProjects } from '@/hooks/use-compass-projects';
+import { useAuth } from '@/hooks/use-auth';
+import { useProfilesByIds } from '@/hooks/use-profiles';
 import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
 import type { Rule, RuleKind, RuleVisibility } from '@/types/bitcompass';
 import { ArrowLeft, FileDown, Layers, Pencil, Trash2, User, Link2, Lock, Globe } from 'lucide-react';
 import {
@@ -92,7 +95,15 @@ export default function RuleDetailPage() {
   const updateRule = useUpdateRule();
   const deleteRule = useDeleteRule();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { data: compassProjects = [] } = useCompassProjects();
+  const isOwner = Boolean(user && rule && user.id === rule.user_id);
+  const authorUserId = rule?.user_id ? [rule.user_id] : [];
+  const { data: authorProfiles = [] } = useProfilesByIds(authorUserId);
+  const authorName = rule?.author_display_name
+    || authorProfiles[0]?.full_name
+    || authorProfiles[0]?.email
+    || 'Unknown author';
   const projectIdToTitle = Object.fromEntries(compassProjects.map((p) => [p.id, p.title]));
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -102,7 +113,6 @@ export default function RuleDetailPage() {
     version: '1.0.0',
     technologies: [] as string[],
     project_id: undefined as string | null | undefined,
-    visibility: 'private' as RuleVisibility,
   });
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -115,8 +125,6 @@ export default function RuleDetailPage() {
         version: bumpRuleVersionMajor(rule.version),
         technologies: rule.technologies || [],
         project_id: rule.project_id ?? undefined,
-        // If a public rule is edited, the newer version starts as private
-        visibility: rule.visibility === 'public' ? 'private' : rule.visibility,
       });
       setEditing(true);
     }
@@ -135,7 +143,6 @@ export default function RuleDetailPage() {
           version: newVersion,
           technologies: editForm.technologies,
           project_id: editForm.project_id ?? undefined,
-          visibility: editForm.visibility,
         },
       });
       toast({ title: 'Updated' });
@@ -155,6 +162,20 @@ export default function RuleDetailPage() {
       toast({
         title: projectId ? 'Linked to project' : 'Unlinked (global)',
       });
+    } catch (e) {
+      toast({ title: e instanceof Error ? e.message : 'Failed', variant: 'destructive' });
+    }
+  };
+
+  const handleVisibilityToggle = async (checked: boolean) => {
+    if (!id || !rule) return;
+    const newVisibility: RuleVisibility = checked ? 'public' : 'private';
+    try {
+      await updateRule.mutateAsync({
+        id,
+        updates: { visibility: newVisibility },
+      });
+      toast({ title: `Visibility changed to ${newVisibility}` });
     } catch (e) {
       toast({ title: e instanceof Error ? e.message : 'Failed', variant: 'destructive' });
     }
@@ -264,21 +285,35 @@ export default function RuleDetailPage() {
                 Version: <span className="font-medium text-foreground">v{rule.version}</span>
               </span>
             )}
-            {(rule.author_display_name ?? rule.user_id) && (
-              <div className="flex items-center gap-1.5 text-muted-foreground dark:text-zinc-400">
-                <User className="h-4 w-4 shrink-0" aria-hidden />
-                <span>Author: {rule.author_display_name ?? 'Unknown author'}</span>
-              </div>
+            <div className="flex items-center gap-1.5 text-muted-foreground dark:text-zinc-400">
+              <User className="h-4 w-4 shrink-0" aria-hidden />
+              <span>Author: <span className="text-foreground">{authorName}</span></span>
+            </div>
+            {isOwner ? (
+              <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                <Lock className={cn('h-3.5 w-3.5', rule.visibility === 'private' ? 'text-zinc-400' : 'text-zinc-600')} />
+                <Switch
+                  checked={rule.visibility === 'public'}
+                  onCheckedChange={(checked) => void handleVisibilityToggle(checked)}
+                  disabled={updateRule.isPending}
+                  aria-label="Toggle visibility"
+                />
+                <Globe className={cn('h-3.5 w-3.5', rule.visibility === 'public' ? 'text-green-400' : 'text-zinc-600')} />
+                <span className="text-xs text-muted-foreground">
+                  {rule.visibility === 'public' ? 'Public' : 'Private'}
+                </span>
+              </label>
+            ) : (
+              <span className={cn(
+                'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border',
+                rule.visibility === 'public'
+                  ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                  : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+              )}>
+                {rule.visibility === 'public' ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                {rule.visibility === 'public' ? 'Public' : 'Private'}
+              </span>
             )}
-            <span className={cn(
-              'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border',
-              rule.visibility === 'public'
-                ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
-            )}>
-              {rule.visibility === 'public' ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-              {rule.visibility === 'public' ? 'Public' : 'Private'}
-            </span>
             {rule.technologies && rule.technologies.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5">
                 {rule.technologies.map((tech) => {
@@ -405,24 +440,6 @@ export default function RuleDetailPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-              <div className="space-y-2">
-                <Label>Visibility</Label>
-                <select
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                  value={editForm.visibility}
-                  onChange={(e) =>
-                    setEditForm((p) => ({ ...p, visibility: e.target.value as RuleVisibility }))
-                  }
-                >
-                  <option value="private">Private (only you)</option>
-                  <option value="public">Public (everyone)</option>
-                </select>
-                {rule.visibility === 'public' && editForm.visibility === 'private' && (
-                  <p className="text-xs text-muted-foreground">
-                    This rule was public. The updated version will be saved as private.
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label>Technologies (comma-separated)</Label>

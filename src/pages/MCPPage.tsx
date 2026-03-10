@@ -81,11 +81,11 @@ export default function MCPPage() {
   };
 
   const handleAddToClaude = async () => {
-    const ok = await copyToClipboard(CLAUDE_MCP_CONFIG);
+    const ok = await copyToClipboard(CLAUDE_CODE_COMMAND);
     if (ok) {
       toast({
-        title: 'Claude config copied',
-        description: 'Paste into ~/Library/Application Support/Claude/claude_desktop_config.json — or run: claude mcp add bitcompass -- bitcompass mcp start',
+        title: 'Claude command copied',
+        description: 'Paste and run in your terminal to add BitCompass MCP to Claude Code',
       });
     } else {
       toast({ title: 'Copy failed', variant: 'destructive' });

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { loadConfig, loadCredentials } from '../auth/config.js';
+import { loadConfig, loadCredentials, loadCredentialsWithRefresh } from '../auth/config.js';
 import { DEFAULT_SUPABASE_ANON_KEY, DEFAULT_SUPABASE_URL } from '../auth/defaults.js';
 import type {
   ActivityLog,
@@ -47,8 +47,21 @@ const getSupabaseUrlAndKey = (): { url: string; key: string } | null => {
   return { url, key };
 };
 
-/** Client for writes and authenticated reads (uses token when available). */
-export const getSupabaseClient = (): SupabaseClient | null => {
+/** Client for writes and authenticated reads (uses token when available, auto-refreshes expired tokens). */
+export const getSupabaseClient = async (): Promise<SupabaseClient | null> => {
+  const pair = getSupabaseUrlAndKey();
+  if (!pair) return null;
+  const creds = await loadCredentialsWithRefresh();
+  const accessToken = creds?.access_token;
+  return createClient(pair.url, pair.key, {
+    global: accessToken
+      ? { headers: { Authorization: `Bearer ${accessToken}` } }
+      : undefined,
+  });
+};
+
+/** Sync version for cases where async is not possible (e.g. getCurrentUserId). */
+export const getSupabaseClientSync = (): SupabaseClient | null => {
   const pair = getSupabaseUrlAndKey();
   if (!pair) return null;
   const creds = loadCredentials();
@@ -90,7 +103,7 @@ export const getCurrentUserId = (): string | null => {
 export const fetchCompassProjectsForCurrentUser = async (): Promise<CompassProject[]> => {
   const userId = getCurrentUserId();
   if (!userId) return [];
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   if (!client) return [];
   const { data: members, error: membersError } = await client
     .from('compass_project_members')
@@ -108,7 +121,7 @@ export const fetchCompassProjectsForCurrentUser = async (): Promise<CompassProje
 };
 
 export const getCompassProjectById = async (id: string): Promise<CompassProject | null> => {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   if (!client) return null;
   const { data, error } = await client
     .from('compass_projects')
@@ -131,7 +144,7 @@ export const fetchRules = async (
   kind?: RuleKind,
   options?: FetchRulesOptions
 ): Promise<Rule[]> => {
-  const client = getSupabaseClientForRead();
+  const client = await getSupabaseClientForRead();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   let query = client.from('rules').select('*').order('created_at', { ascending: false });
   if (kind) {
@@ -152,7 +165,7 @@ export const searchRules = async (
   queryText: string,
   options: { kind?: RuleKind; limit?: number } = {}
 ): Promise<Rule[]> => {
-  const client = getSupabaseClientForRead();
+  const client = await getSupabaseClientForRead();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   let query = client
     .from('rules')
@@ -169,7 +182,7 @@ export const searchRules = async (
 };
 
 export const getRuleById = async (id: string): Promise<Rule | null> => {
-  const client = getSupabaseClientForRead();
+  const client = await getSupabaseClientForRead();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   const { data, error } = await client.from('rules').select('*').eq('id', id).single();
   if (error) {
@@ -184,7 +197,7 @@ export const getRuleById = async (id: string): Promise<Rule | null> => {
  */
 export const fetchRulesByIds = async (ids: string[]): Promise<Rule[]> => {
   if (ids.length === 0) return [];
-  const client = getSupabaseClientForRead();
+  const client = await getSupabaseClientForRead();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   const { data, error } = await client
     .from('rules')
@@ -195,7 +208,7 @@ export const fetchRulesByIds = async (ids: string[]): Promise<Rule[]> => {
 };
 
 export const insertRule = async (rule: RuleInsert): Promise<Rule> => {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   const { data, error } = await client.from('rules').insert(rule).select().single();
   if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
@@ -203,7 +216,7 @@ export const insertRule = async (rule: RuleInsert): Promise<Rule> => {
 };
 
 export const updateRule = async (id: string, updates: Partial<RuleInsert>): Promise<Rule> => {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   const { data, error } = await client.from('rules').update(updates).eq('id', id).select().single();
   if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
@@ -211,14 +224,14 @@ export const updateRule = async (id: string, updates: Partial<RuleInsert>): Prom
 };
 
 export const deleteRule = async (id: string): Promise<void> => {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   const { error } = await client.from('rules').delete().eq('id', id);
   if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
 };
 
 export const insertActivityLog = async (payload: ActivityLogInsert): Promise<ActivityLog> => {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   const { data, error } = await client
     .from('activity_logs')
@@ -230,7 +243,7 @@ export const insertActivityLog = async (payload: ActivityLogInsert): Promise<Act
 };
 
 export const fetchActivityLogs = async (options?: { limit?: number; time_frame?: 'day' | 'week' | 'month' }): Promise<ActivityLog[]> => {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   let query = client.from('activity_logs').select('*').order('created_at', { ascending: false });
   if (options?.time_frame) {
@@ -245,7 +258,7 @@ export const fetchActivityLogs = async (options?: { limit?: number; time_frame?:
 };
 
 export const getActivityLogById = async (id: string): Promise<ActivityLog | null> => {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   const { data, error } = await client.from('activity_logs').select('*').eq('id', id).single();
   if (error) {
@@ -256,7 +269,7 @@ export const getActivityLogById = async (id: string): Promise<ActivityLog | null
 };
 
 export const getRuleGroupById = async (id: string): Promise<RuleGroup | null> => {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   const { data, error } = await client
     .from('rule_groups')
@@ -271,7 +284,7 @@ export const getRuleGroupById = async (id: string): Promise<RuleGroup | null> =>
 };
 
 export const fetchRuleGroups = async (): Promise<RuleGroup[]> => {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   const { data, error } = await client
     .from('rule_groups')
@@ -286,7 +299,7 @@ export const fetchRuleGroups = async (): Promise<RuleGroup[]> => {
  * Uses the `get_group_rule_ids` Postgres function for efficiency.
  */
 export const fetchRulesByGroupId = async (groupId: string): Promise<Rule[]> => {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   if (!client) throw new Error(NOT_CONFIGURED_MSG);
   const { data: ruleIds, error: rpcErr } = await client
     .rpc('get_group_rule_ids', { root_group_id: groupId });

@@ -15,7 +15,7 @@ import {
   getRuleGroupById,
 } from '../api/client.js';
 import { buildAndPushActivityLog } from '../commands/log.js';
-import { loadCredentials } from '../auth/config.js';
+import { loadCredentials, loadCredentialsWithRefresh } from '../auth/config.js';
 import { getProjectConfig } from '../auth/project-config.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import { bumpRuleVersionMajor } from '../lib/version-bump.js';
@@ -53,7 +53,9 @@ function createStdioServer(): {
       }
       if (isNotification) return;
       if (msg.method === 'initialize') {
-        const hasToken = Boolean(loadCredentials()?.access_token);
+        // Try auto-refresh if token is expired
+        const creds = await loadCredentialsWithRefresh();
+        const hasToken = Boolean(creds?.access_token);
         if (!hasToken) {
           send({
             jsonrpc: '2.0',

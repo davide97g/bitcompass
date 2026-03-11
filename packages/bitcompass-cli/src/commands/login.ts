@@ -370,6 +370,9 @@ export const runLogin = async (): Promise<void> => {
           const creds: StoredCredentials = {
             access_token: session.access_token,
             refresh_token: session.refresh_token ?? '',
+            expires_at: session.expires_at
+              ? session.expires_at * 1000   // Supabase returns seconds, store as ms
+              : undefined,
             user: session.user ? { email: session.user.email ?? undefined } : {},
           };
           const tokenPath = getTokenFilePath();

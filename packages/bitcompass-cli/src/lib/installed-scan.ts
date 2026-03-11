@@ -44,7 +44,7 @@ export const scanInstalled = (options: { global?: boolean }): InstalledItem[] =>
     let entries: string[];
     try {
       entries = readdirSync(dir, { withFileTypes: true })
-        .filter((e) => e.isFile() && exts.some((ext) => e.name.endsWith(ext)))
+        .filter((e) => (e.isFile() || e.isSymbolicLink()) && exts.some((ext) => e.name.endsWith(ext)))
         .map((e) => e.name);
     } catch {
       continue;

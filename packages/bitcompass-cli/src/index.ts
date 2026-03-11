@@ -19,6 +19,7 @@ import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './comm
 import { runGroupList, runGroupPull, runGroupSync } from './commands/group.js';
 import { runProjectList, runProjectPull, runProjectSync } from './commands/project.js';
 import { runSharePush } from './commands/share.js';
+import { runSync } from './commands/sync.js';
 import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
 import { runSolutionsList, runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
 import { runUpdate } from './commands/update.js';
@@ -124,6 +125,34 @@ Examples:
       kind,
     }).catch(handleErr);
   });
+
+program
+  .command('sync')
+  .description('Sync local rules/skills/commands/solutions with the linked Compass project')
+  .option('--check', 'Show sync status only; do not apply changes')
+  .option('-a, --all', 'Sync all items without interactive selection')
+  .option('-y, --yes', 'Skip confirmation prompt (use with --all for non-interactive)')
+  .option('--prune', 'Also remove local items no longer in the project')
+  .option('-g, --global', 'Operate on global installs (~/.cursor/...)')
+  .addHelpText(
+    'after',
+    `
+Examples:
+  bitcompass sync
+  bitcompass sync --check
+  bitcompass sync --all -y
+  bitcompass sync --prune
+`
+  )
+  .action((opts?: { check?: boolean; all?: boolean; yes?: boolean; prune?: boolean; global?: boolean }) =>
+    runSync({
+      check: opts?.check,
+      all: opts?.all,
+      yes: opts?.yes,
+      prune: opts?.prune,
+      global: opts?.global,
+    }).catch(handleErr)
+  );
 
 program
   .command('log [dates...]')

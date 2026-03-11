@@ -4,6 +4,7 @@ import { createSpinner } from '../lib/spinner.js';
 import chalk from 'chalk';
 import { loadCredentials } from '../auth/config.js';
 import { insertRule } from '../api/client.js';
+import { loadProjectConfig } from '../auth/project-config.js';
 import { parseRuleMdcContent, parseFrontmatterKind } from '../lib/mdc-format.js';
 import { bumpRuleVersionMajor } from '../lib/version-bump.js';
 import { SHARE_KIND_CHOICES, inferKindFromFilename } from '../lib/share-types.js';
@@ -106,6 +107,20 @@ export const runSharePush = async (
     process.exit(1);
   }
 
+  // Auto-detect project from config (explicit --project-id takes precedence)
+  let projectId = options?.projectId ?? null;
+  let autoProject = false;
+  if (!projectId) {
+    const projectConfig = loadProjectConfig();
+    if (projectConfig?.compassProjectId) {
+      projectId = projectConfig.compassProjectId;
+      autoProject = true;
+    }
+  }
+
+  // When scoped to a project, default to public visibility
+  const visibility = projectId ? 'public' : 'private';
+
   let payload: RuleInsert;
 
   if (file) {
@@ -123,11 +138,11 @@ export const runSharePush = async (
       context: parsed.context,
       examples: parsed.examples,
       technologies: parsed.technologies,
-      project_id: options?.projectId,
+      project_id: projectId,
       globs: parsed.globs,
       always_apply: parsed.always_apply,
       version: parsed.version ? bumpRuleVersionMajor(parsed.version) : '1.0.0',
-      visibility: 'private',
+      visibility,
     };
   } else {
     const kind = options?.kind ?? (await promptForKind());
@@ -141,14 +156,10 @@ export const runSharePush = async (
       title: answers.title,
       description: answers.description,
       body: answers.body,
-      project_id: options?.projectId,
+      project_id: projectId,
       version: '1.0.0',
-      visibility: 'private',
+      visibility,
     };
-  }
-
-  if (options?.projectId) {
-    payload = { ...payload, project_id: options.projectId };
   }
 
   const label = KIND_LABELS[payload.kind];
@@ -156,4 +167,11 @@ export const runSharePush = async (
   const created = await insertRule(payload);
   spinner.succeed(chalk.green(`Published ${label} `) + created.id);
   console.log(chalk.dim(created.title));
+  if (projectId) {
+    console.log(
+      chalk.dim(autoProject ? 'Auto-linked to project ' : 'Linked to project ') +
+        chalk.cyan(projectId) +
+        chalk.dim(` (${visibility})`)
+    );
+  }
 };

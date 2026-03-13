@@ -42,6 +42,7 @@ export const loadProjectConfig = (): ProjectConfig | null => {
       editor?: string;
       outputPath?: string;
       compassProjectId?: string | null;
+      defaultSharing?: string;
     };
     const editor = data.editor as EditorProvider | undefined;
     const outputPath = typeof data.outputPath === 'string' ? data.outputPath : undefined;
@@ -52,7 +53,9 @@ export const loadProjectConfig = (): ProjectConfig | null => {
           : typeof data.compassProjectId === 'string'
             ? data.compassProjectId
             : null;
-      return { editor, outputPath, compassProjectId };
+      const defaultSharing =
+        data.defaultSharing === 'public' ? 'public' as const : 'private' as const;
+      return { editor, outputPath, compassProjectId, defaultSharing };
     }
     return null;
   } catch {

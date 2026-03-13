@@ -59,12 +59,16 @@ export interface CompassProject {
   updated_at: string;
 }
 
+export type DefaultSharing = 'private' | 'public';
+
 export interface ProjectConfig {
   editor: EditorProvider;
   /** Folder for rules/docs/commands output (e.g. .cursor/rules/) */
   outputPath: string;
   /** Compass project this folder is associated with (null = personal only). */
   compassProjectId?: string | null;
+  /** Default visibility when sharing rules/solutions. Default 'private'. */
+  defaultSharing?: DefaultSharing;
 }
 
 export interface BitcompassConfig {

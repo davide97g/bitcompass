@@ -23,6 +23,8 @@ import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './
 import { runSolutionsList, runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
 import { runUpdate } from './commands/update.js';
 import { runWhoami } from './commands/whoami.js';
+import { runSelfUpdate } from './commands/self-update.js';
+import { checkForCliUpdate } from './lib/version-check.js';
 
 // Disable chalk colors when NO_COLOR is set or --no-color is passed (must run before any command)
 if (process.env.NO_COLOR !== undefined || process.argv.includes('--no-color')) {
@@ -153,8 +155,11 @@ Examples:
     }).catch(handleErr)
   );
 
-const configCmd = program.command('config').description('Show or set config');
-configCmd.action(runConfigList);
+const configCmd = program.command('config').description('Show or set config (interactive TUI when run without subcommand)');
+configCmd.action(async () => {
+  const { runConfigTui } = await import('./commands/config-tui.js');
+  return runConfigTui().catch(handleErr);
+});
 configCmd.command('list').description('List config values').action(runConfigList);
 configCmd.command('set <key> <value>').description('Set supabaseUrl, supabaseAnonKey, or apiUrl').action((key: string, value: string) => runConfigSet(key, value));
 configCmd.command('get <key>').description('Get a config value').action((key: string) => runConfigGet(key));
@@ -344,6 +349,12 @@ const mcp = program.command('mcp').description('MCP server');
 mcp.command('start').description('Start MCP server (stdio)').action(() => runMcpStart().catch(handleErr));
 mcp.command('status').description('Show MCP status').action(runMcpStatus);
 
+// self-update
+program
+  .command('self-update')
+  .description('Update BitCompass CLI to the latest version')
+  .action(() => runSelfUpdate().catch(handleErr));
+
 function handleErr(err: unknown): void {
   console.error(chalk.red(err instanceof Error ? err.message : String(err)));
   process.exit(1);
@@ -357,6 +368,12 @@ if (process.argv.slice(2).length === 0) {
       chalk.dim(' for commands.')
   );
   process.exit(0);
+}
+
+// Check for CLI updates (cached, non-blocking) for all commands except mcp start (stdio)
+const subcommand = process.argv[2];
+if (subcommand !== 'mcp' && subcommand !== 'self-update' && subcommand !== '--version' && subcommand !== '-v' && subcommand !== '-V') {
+  checkForCliUpdate(version);
 }
 
 program.parse();

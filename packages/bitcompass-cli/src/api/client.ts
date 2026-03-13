@@ -2,8 +2,6 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { loadConfig, loadCredentials, loadCredentialsWithRefresh } from '../auth/config.js';
 import { DEFAULT_SUPABASE_ANON_KEY, DEFAULT_SUPABASE_URL } from '../auth/defaults.js';
 import type {
-  ActivityLog,
-  ActivityLogInsert,
   CompassProject,
   Rule,
   RuleGroup,
@@ -230,43 +228,6 @@ export const deleteRule = async (id: string): Promise<void> => {
   if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
 };
 
-export const insertActivityLog = async (payload: ActivityLogInsert): Promise<ActivityLog> => {
-  const client = await getSupabaseClient();
-  if (!client) throw new Error(NOT_CONFIGURED_MSG);
-  const { data, error } = await client
-    .from('activity_logs')
-    .insert(payload)
-    .select()
-    .single();
-  if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
-  return data as ActivityLog;
-};
-
-export const fetchActivityLogs = async (options?: { limit?: number; time_frame?: 'day' | 'week' | 'month' }): Promise<ActivityLog[]> => {
-  const client = await getSupabaseClient();
-  if (!client) throw new Error(NOT_CONFIGURED_MSG);
-  let query = client.from('activity_logs').select('*').order('created_at', { ascending: false });
-  if (options?.time_frame) {
-    query = query.eq('time_frame', options.time_frame);
-  }
-  if (options?.limit) {
-    query = query.limit(options.limit);
-  }
-  const { data, error } = await query;
-  if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
-  return (data ?? []) as ActivityLog[];
-};
-
-export const getActivityLogById = async (id: string): Promise<ActivityLog | null> => {
-  const client = await getSupabaseClient();
-  if (!client) throw new Error(NOT_CONFIGURED_MSG);
-  const { data, error } = await client.from('activity_logs').select('*').eq('id', id).single();
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
-  }
-  return data as ActivityLog;
-};
 
 export const getRuleGroupById = async (id: string): Promise<RuleGroup | null> => {
   const client = await getSupabaseClient();

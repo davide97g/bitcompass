@@ -11,7 +11,6 @@ import { runCommandsList, runCommandsPull, runCommandsPush, runCommandsSearch } 
 import { runConfigGet, runConfigList, runConfigSet } from './commands/config-cmd.js';
 import { runGlossary } from './commands/glossary.js';
 import { runInit } from './commands/init.js';
-import { runLog, ValidationError } from './commands/log.js';
 import { runLogin } from './commands/login.js';
 import { runLogout } from './commands/logout.js';
 import { runMcpStart, runMcpStatus } from './commands/mcp.js';
@@ -152,30 +151,6 @@ Examples:
       prune: opts?.prune,
       global: opts?.global,
     }).catch(handleErr)
-  );
-
-program
-  .command('log [dates...]')
-  .description(
-    'Collect repo summary and git activity, then push to your activity logs. Optional: bitcompass log YYYY-MM-DD or bitcompass log YYYY-MM-DD YYYY-MM-DD'
-  )
-  .addHelpText(
-    'after',
-    `
-Examples:
-  bitcompass log
-  bitcompass log 2025-02-01
-  bitcompass log 2025-02-01 2025-02-05
-`
-  )
-  .action((dates: string[]) =>
-    runLog(dates ?? []).catch((err) => {
-      if (err instanceof ValidationError) {
-        console.error(chalk.red(err.message));
-        process.exit(2);
-      }
-      handleErr(err);
-    })
   );
 
 const configCmd = program.command('config').description('Show or set config');

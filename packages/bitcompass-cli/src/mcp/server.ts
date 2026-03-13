@@ -9,18 +9,14 @@ import {
   fetchRules,
   updateRule,
   deleteRule,
-  fetchActivityLogs,
-  getActivityLogById,
   fetchRulesByGroupId,
   getRuleGroupById,
 } from '../api/client.js';
-import { buildAndPushActivityLog } from '../commands/log.js';
 import { loadCredentials, loadCredentialsWithRefresh } from '../auth/config.js';
 import { getProjectConfig } from '../auth/project-config.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import { bumpRuleVersionMajor } from '../lib/version-bump.js';
 import type { RuleInsert, RuleKind } from '../types.js';
-import type { TimeFrame } from '../lib/git-analysis.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // From dist/mcp/server.js (or src/mcp/server.ts when run via Bun), package.json is at package root
@@ -132,20 +128,7 @@ function createStdioServer(): {
                   required: ['kind', 'title', 'body'],
                 },
               },
-              {
-                name: 'create-activity-log',
-                description:
-                  "Use when the user wants to record their repo activity (commits, files changed) for a time period. Ask for time_frame: day, week, or month. Requires a git repo at repo_path (default: cwd). Returns success and log id, or an error if not a git repo or auth missing.",
-                inputSchema: {
-                  type: 'object',
-                  properties: {
-                    time_frame: { type: 'string', enum: ['day', 'week', 'month'], description: 'Time period for the activity log' },
-                    repo_path: { type: 'string', description: 'Path to the git repo (e.g. workspace root). If omitted, uses current working directory.' },
-                  },
-                  required: ['time_frame'],
-                },
-              },
-              {
+{
                 name: 'get-rule',
                 description:
                   'Use when you have a rule/solution ID and need the full content (title, description, body, examples, technologies). Returns the complete rule object or an error if not found. Optional kind filter verifies the entry matches that type.',
@@ -216,31 +199,7 @@ function createStdioServer(): {
                   required: ['id'],
                 },
               },
-              {
-                name: 'list-activity-logs',
-                description:
-                  "Use when the user wants to see their past activity logs (e.g. 'show my logs', 'list activity'). Optional limit and time_frame (day, week, month). Returns an array of logs with id, time_frame, period_start, period_end, created_at.",
-                inputSchema: {
-                  type: 'object',
-                  properties: {
-                    limit: { type: 'number', description: 'Optional: maximum number of results (default: 20)' },
-                    time_frame: { type: 'string', enum: ['day', 'week', 'month'], description: 'Optional: filter by time frame' },
-                  },
-                },
-              },
-              {
-                name: 'get-activity-log',
-                description:
-                  'Use when the user asks for details of a specific activity log by ID. Returns the full log: time_frame, period_start, period_end, repo_summary, git_analysis, created_at.',
-                inputSchema: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'string', description: 'Activity log ID' },
-                  },
-                  required: ['id'],
-                },
-              },
-              {
+{
                 name: 'pull-group',
                 description:
                   'Use when the user wants to pull all rules from a knowledge group (and its sub-groups) into their project. Returns the list of pulled rule titles. Groups are curated collections of rules that can be synced in bulk.',
@@ -438,22 +397,7 @@ Then collect: title, description, body (and optionally context, examples, techno
       return { error: msg };
     }
   });
-  handlers.set('create-activity-log', async (args: ToolArgs) => {
-    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
-    const timeFrame = (args.time_frame as TimeFrame) ?? 'day';
-    if (timeFrame !== 'day' && timeFrame !== 'week' && timeFrame !== 'month') {
-      return { error: 'time_frame must be day, week, or month.' };
-    }
-    const repoPath = typeof args.repo_path === 'string' ? args.repo_path : process.cwd();
-    try {
-      const result = await buildAndPushActivityLog(timeFrame, repoPath);
-      return { success: true, id: result.id };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to create activity log.';
-      return { error: msg };
-    }
-  });
-  handlers.set('get-rule', async (args: ToolArgs) => {
+handlers.set('get-rule', async (args: ToolArgs) => {
     const id = args.id as string;
     if (!id) return { error: 'id is required' };
     const kind = args.kind as RuleKind | undefined;
@@ -570,31 +514,7 @@ Then collect: title, description, body (and optionally context, examples, techno
       return { error: msg };
     }
   });
-  handlers.set('list-activity-logs', async (args: ToolArgs) => {
-    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
-    const limit = (args.limit as number) ?? 20;
-    const timeFrame = args.time_frame as 'day' | 'week' | 'month' | undefined;
-    try {
-      const logs = await fetchActivityLogs({ limit, time_frame: timeFrame });
-      const summary =
-        logs.length === 0 ? 'No activity logs found.' : `Found ${logs.length} activity log(s).`;
-      return {
-        logs: logs.map((log) => ({
-          id: log.id,
-          time_frame: log.time_frame,
-          period_start: log.period_start,
-          period_end: log.period_end,
-          created_at: log.created_at,
-        })),
-        total: logs.length,
-        summary,
-      };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to list activity logs.';
-      return { error: msg };
-    }
-  });
-  handlers.set('pull-group', async (args: ToolArgs) => {
+handlers.set('pull-group', async (args: ToolArgs) => {
     if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
     const id = args.id as string;
     if (!id) return { error: 'id is required' };
@@ -617,29 +537,6 @@ Then collect: title, description, body (and optionally context, examples, techno
       return { success: true, group_title: group.title, pulled, total: rules.length };
     } catch (e) {
       return { error: e instanceof Error ? e.message : 'Failed to pull group.' };
-    }
-  });
-  handlers.set('get-activity-log', async (args: ToolArgs) => {
-    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
-    const id = args.id as string;
-    if (!id) return { error: 'id is required' };
-    try {
-      const log = await getActivityLogById(id);
-      if (!log) {
-        return { error: `Activity log with ID ${id} not found.` };
-      }
-      return {
-        id: log.id,
-        time_frame: log.time_frame,
-        period_start: log.period_start,
-        period_end: log.period_end,
-        repo_summary: log.repo_summary,
-        git_analysis: log.git_analysis,
-        created_at: log.created_at,
-      };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to get activity log.';
-      return { error: msg };
     }
   });
 

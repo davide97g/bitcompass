@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { navGroups } from '@/lib/navConfig';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import logoSvg from '@/logo.svg';
 import { NavLink, useLocation } from 'react-router-dom';
 
 interface AppSidebarProps {
@@ -22,8 +23,8 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg text-sidebar-foreground">
-            <Sparkles className="w-5 h-5" />
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg">
+            <img src={logoSvg} alt="BitCompass" className="w-8 h-8 rounded-lg" />
           </div>
           {!collapsed && (
             <span className="font-semibold text-sidebar-foreground whitespace-nowrap">

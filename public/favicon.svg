@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="needle-north" x1="256" y1="120" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E0E7FF"/>
+    </linearGradient>
+    <linearGradient id="needle-south" x1="256" y1="256" x2="256" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#C7D2FE"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bg)"/>
+
+  <!-- Outer compass ring -->
+  <circle cx="256" cy="256" r="176" stroke="rgba(255,255,255,0.2)" stroke-width="3" fill="none"/>
+
+  <!-- Cardinal tick marks -->
+  <!-- North -->
+  <line x1="256" y1="72" x2="256" y2="96" stroke="rgba(255,255,255,0.6)" stroke-width="4" stroke-linecap="round"/>
+  <!-- South -->
+  <line x1="256" y1="416" x2="256" y2="440" stroke="rgba(255,255,255,0.6)" stroke-width="4" stroke-linecap="round"/>
+  <!-- East -->
+  <line x1="416" y1="256" x2="440" y2="256" stroke="rgba(255,255,255,0.6)" stroke-width="4" stroke-linecap="round"/>
+  <!-- West -->
+  <line x1="72" y1="256" x2="96" y2="256" stroke="rgba(255,255,255,0.6)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Intercardinal tick marks (shorter) -->
+  <line x1="378" y1="134" x2="388" y2="124" stroke="rgba(255,255,255,0.3)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="378" y1="378" x2="388" y2="388" stroke="rgba(255,255,255,0.3)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="134" y1="378" x2="124" y2="388" stroke="rgba(255,255,255,0.3)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="134" y1="134" x2="124" y2="124" stroke="rgba(255,255,255,0.3)" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Inner compass ring -->
+  <circle cx="256" cy="256" r="140" stroke="rgba(255,255,255,0.1)" stroke-width="2" fill="none"/>
+
+  <!-- Compass needle - North (pointing up-right, rotated 45deg for dynamism) -->
+  <g transform="rotate(-30, 256, 256)">
+    <!-- North needle (white/bright) -->
+    <polygon points="256,120 240,256 272,256" fill="url(#needle-north)" opacity="0.95"/>
+    <!-- South needle (darker) -->
+    <polygon points="256,392 240,256 272,256" fill="url(#needle-south)" opacity="0.7"/>
+  </g>
+
+  <!-- Center dot -->
+  <circle cx="256" cy="256" r="12" fill="white" opacity="0.9"/>
+  <circle cx="256" cy="256" r="6" fill="url(#bg)"/>
+
+  <!-- Subtle "bit" accent - small binary dots near the ring -->
+  <circle cx="256" cy="88" r="4" fill="white" opacity="0.8"/>
+  <circle cx="256" cy="424" r="3" fill="white" opacity="0.4"/>
+  <circle cx="88" cy="256" r="3" fill="white" opacity="0.4"/>
+  <circle cx="424" cy="256" r="3" fill="white" opacity="0.4"/>
+</svg>

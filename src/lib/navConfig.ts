@@ -3,7 +3,6 @@ import {
   BookMarked,
   BookOpen,
   FolderTree,
-  History,
   Layers,
   Plug,
   Terminal,
@@ -30,7 +29,6 @@ export const navGroups: NavGroup[] = [
       { to: '/compass-projects', icon: Layers, label: 'Compass projects' },
       { to: '/groups', icon: FolderTree, label: 'Groups' },
       { to: '/users', icon: Users, label: 'Users' },
-      { to: '/logs', icon: History, label: 'Activity logs' },
     ],
   },
   {

@@ -1,6 +1,22 @@
 # BitCompass MCP and CLI Usage
 
-This project uses BitCompass for managing rules, solutions, and activity logs. LLMs should use the available MCP tools and CLI commands when appropriate.
+This project uses BitCompass for managing rules, solutions, skills, and commands. LLMs should use the available MCP tools and CLI commands when appropriate.
+
+## Output Folders and Formats (CLI and MCP)
+
+When you run `bitcompass init`, the project is configured with a base output path (e.g. `.cursor`). Pull and MCP save content into separate folders by type:
+
+| Type      | Folder           | Format | Notes |
+|-----------|------------------|--------|--------|
+| Rules     | `.cursor/rules` | `.mdc` | YAML frontmatter: `description`, `globs`, `alwaysApply`. Same as Cursor rules (see create-rule). |
+| Skills    | `.cursor/skills` | `.md` | YAML frontmatter: `name`, `description` only. Matches create-skill SKILL.md format. |
+| Commands  | `.cursor/commands` | `.md` | Plain markdown, no frontmatter (no description/alwaysApply). |
+| Solutions | `.cursor/documentation` | `.md` | Plain markdown, no frontmatter. |
+
+- **CLI:** `bitcompass rules pull`, `bitcompass skills pull`, `bitcompass commands pull`, `bitcompass solutions pull` save to these project folders (or `--global` to `~/.cursor/<folder>`).
+- **MCP:** `pull-rule` uses the same project config unless `output_path` is provided; then that path is used as the base and kind subfolders are created under it.
+
+When creating new skills or rules from scratch, follow the same conventions as the create-skill and create-rule workflows: skills in `.cursor/skills/` with `name` and `description` in frontmatter; rules in `.cursor/rules/` as `.mdc` with `description`, `globs`, `alwaysApply`.
 
 ## MCP Tools (Available in AI Editor)
 
@@ -13,7 +29,7 @@ Search BitCompass rules by query.
 
 **Parameters:**
 - `query` (required): Search query string
-- `kind` (optional): Filter by 'rule', 'solution', 'skill', or 'command'
+- `kind` (optional): Filter by 'rule' or 'solution'
 - `limit` (optional): Maximum number of results (default: 20)
 
 **Example:** Search for rules about "authentication" or "error handling"
@@ -32,18 +48,18 @@ Search BitCompass solutions by query.
 ### post-rules
 Publish a new rule, solution, skill, or command to BitCompass.
 
-**When to use:** When you've created a reusable pattern, best practice, solution, skill, or workflow that should be shared with the team.
+**When to use:** When you've created a reusable pattern, best practice, solution, skill, or command that should be shared.
 
 **Parameters:**
 - `kind` (required): 'rule', 'solution', 'skill', or 'command'
-- `title` (required): Title of the entry
+- `title` (required): Title
 - `body` (required): Full content
 - `description` (optional): Short description
 - `context` (optional): Additional context
 - `examples` (optional): Array of example strings
 - `technologies` (optional): Array of technology tags
 
-**When the user says "share" without specifying type:** First ask or infer the type (see "What to share as what" below), then call post-rules with the chosen kind.
+**Example:** After implementing a new pattern, publish it as a rule; skills and commands follow the same flow.
 
 ### create-activity-log
 Collect repository summary and git activity, then push to activity logs.
@@ -55,17 +71,6 @@ Collect repository summary and git activity, then push to activity logs.
 - `repo_path` (optional): Path to git repo (defaults to current directory)
 
 **Example:** User asks "log my work for this week" → call with time_frame: 'week'
-
-## What to share as what
-
-When the user wants to **share** something, determine the type (or ask with a single choice) using this mapping:
-
-- **Rule** – Documentation or behavior guidance for the AI (e.g. "how to do internationalization", coding standards, i18n guide).
-- **Solution** – How you fixed or implemented a specific problem (e.g. "how we fixed the login bug", "how we implemented feature X").
-- **Skill** – How the AI should behave in a domain (e.g. "front-end design", "back-end implementation", frontend-design skill).
-- **Command (workflow)** – A workflow or command (e.g. "share this workflow", "our release checklist").
-
-**Rule of thumb:** If the user says "share" without a clear type, ask for a single choice (rule / command / solution / skill) or infer from file frontmatter or filename (e.g. `rule-*.mdc`, `solution-*.md`), then use the mapping above.
 
 ## CLI Commands (Run via Terminal)
 
@@ -83,32 +88,37 @@ Use these commands when you need to interact with BitCompass from the terminal:
 
 **When to use:** Run once per project to set up BitCompass configuration.
 
-### Share (unified)
-- `bitcompass share [file]` – Share a rule, solution, skill, or command. Prompts for type if not in file or `--kind`.
-- `--kind <rule|solution|skill|command>` – Skip type prompt.
-- `--project-id <uuid>` – Scope to a Compass project.
-
-**When to use:** When the user wants to share something and you want one flow that asks what type, or when sharing a file that has `kind` in frontmatter (or a filename like `rule-*.mdc`).
-
 ### Rules Management
 - `bitcompass rules search [query]` - Search rules interactively
 - `bitcompass rules list` - List all available rules
-- `bitcompass rules pull [id]` - Pull a rule by ID (saves to project rules folder)
+- `bitcompass rules pull [id]` - Pull a rule by ID (saves to `.cursor/rules` as `.mdc`)
   - Use `--global` flag to install globally to ~/.cursor/rules/
 - `bitcompass rules push [file]` - Push a rule file to BitCompass
 
-**When to use:** 
-- `pull`: When you want to download and use a specific rule in your project
-- `push`: When you've created a rule file and want to share it
-- `search`/`list`: When browsing available rules
+**When to use:** `pull` to add a rule to the project; `push` to share; `search`/`list` to browse.
+
+### Skills Management
+- `bitcompass skills list` - List all skills
+- `bitcompass skills pull [id]` - Pull a skill by ID (saves to `.cursor/skills` as `.md` with name/description frontmatter)
+- `bitcompass skills push [file]` - Push a skill file to BitCompass
+
+**When to use:** Same pattern as rules; skills go to `.cursor/skills` and match create-skill format.
+
+### Commands Management
+- `bitcompass commands list` - List all commands
+- `bitcompass commands pull [id]` - Pull a command by ID (saves to `.cursor/commands` as plain `.md`, no frontmatter)
+- `bitcompass commands push [file]` - Push a command file to BitCompass
+
+**When to use:** Commands are saved as plain markdown in `.cursor/commands`.
 
 ### Solutions Management
 - `bitcompass solutions search [query]` - Search solutions interactively
-- `bitcompass solutions pull [id]` - Pull a solution by ID
+- `bitcompass solutions list` - List all solutions
+- `bitcompass solutions pull [id]` - Pull a solution by ID (saves to `.cursor/documentation` as plain `.md`)
   - Use `--global` flag to install globally
 - `bitcompass solutions push [file]` - Push a solution file to BitCompass
 
-**When to use:** Similar to rules, but for problem-solution pairs.
+**When to use:** Solutions go to `.cursor/documentation` as plain markdown.
 
 ### Activity Logs
 - `bitcompass log` - Collect repo summary and git activity, push to activity logs
@@ -133,9 +143,9 @@ Use these commands when you need to interact with BitCompass from the terminal:
 ## Decision Guide
 
 **Use MCP tools when:**
-- You're working in the AI editor and need to search or publish rules, solutions, skills, or commands
+- You're working in the AI editor and need to search or publish rules/solutions
 - The user asks you to search for existing patterns or solutions
-- You've created something reusable and want to share it immediately (use post-rules with the right kind; see "What to share as what")
+- You've created something reusable and want to share it immediately
 - The user wants to log their activity
 
 **Use CLI commands when:**
@@ -156,5 +166,5 @@ Use these commands when you need to interact with BitCompass from the terminal:
 1. **Search before creating:** Before publishing a new rule, search to see if something similar exists
 2. **Use descriptive titles:** When posting rules/solutions, use clear, searchable titles
 3. **Include context:** Add context, examples, and technologies when posting to make rules more discoverable
-4. **Pull for version control:** Use `rules pull` or `solutions pull` to add rules to your project's rules folder (tracked in git)
-5. **Global vs project:** Use `--global` flag when you want a rule available across all projects, otherwise use project-specific rules
+4. **Pull for version control:** Use `rules pull`, `skills pull`, `commands pull`, or `solutions pull` to add content to `.cursor/rules`, `.cursor/skills`, `.cursor/commands`, or `.cursor/documentation` (tracked in git)
+5. **Global vs project:** Use `--global` flag when you want content available across all projects, otherwise use project-specific folders

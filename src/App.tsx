@@ -6,9 +6,6 @@ import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 // Pages
-import ActivityLogDayDetailPage from "./pages/ActivityLogDayDetailPage";
-import ActivityLogDetailPage from "./pages/ActivityLogDetailPage";
-import ActivityLogsPage from "./pages/ActivityLogsPage";
 import AutomationDetailPage from "./pages/AutomationDetailPage";
 import AutomationsPage from "./pages/AutomationsPage";
 import CLIPage from "./pages/CLIPage";
@@ -83,9 +80,6 @@ const App = () => (
             <Route path="/users/:id" element={<UserDetailPage />} />
             <Route path="/compass-projects" element={<CompassProjectsPage />} />
             <Route path="/compass-projects/:id" element={<CompassProjectDetailPage />} />
-            <Route path="/logs" element={<ActivityLogsPage />} />
-            <Route path="/logs/day/:date" element={<ActivityLogDayDetailPage />} />
-            <Route path="/logs/:id" element={<ActivityLogDetailPage />} />
             <Route path="/cli" element={<CLIPage />} />
             <Route path="/mcp" element={<MCPPage />} />
             <Route path="/glossary" element={<GlossaryPage />} />

@@ -361,17 +361,6 @@ Publish a new rule, solution, skill, or command to BitCompass.
 
 **Example:** After implementing a new pattern, publish it as a rule; skills and commands follow the same flow.
 
-### create-activity-log
-Collect repository summary and git activity, then push to activity logs.
-
-**When to use:** When the user asks to log their work or track activity for a specific time period.
-
-**Parameters:**
-- \`time_frame\` (required): 'day', 'week', or 'month'
-- \`repo_path\` (optional): Path to git repo (defaults to current directory)
-
-**Example:** User asks "log my work for this week" → call with time_frame: 'week'
-
 ## CLI Commands (Run via Terminal)
 
 Use these commands when you need to interact with BitCompass from the terminal:
@@ -419,13 +408,6 @@ Use these commands when you need to interact with BitCompass from the terminal:
 - \`bitcompass solutions push [file]\` - Push a solution file to BitCompass
 
 **When to use:** Solutions go to \`.cursor/documentation\` as plain markdown.
-
-### Activity Logs
-- \`bitcompass log\` - Collect repo summary and git activity, push to activity logs
-- \`bitcompass log YYYY-MM-DD\` - Log activity for a specific date
-- \`bitcompass log YYYY-MM-DD YYYY-MM-DD\` - Log activity for a date range
-
-**When to use:** When the user wants to track or log their development activity.
 
 ### Configuration
 - \`bitcompass config list\` - List all config values

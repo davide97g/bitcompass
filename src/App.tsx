@@ -3,35 +3,36 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-// Pages
-import AutomationDetailPage from "./pages/AutomationDetailPage";
-import AutomationsPage from "./pages/AutomationsPage";
-import CLIPage from "./pages/CLIPage";
-import CompassProjectDetailPage from "./pages/CompassProjectDetailPage";
-import CompassProjectsPage from "./pages/CompassProjectsPage";
-import GlossaryPage from "./pages/GlossaryPage";
-import LoginPage from "./pages/LoginPage";
-import MCPPage from "./pages/MCPPage";
-import NotFound from "./pages/NotFound";
-import PeoplePage from "./pages/PeoplePage";
-import PersonDetailPage from "./pages/PersonDetailPage";
-import ProblemDetailPage from "./pages/ProblemDetailPage";
-import ProblemsPage from "./pages/ProblemsPage";
-import ProjectDetailPage from "./pages/ProjectDetailPage";
-import ProjectsPage from "./pages/ProjectsPage";
-import RuleDetailPage from "./pages/RuleDetailPage";
-import GroupDetailPage from "./pages/GroupDetailPage";
-import GroupsPage from "./pages/GroupsPage";
-import RulesPage from "./pages/RulesPage";
-import UserDetailPage from "./pages/UserDetailPage";
-import UsersPage from "./pages/UsersPage";
-import TopicDetailPage from "./pages/TopicDetailPage";
-import TopicsPage from "./pages/TopicsPage";
-import WelcomePage from "./pages/WelcomePage";
+// Lazy-loaded pages
+const AutomationDetailPage = lazy(() => import("./pages/AutomationDetailPage"));
+const AutomationsPage = lazy(() => import("./pages/AutomationsPage"));
+const CLIPage = lazy(() => import("./pages/CLIPage"));
+const CompassProjectDetailPage = lazy(() => import("./pages/CompassProjectDetailPage"));
+const CompassProjectsPage = lazy(() => import("./pages/CompassProjectsPage"));
+const GlossaryPage = lazy(() => import("./pages/GlossaryPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const MCPPage = lazy(() => import("./pages/MCPPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const PeoplePage = lazy(() => import("./pages/PeoplePage"));
+const PersonDetailPage = lazy(() => import("./pages/PersonDetailPage"));
+const ProblemDetailPage = lazy(() => import("./pages/ProblemDetailPage"));
+const ProblemsPage = lazy(() => import("./pages/ProblemsPage"));
+const ProjectDetailPage = lazy(() => import("./pages/ProjectDetailPage"));
+const ProjectsPage = lazy(() => import("./pages/ProjectsPage"));
+const RuleDetailPage = lazy(() => import("./pages/RuleDetailPage"));
+const GroupDetailPage = lazy(() => import("./pages/GroupDetailPage"));
+const GroupsPage = lazy(() => import("./pages/GroupsPage"));
+const RulesPage = lazy(() => import("./pages/RulesPage"));
+const UserDetailPage = lazy(() => import("./pages/UserDetailPage"));
+const UsersPage = lazy(() => import("./pages/UsersPage"));
+const TopicDetailPage = lazy(() => import("./pages/TopicDetailPage"));
+const TopicsPage = lazy(() => import("./pages/TopicsPage"));
+const WelcomePage = lazy(() => import("./pages/WelcomePage"));
 
-// Layout
+// Layout (kept eager — they're needed on every route)
 import { AppLock } from "./components/AppLock";
 import { AppLayout } from "./components/layout/AppLayout";
 import { RequireAuth } from "./components/RequireAuth";
@@ -46,14 +47,15 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+        <Suspense>
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/welcome" element={<WelcomePage />} />
-          
+
           {/* Root: recover OAuth hash before any redirect */}
           <Route path="/" element={<RootRedirect />} />
-          
+
           {/* App routes with layout (auth required when Supabase configured) */}
           <Route element={
             <RequireAuth>
@@ -84,10 +86,11 @@ const App = () => (
             <Route path="/mcp" element={<MCPPage />} />
             <Route path="/glossary" element={<GlossaryPage />} />
           </Route>
-          
+
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>

@@ -1,5 +1,6 @@
 import { CodeBlockWithCopy } from '@/components/ui/code-block-with-copy';
 import { PageHeader } from '@/components/ui/page-header';
+import { Fragment } from 'react';
 
 const COMMAND_GROUPS: { label: string; commands: [string, string][] }[] = [
   {
@@ -112,8 +113,8 @@ export default function CLIPage() {
             </thead>
             <tbody className="divide-y divide-border dark:divide-white/10">
               {COMMAND_GROUPS.map((group) => (
-                <>
-                  <tr key={group.label}>
+                <Fragment key={group.label}>
+                  <tr>
                     <td
                       colSpan={2}
                       className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500 bg-muted/30"
@@ -127,7 +128,7 @@ export default function CLIPage() {
                       <td className="px-4 py-2 text-muted-foreground dark:text-zinc-400">{desc}</td>
                     </tr>
                   ))}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

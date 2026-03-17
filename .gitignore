@@ -33,3 +33,7 @@ dist-ssr
 supabase/.temp
 
 .sonarflow
+
+!CLAUDE.md
+!.claude/
+!.cursor/

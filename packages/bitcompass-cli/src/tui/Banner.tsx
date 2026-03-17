@@ -14,34 +14,42 @@ const INTERVAL_MS = 60;
 export const Banner: React.FC<BannerProps> = ({ onComplete }) => {
   const [charCount, setCharCount] = useState(0);
   const [done, setDone] = useState(false);
+  const [completed, setCompleted] = useState(false);
 
+  // Skip animation on any keypress
   useInput(() => {
-    if (!done) {
+    if (!completed) {
+      setCompleted(true);
       setCharCount(TITLE.length);
       setDone(true);
-      setTimeout(onComplete, 200);
-    } else {
       onComplete();
     }
   });
 
+  // Typewriter interval
   useEffect(() => {
-    if (charCount >= TITLE.length) {
-      setDone(true);
-      const timeout = setTimeout(onComplete, 800);
-      return () => clearTimeout(timeout);
-    }
+    if (done) return;
     const interval = setInterval(() => {
       setCharCount((n) => {
         const next = n + 1;
-        if (next >= TITLE.length) clearInterval(interval);
+        if (next >= TITLE.length) {
+          clearInterval(interval);
+          setDone(true);
+        }
         return next;
       });
     }, INTERVAL_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [done]);
 
-  const visibleTitle = TITLE.slice(0, charCount);
+  // Auto-advance after animation finishes
+  useEffect(() => {
+    if (!done || completed) return;
+    setCompleted(true);
+    const t = setTimeout(onComplete, 600);
+    return () => clearTimeout(t);
+  }, [done]);
+
   const chars = gradientChars(TITLE, theme.gradient[0], theme.gradient[1]);
 
   return (
@@ -53,10 +61,8 @@ export const Banner: React.FC<BannerProps> = ({ onComplete }) => {
           </Text>
         ))}
         {charCount < TITLE.length && (
-          <Text color={theme.accent}>▊</Text>
+          <Text color={theme.accent}>|</Text>
         )}
-        {/* invisible spacer to reserve width */}
-        <Text color="black">{TITLE.slice(visibleTitle.length)}</Text>
       </Box>
 
       {done && (
@@ -66,7 +72,7 @@ export const Banner: React.FC<BannerProps> = ({ onComplete }) => {
       )}
 
       <Box marginTop={2}>
-        <Text dimColor>{done ? 'Press any key to continue…' : ''}</Text>
+        <Text dimColor>{done ? 'Press any key to continue...' : ' '}</Text>
       </Box>
     </Box>
   );

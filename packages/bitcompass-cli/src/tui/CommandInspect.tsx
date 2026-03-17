@@ -111,8 +111,13 @@ export const CommandInspect: React.FC<CommandInspectProps> = ({ command, onRun, 
     }
     const field = fields[focusIndex];
     if (!field) return;
-    if (field.type === 'boolean-option' && (input === ' ' || key.return)) {
+    if (field.type === 'boolean-option' && input === ' ') {
       setFields((prev) => prev.map((f, i) => i === focusIndex ? { ...f, value: !f.value } : f));
+      return;
+    }
+    if (field.type === 'boolean-option' && key.return) {
+      setFocusIndex((f) => Math.min(f + 1, fields.length));
+      return;
     }
   });
 

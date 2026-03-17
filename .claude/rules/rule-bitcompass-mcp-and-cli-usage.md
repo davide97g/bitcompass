@@ -74,8 +74,10 @@ Use these commands when you need to interact with BitCompass from the terminal:
 
 ### Project Configuration
 - `bitcompass init` - Configure project: editor/AI provider and output folder
+- `bitcompass migrate` - Migrate project files from older BitCompass versions to the current layout (flat skills → subdirectories, special files → correct paths)
+  - Use `--dry-run` to preview changes without applying them
 
-**When to use:** Run once per project to set up BitCompass configuration.
+**When to use:** Run `init` once per project to set up BitCompass. Run `migrate` when upgrading from versions prior to 0.10.2 or when prompted by the CLI after `init`.
 
 ### Rules Management
 - `bitcompass rules search [query]` - Search rules interactively

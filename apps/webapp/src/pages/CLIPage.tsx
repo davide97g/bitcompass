@@ -7,6 +7,8 @@ const COMMAND_GROUPS: { label: string; commands: [string, string][] }[] = [
     label: 'Project setup',
     commands: [
       ['bitcompass init', 'Configure project (editor + output folder)'],
+      ['bitcompass migrate', 'Migrate files from older versions to current layout'],
+      ['bitcompass migrate --dry-run', 'Preview migration without changing files'],
     ],
   },
   {
@@ -54,11 +56,52 @@ const COMMAND_GROUPS: { label: string; commands: [string, string][] }[] = [
     ],
   },
   {
+    label: 'Share',
+    commands: [
+      ['bitcompass share [file]', 'Share a rule, solution, skill, or command'],
+      ['bitcompass share [file] --kind [rule|solution|skill|command]', 'Share with explicit type'],
+    ],
+  },
+  {
+    label: 'Update',
+    commands: [
+      ['bitcompass update', 'Check for and apply updates to installed items'],
+      ['bitcompass update --check', 'List available updates without applying'],
+      ['bitcompass update --all -y', 'Update all items without prompting'],
+    ],
+  },
+  {
+    label: 'Sync',
+    commands: [
+      ['bitcompass sync', 'Sync local items with the linked Compass project'],
+      ['bitcompass sync --check', 'Show sync status without applying changes'],
+      ['bitcompass sync --prune', 'Sync and remove items no longer in the project'],
+    ],
+  },
+  {
+    label: 'Compass project',
+    commands: [
+      ['bitcompass project pull', 'Pull all items from the linked Compass project'],
+      ['bitcompass project sync', 'Sync items with the linked Compass project'],
+      ['bitcompass project list', 'Show the Compass project for this folder'],
+    ],
+  },
+  {
+    label: 'Groups',
+    commands: [
+      ['bitcompass group pull [id]', 'Pull all rules in a knowledge group'],
+      ['bitcompass group sync [id]', 'Sync local rules with a group'],
+      ['bitcompass group list', 'List available groups'],
+    ],
+  },
+  {
     label: 'Configuration',
     commands: [
       ['bitcompass config list', 'List all config values'],
       ['bitcompass config get [key]', 'Get a config value'],
       ['bitcompass config set [key] [value]', 'Set a config value'],
+      ['bitcompass config push', 'Push local config to the linked Compass project'],
+      ['bitcompass config pull', 'Pull shared config from the linked Compass project'],
     ],
   },
   {
@@ -66,6 +109,13 @@ const COMMAND_GROUPS: { label: string; commands: [string, string][] }[] = [
     commands: [
       ['bitcompass mcp start', 'Start MCP server (stdio)'],
       ['bitcompass mcp status', 'Show MCP server status'],
+    ],
+  },
+  {
+    label: 'Other',
+    commands: [
+      ['bitcompass glossary', 'Show glossary (rules, solutions, skills, commands)'],
+      ['bitcompass self-update', 'Update BitCompass CLI to the latest version'],
     ],
   },
 ];

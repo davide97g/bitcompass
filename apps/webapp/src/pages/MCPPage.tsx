@@ -164,14 +164,15 @@ export default function MCPPage() {
             </thead>
             <tbody className="divide-y divide-border dark:divide-white/10">
               {[
-                ['search-rules', 'Search rules by query', 'No'],
+                ['search-rules', 'Search rules, solutions, skills, or commands by query', 'No'],
                 ['search-solutions', 'Search solutions by query', 'No'],
-                ['get-rule', 'Get full rule or solution by ID', 'Yes'],
-                ['list-rules', 'List all rules and solutions', 'Yes'],
-                ['post-rules', 'Create / publish a rule or solution', 'Yes'],
-                ['update-rule', 'Update an existing rule or solution', 'Yes'],
-                ['delete-rule', 'Delete a rule or solution by ID', 'Yes'],
-                ['pull-rule', 'Pull a rule or solution to a local file', 'Yes'],
+                ['get-rule', 'Get full content of any item by ID', 'Yes'],
+                ['list-rules', 'List all rules, solutions, skills, or commands', 'Yes'],
+                ['post-rules', 'Publish a rule, solution, skill, or command', 'Yes'],
+                ['update-rule', 'Update an existing item', 'Yes'],
+                ['delete-rule', 'Delete an item by ID', 'Yes'],
+                ['pull-rule', 'Pull any item to a local file', 'Yes'],
+                ['pull-group', 'Pull all items in a knowledge group', 'Yes'],
               ].map(([tool, desc, auth]) => (
                 <tr key={tool}>
                   <td className="px-4 py-2.5 font-mono text-xs text-foreground">{tool}</td>

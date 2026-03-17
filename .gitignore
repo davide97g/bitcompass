@@ -38,3 +38,4 @@ dist-ssr
 !.claude/
 !.cursor/
 .turbopackages/bitcompass-cli/bun.lock
+.turbo/

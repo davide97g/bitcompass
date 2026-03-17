@@ -111,15 +111,17 @@ interface DiscoveredRule {
   title: string;
   path: string;
   kind: RuleKind;
+  /** When set, maps to a special output file (e.g. 'claude.md' → CLAUDE.md). */
+  special_file_target?: string;
 }
 
 const discoverLocalRules = (cwd: string): DiscoveredRule[] => {
   const found: DiscoveredRule[] = [];
 
-  const tryFile = (relPath: string, title: string, kind: RuleKind) => {
+  const tryFile = (relPath: string, title: string, kind: RuleKind, special_file_target?: string) => {
     const abs = join(cwd, relPath);
     if (existsSync(abs)) {
-      found.push({ title, path: relPath, kind });
+      found.push({ title, path: relPath, kind, special_file_target });
     }
   };
 
@@ -142,19 +144,19 @@ const discoverLocalRules = (cwd: string): DiscoveredRule[] => {
   };
 
   // Claude Code
-  tryFile('CLAUDE.md', 'Claude Code rules (CLAUDE.md)', 'rule');
+  tryFile('CLAUDE.md', 'Claude Code rules (CLAUDE.md)', 'rule', 'claude.md');
   tryDir('.claude/commands', '.md', 'command', 'Claude command');
 
   // Cursor
-  tryFile('.cursorrules', 'Cursor rules (.cursorrules)', 'rule');
+  tryFile('.cursorrules', 'Cursor rules (.cursorrules)', 'rule', 'cursorrules');
   tryDir('.cursor/rules', '.mdc', 'rule', 'Cursor rule');
   tryDir('.cursor/rules', '.md', 'rule', 'Cursor rule');
 
   // GitHub Copilot
-  tryFile('.github/copilot-instructions.md', 'GitHub Copilot instructions', 'rule');
+  tryFile('.github/copilot-instructions.md', 'GitHub Copilot instructions', 'rule', 'copilot-instructions');
 
   // Windsurf
-  tryFile('.windsurfrules', 'Windsurf rules (.windsurfrules)', 'rule');
+  tryFile('.windsurfrules', 'Windsurf rules (.windsurfrules)', 'rule', 'windsurfrules');
 
   // Aider
   tryFile('.aider.conf.yml', 'Aider config (.aider.conf.yml)', 'rule');
@@ -184,6 +186,7 @@ const importDiscoveredRules = async (
       project_id: compassProjectId,
       version: '1.0.0',
       visibility: 'private',
+      special_file_target: rule.special_file_target ?? undefined,
     };
     try {
       await insertRule(payload);

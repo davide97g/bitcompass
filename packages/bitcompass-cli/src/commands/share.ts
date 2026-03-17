@@ -2,9 +2,10 @@ import { readFileSync } from 'fs';
 import inquirer from 'inquirer';
 import { createSpinner } from '../lib/spinner.js';
 import chalk from 'chalk';
+import { basename } from 'path';
 import { loadCredentials } from '../auth/config.js';
 import { insertRule } from '../api/client.js';
-import { loadProjectConfig } from '../auth/project-config.js';
+import { loadProjectConfig, SPECIAL_FILE_TARGETS } from '../auth/project-config.js';
 import { parseRuleMdcContent, parseFrontmatterKind } from '../lib/mdc-format.js';
 import { bumpRuleVersionMajor } from '../lib/version-bump.js';
 import { SHARE_KIND_CHOICES, inferKindFromFilename } from '../lib/share-types.js';
@@ -83,6 +84,20 @@ export const parseFileToPayload = (
   };
 };
 
+/**
+ * Auto-detect special file target from a file path.
+ * Matches against known SPECIAL_FILE_TARGETS paths.
+ */
+const inferSpecialFileTarget = (filePath: string): string | null => {
+  const normalized = filePath.replace(/\\/g, '/');
+  for (const [key, target] of Object.entries(SPECIAL_FILE_TARGETS)) {
+    if (normalized === target.path || normalized.endsWith('/' + target.path) || basename(normalized) === target.path) {
+      return key;
+    }
+  }
+  return null;
+};
+
 const promptForKind = async (): Promise<RuleKind> => {
   const { kind } = await inquirer.prompt<{ kind: RuleKind }>([
     {
@@ -143,7 +158,7 @@ export const runSharePush = async (
       always_apply: parsed.always_apply,
       version: parsed.version ? bumpRuleVersionMajor(parsed.version) : '1.0.0',
       visibility,
-      special_file_target: options?.specialFile ?? undefined,
+      special_file_target: options?.specialFile ?? inferSpecialFileTarget(file) ?? undefined,
     };
   } else {
     const kind = options?.kind ?? (await promptForKind());

@@ -1,5 +1,5 @@
 {
-  "name": "bitcompass",
+  "name": "@bitcompass/webapp",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,8 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "sonar:fetch": "npx sonarflow fetch"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

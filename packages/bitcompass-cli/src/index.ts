@@ -360,20 +360,23 @@ function handleErr(err: unknown): void {
   process.exit(1);
 }
 
-if (process.argv.slice(2).length === 0) {
-  console.log(
-    chalk.cyan('BitCompass') +
-      chalk.dim(' – rules, solutions, and MCP server. Run ') +
-      chalk.cyan('bitcompass --help') +
-      chalk.dim(' for commands.')
-  );
-  process.exit(0);
-}
-
 // Check for CLI updates (cached, non-blocking) for all commands except mcp start (stdio)
 const subcommand = process.argv[2];
-if (subcommand !== 'mcp' && subcommand !== 'self-update' && subcommand !== '--version' && subcommand !== '-v' && subcommand !== '-V') {
+if (subcommand && subcommand !== 'mcp' && subcommand !== 'self-update' && subcommand !== '--version' && subcommand !== '-v' && subcommand !== '-V') {
   checkForCliUpdate(version);
+}
+
+const userArgs = process.argv.slice(2);
+const commandNames = program.commands.map((c) => c.name());
+const hasCommand = userArgs.some((a) => commandNames.includes(a));
+const hasFlags = userArgs.some((a) => a.startsWith('-'));
+const cols = process.stdout.columns || 80;
+const rows = process.stdout.rows || 24;
+
+if (!hasCommand && !hasFlags && process.stdout.isTTY && cols >= 60 && rows >= 20) {
+  const { launchTui } = await import('./tui/App.js');
+  await launchTui(program);
+  process.exit(0);
 }
 
 program.parse();

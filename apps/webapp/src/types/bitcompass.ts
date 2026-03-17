@@ -22,6 +22,8 @@ export interface Rule {
   always_apply?: boolean;
   /** 'private' = only visible to owner, 'public' = visible to everyone. Default 'private'. */
   visibility: RuleVisibility;
+  /** Maps to a special output file (e.g. 'claude.md' → CLAUDE.md). */
+  special_file_target?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +43,8 @@ export interface RuleInsert {
   always_apply?: boolean;
   /** Default 'private'. */
   visibility?: RuleVisibility;
+  /** Maps to a special output file (e.g. 'claude.md' → CLAUDE.md). */
+  special_file_target?: string | null;
 }
 
 export interface Profile {

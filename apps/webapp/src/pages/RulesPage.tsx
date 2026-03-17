@@ -30,11 +30,21 @@ import { useProfilesByIds } from '@/hooks/use-profiles';
 import { useToast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Rule, RuleInsert, RuleKind, RuleVisibility } from '@/types/bitcompass';
-import { BookMarked, FileDown, Plus, Search, User, Link2, GitFork, Lock, Globe } from 'lucide-react';
+import { BookMarked, FileDown, Plus, Search, User, Link2, GitFork, Lock, Globe, FileText } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PageHeader } from '@/components/ui/page-header';
 import { ruleDownloadBasename } from '@/lib/utils';
 import { getTechStyle } from '@/lib/tech-styles';
 import { RulesPageSkeleton } from '@/components/skeletons';
+
+/** Special file output targets with display info. */
+const SPECIAL_FILE_TARGETS: Record<string, { path: string; description: string }> = {
+  'claude.md': { path: 'CLAUDE.md', description: 'Claude Code project instructions' },
+  'agents.md': { path: 'AGENTS.md', description: 'OpenAI Codex instructions' },
+  'cursorrules': { path: '.cursorrules', description: 'Cursor legacy rules' },
+  'copilot-instructions': { path: '.github/copilot-instructions.md', description: 'GitHub Copilot instructions' },
+  'windsurfrules': { path: '.windsurfrules', description: 'Windsurf rules' },
+};
 
 /** Highlight all occurrences of query in text. Returns JSX with <mark> tags. */
 const highlightText = (text: string, query: string): React.ReactNode => {
@@ -467,6 +477,24 @@ export default function RulesPage() {
                 />
               </div>
               <div className="space-y-2">
+                <Label>Special file target (optional)</Label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                  value={newRule.special_file_target ?? ''}
+                  onChange={(e) =>
+                    setNewRule((p) => ({ ...p, special_file_target: e.target.value || null }))
+                  }
+                  aria-label="Map to a special output file"
+                >
+                  <option value="">None (default)</option>
+                  {Object.entries(SPECIAL_FILE_TARGETS).map(([key, target]) => (
+                    <option key={key} value={key}>
+                      {target.path} – {target.description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
                 <Label>Content</Label>
                 <textarea
                   className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -601,6 +629,28 @@ export default function RulesPage() {
                           {projectIdToTitle[rule.project_id] ?? 'Project'}
                         </button>
                       </span>
+                    )}
+                    {rule.special_file_target && SPECIAL_FILE_TARGETS[rule.special_file_target] && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border bg-orange-500/10 text-orange-400 border-orange-500/20 cursor-help"
+                              onClick={(e) => e.stopPropagation()}
+                              onKeyDown={(e) => e.stopPropagation()}
+                            >
+                              <FileText className="h-3 w-3" />
+                              {SPECIAL_FILE_TARGETS[rule.special_file_target].path}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{SPECIAL_FILE_TARGETS[rule.special_file_target].description}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Outputs to <code className="font-mono">{SPECIAL_FILE_TARGETS[rule.special_file_target].path}</code>
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                   </div>
                 </CardHeader>

@@ -27,7 +27,8 @@ import { useProfilesByIds } from '@/hooks/use-profiles';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import type { Rule, RuleKind, RuleVisibility } from '@/types/bitcompass';
-import { ArrowLeft, FileDown, FolderTree, Layers, Pencil, Trash2, User, Link2, Lock, Globe, X, Plus } from 'lucide-react';
+import { ArrowLeft, FileDown, FolderTree, Layers, Pencil, Trash2, User, Link2, Lock, Globe, X, Plus, FileText } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,6 +63,15 @@ const getKindDescription = (kind: RuleKind): string => {
     command: 'Command',
   };
   return descriptions[kind];
+};
+
+/** Special file output targets with display info. */
+const SPECIAL_FILE_TARGETS: Record<string, { path: string; description: string }> = {
+  'claude.md': { path: 'CLAUDE.md', description: 'Claude Code project instructions' },
+  'agents.md': { path: 'AGENTS.md', description: 'OpenAI Codex instructions' },
+  'cursorrules': { path: '.cursorrules', description: 'Cursor legacy rules' },
+  'copilot-instructions': { path: '.github/copilot-instructions.md', description: 'GitHub Copilot instructions' },
+  'windsurfrules': { path: '.windsurfrules', description: 'Windsurf rules' },
 };
 
 /** Card/recap accent by kind (align with list cards) */
@@ -125,6 +135,7 @@ export default function RuleDetailPage() {
     version: '1.0.0',
     technologies: [] as string[],
     project_id: undefined as string | null | undefined,
+    special_file_target: null as string | null,
   });
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -137,6 +148,7 @@ export default function RuleDetailPage() {
         version: bumpRuleVersionMajor(rule.version),
         technologies: rule.technologies || [],
         project_id: rule.project_id ?? undefined,
+        special_file_target: rule.special_file_target ?? null,
       });
       setEditing(true);
     }
@@ -155,6 +167,7 @@ export default function RuleDetailPage() {
           version: newVersion,
           technologies: editForm.technologies,
           project_id: editForm.project_id ?? undefined,
+          special_file_target: editForm.special_file_target,
         },
       });
       toast({ title: 'Updated' });
@@ -330,6 +343,24 @@ export default function RuleDetailPage() {
                 {rule.visibility === 'public' ? 'Public' : 'Private'}
               </span>
             )}
+            {rule.special_file_target && SPECIAL_FILE_TARGETS[rule.special_file_target] && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border bg-orange-500/10 text-orange-400 border-orange-500/20 cursor-help">
+                      <FileText className="h-3 w-3" />
+                      {SPECIAL_FILE_TARGETS[rule.special_file_target].path}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{SPECIAL_FILE_TARGETS[rule.special_file_target].description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      When pulled, this rule writes directly to <code className="font-mono">{SPECIAL_FILE_TARGETS[rule.special_file_target].path}</code> in your project root
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             {rule.technologies && rule.technologies.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5">
                 {rule.technologies.map((tech) => {
@@ -450,7 +481,7 @@ export default function RuleDetailPage() {
               Pull to project
             </p>
             <p className="text-xs text-muted-foreground dark:text-zinc-400">
-              Run this in your terminal to install this {getKindDescription(rule.kind).toLowerCase()} into your project (symbolic link). Copy the command with the button.
+              Run this in your terminal to install this {getKindDescription(rule.kind).toLowerCase()} into your project{rule.special_file_target && SPECIAL_FILE_TARGETS[rule.special_file_target] ? `. Output: ${SPECIAL_FILE_TARGETS[rule.special_file_target].path}` : ' (symbolic link)'}. Copy the command with the button.
             </p>
             <CommandBlock commands={[getPullCommand(id, rule.kind, false)]} />
             <p className="text-xs text-muted-foreground dark:text-zinc-400">
@@ -521,6 +552,24 @@ export default function RuleDetailPage() {
                   }
                   placeholder="React, TypeScript, Tailwind"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Special file target (optional)</Label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                  value={editForm.special_file_target ?? ''}
+                  onChange={(e) =>
+                    setEditForm((p) => ({ ...p, special_file_target: e.target.value || null }))
+                  }
+                  aria-label="Map to a special output file"
+                >
+                  <option value="">None (default)</option>
+                  {Object.entries(SPECIAL_FILE_TARGETS).map(([key, target]) => (
+                    <option key={key} value={key}>
+                      {target.path} – {target.description}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
                 <Label>Content</Label>

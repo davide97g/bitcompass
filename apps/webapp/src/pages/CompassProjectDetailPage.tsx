@@ -36,6 +36,7 @@ import {
   Link2,
   LogOut,
   Search,
+  Settings,
   Trash2,
   User,
   UserPlus,
@@ -806,6 +807,70 @@ export default function CompassProjectDetailPage() {
                   ariaLabel="Copy bitcompass project pull command"
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Shared Configuration */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Settings className="w-5 h-5" />
+                Shared Configuration
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {project.config && Object.keys(project.config).length > 0 ? (
+                <>
+                  <div className="rounded-lg border border-border bg-muted/50 p-3 space-y-1.5">
+                    {project.config.editor && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Primary editor</span>
+                        <span className="font-medium">{String(project.config.editor)}</span>
+                      </div>
+                    )}
+                    {Array.isArray(project.config.editors) && project.config.editors.length > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Editors</span>
+                        <span className="font-medium">{(project.config.editors as string[]).join(', ')}</span>
+                      </div>
+                    )}
+                    {project.config.outputPath && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Output path</span>
+                        <code className="font-mono text-xs bg-background px-1.5 py-0.5 rounded">{String(project.config.outputPath)}</code>
+                      </div>
+                    )}
+                    {project.config.defaultSharing && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Default sharing</span>
+                        <span className="font-medium">{String(project.config.defaultSharing)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground text-xs">
+                      Pull this config to your local project
+                    </Label>
+                    <CodeBlockWithCopy
+                      code="bitcompass config pull"
+                      ariaLabel="Copy bitcompass config pull command"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    To update, run <code className="font-mono bg-muted px-1 py-0.5 rounded">bitcompass config push</code> from your local project.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    No shared configuration yet. Push your local config to share editor settings with your team.
+                  </p>
+                  <CodeBlockWithCopy
+                    code="bitcompass config push"
+                    ariaLabel="Copy bitcompass config push command"
+                  />
+                </>
+              )}
             </CardContent>
           </Card>
         </aside>

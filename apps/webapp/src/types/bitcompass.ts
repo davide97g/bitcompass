@@ -60,6 +60,8 @@ export interface CompassProject {
   title: string;
   description: string;
   created_by: string | null;
+  /** Shared project config (pushed via `bitcompass config push`). */
+  config?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }

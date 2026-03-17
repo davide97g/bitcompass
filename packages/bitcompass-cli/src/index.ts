@@ -218,8 +218,8 @@ rules
   .command('search [query]')
   .description('Search rules')
   .option('-l, --list', 'List results only; do not prompt to select')
-  .action((query?: string, cmd?: { opts(): { list?: boolean } }) =>
-    runRulesSearch(query, { listOnly: cmd?.opts()?.list }).catch(handleErr)
+  .action((query?: string, opts?: { list?: boolean }) =>
+    runRulesSearch(query, { listOnly: opts?.list }).catch(handleErr)
   );
 rules
   .command('list')
@@ -251,8 +251,8 @@ solutions
   .command('search [query]')
   .description('Search solutions')
   .option('-l, --list', 'List results only; do not prompt to select')
-  .action((query?: string, cmd?: { opts(): { list?: boolean } }) =>
-    runSolutionsSearch(query, { listOnly: cmd?.opts()?.list }).catch(handleErr)
+  .action((query?: string, opts?: { list?: boolean }) =>
+    runSolutionsSearch(query, { listOnly: opts?.list }).catch(handleErr)
   );
 solutions
   .command('list')
@@ -284,8 +284,8 @@ skills
   .command('search [query]')
   .description('Search skills')
   .option('-l, --list', 'List results only; do not prompt to select')
-  .action((query?: string, cmd?: { opts(): { list?: boolean } }) =>
-    runSkillsSearch(query, { listOnly: cmd?.opts()?.list }).catch(handleErr)
+  .action((query?: string, opts?: { list?: boolean }) =>
+    runSkillsSearch(query, { listOnly: opts?.list }).catch(handleErr)
   );
 skills
   .command('list')
@@ -317,8 +317,8 @@ commands
   .command('search [query]')
   .description('Search commands')
   .option('-l, --list', 'List results only; do not prompt to select')
-  .action((query?: string, cmd?: { opts(): { list?: boolean } }) =>
-    runCommandsSearch(query, { listOnly: cmd?.opts()?.list }).catch(handleErr)
+  .action((query?: string, opts?: { list?: boolean }) =>
+    runCommandsSearch(query, { listOnly: opts?.list }).catch(handleErr)
   );
 commands
   .command('list')

@@ -7,9 +7,12 @@ import { basename, join, relative } from 'path';
 import { fetchCompassProjectsForCurrentUser, insertRule } from '../api/client.js';
 import { getCurrentUserEmail, isLoggedIn } from '../auth/config.js';
 import {
+    EDITOR_BASE_PATHS,
     getEditorDefaultPath,
     getOutputDirForKind,
+    getOutputDirsForKind,
     getProjectConfigDir,
+    KIND_SUBFOLDERS,
     loadProjectConfig,
     saveProjectConfig,
 } from '../auth/project-config.js';
@@ -199,23 +202,30 @@ export const runInit = async (): Promise<void> => {
   await printBanner();
 
   const existing = loadProjectConfig();
+  const { editors: selectedEditors } = await inquirer.prompt<{ editors: EditorProvider[] }>([
+    {
+      name: 'editors',
+      message: 'Editor / AI providers (select all that apply)',
+      type: 'checkbox',
+      choices: EDITOR_CHOICES.map((c) => ({
+        ...c,
+        checked: existing?.editors
+          ? existing.editors.includes(c.value)
+          : c.value === (existing?.editor ?? 'cursor'),
+      })),
+      validate: (input: EditorProvider[]) =>
+        input.length > 0 || 'Select at least one editor',
+    },
+  ]);
   const answers = await inquirer.prompt<{
-    editor: EditorProvider;
     outputPath: string;
     setupGlobalGitignore: boolean;
   }>([
     {
-      name: 'editor',
-      message: 'Editor / AI provider',
-      type: 'list',
-      choices: EDITOR_CHOICES,
-      default: existing?.editor ?? 'cursor',
-    },
-    {
       name: 'outputPath',
-      message: 'Folder for rules/docs/commands output',
+      message: 'Folder for rules/docs/commands output (primary)',
       type: 'input',
-      default: ({ editor }: { editor: EditorProvider }) => getEditorDefaultPath(editor),
+      default: getEditorDefaultPath(selectedEditors[0]),
     },
     {
       name: 'setupGlobalGitignore',
@@ -252,23 +262,24 @@ export const runInit = async (): Promise<void> => {
     );
   }
 
+  const primaryEditor = selectedEditors[0];
   const config: ProjectConfig = {
-    editor: answers.editor,
-    outputPath: answers.outputPath.trim() || getEditorDefaultPath(answers.editor),
+    editor: primaryEditor,
+    outputPath: answers.outputPath.trim() || getEditorDefaultPath(primaryEditor),
+    editors: selectedEditors,
     compassProjectId,
   };
 
   saveProjectConfig(config);
 
-  // Create all four output folders (rules, skills, commands, documentation)
-  const rulesDir = getOutputDirForKind(config, 'rule');
-  const skillsDir = getOutputDirForKind(config, 'skill');
-  const commandsDir = getOutputDirForKind(config, 'command');
-  const documentationDir = getOutputDirForKind(config, 'solution');
-  mkdirSync(rulesDir, { recursive: true });
-  mkdirSync(skillsDir, { recursive: true });
-  mkdirSync(commandsDir, { recursive: true });
-  mkdirSync(documentationDir, { recursive: true });
+  // Create all four output folders for ALL configured editors
+  const kinds = Object.keys(KIND_SUBFOLDERS) as import('../types.js').RuleKind[];
+  for (const kind of kinds) {
+    const dirs = getOutputDirsForKind(config, kind);
+    for (const dir of dirs) {
+      mkdirSync(dir, { recursive: true });
+    }
+  }
 
   // Discover local AI rules/configs and offer to import them
   let importedCount = 0;
@@ -297,6 +308,7 @@ export const runInit = async (): Promise<void> => {
     }
   }
 
+  const rulesDir = getOutputDirForKind(config, 'rule');
   const rulePath = join(rulesDir, 'rule-bitcompass-mcp-and-cli-usage.md');
   const ruleContent = `# BitCompass MCP and CLI Usage
 
@@ -469,7 +481,7 @@ Use these commands when you need to interact with BitCompass from the terminal:
 
   console.log(gradient('Project configured.', cyan, magenta));
   console.log(INDENT + chalk.bold('Config:'), join(getProjectConfigDir(), 'config.json'));
-  console.log(INDENT + chalk.bold('Editor:'), config.editor);
+  console.log(INDENT + chalk.bold('Editors:'), selectedEditors.join(', '));
   console.log(INDENT + chalk.bold('Output path:'), config.outputPath);
   console.log(
     INDENT + chalk.bold('Compass project:'),

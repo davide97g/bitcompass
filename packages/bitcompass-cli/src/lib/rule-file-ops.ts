@@ -4,8 +4,10 @@ import { getRuleById } from '../api/client.js';
 import {
   getProjectConfig,
   getOutputDirForKind,
+  getOutputDirsForKind,
   getGlobalOutputDirForKind,
   KIND_SUBFOLDERS,
+  SPECIAL_FILE_TARGETS,
 } from '../auth/project-config.js';
 import { ruleFilename, solutionFilename, skillFilename, commandFilename } from './slug.js';
 import { ensureRuleCached } from './rule-cache.js';
@@ -26,8 +28,91 @@ export interface PullRuleOptions {
 }
 
 /**
+ * Returns the filename for a rule based on its kind.
+ */
+const getFilenameForKind = (rule: { kind: string; title: string; id: string }): string => {
+  switch (rule.kind) {
+    case 'solution':
+      return solutionFilename(rule.title, rule.id);
+    case 'skill':
+      return skillFilename(rule.title, rule.id);
+    case 'command':
+      return commandFilename(rule.title, rule.id);
+    case 'rule':
+    default:
+      return ruleFilename(rule.title, rule.id);
+  }
+};
+
+/**
+ * Removes an existing file or symlink at the given path.
+ */
+const removeExisting = (filePath: string): void => {
+  if (!existsSync(filePath)) return;
+  try {
+    const stats = lstatSync(filePath);
+    if (stats.isSymbolicLink() || stats.isFile()) {
+      unlinkSync(filePath);
+    }
+  } catch {
+    // Ignore errors when removing
+  }
+};
+
+/**
+ * Writes a rule to a single output file path.
+ * Returns the file path written.
+ */
+const writeRuleToPath = (
+  rule: { kind: string; title: string; id: string; body: string; description: string; globs?: string | null; always_apply?: boolean; version?: string | null },
+  outDir: string,
+  cachedPath: string,
+  useSymlink: boolean
+): string => {
+  const filename = getFilenameForKind(rule);
+  const filePath = join(outDir, filename);
+
+  // Ensure parent directory exists (handles skill subdirectories like skills/my-skill/)
+  mkdirSync(dirname(filePath), { recursive: true });
+
+  removeExisting(filePath);
+
+  // Commands and solutions: always write plain .md (no frontmatter), never symlink
+  const useCopyForPlainMd = rule.kind === 'command' || rule.kind === 'solution';
+  const shouldSymlink = useSymlink && !useCopyForPlainMd;
+
+  if (shouldSymlink) {
+    const relativePath = relative(dirname(filePath), cachedPath);
+    try {
+      symlinkSync(relativePath, filePath);
+    } catch (error: unknown) {
+      const err = error as { code?: string };
+      if (err.code === 'ENOENT' || err.code === 'EXDEV') {
+        symlinkSync(cachedPath, filePath);
+      } else {
+        throw error;
+      }
+    }
+  } else {
+    const content =
+      rule.kind === 'rule'
+        ? buildRuleMdcContent(rule as any)
+        : rule.kind === 'skill'
+          ? buildSkillContent(rule as any)
+          : rule.kind === 'command'
+            ? buildCommandContent(rule as any)
+            : buildSolutionContent(rule as any);
+    writeFileSync(filePath, content);
+  }
+
+  return filePath;
+};
+
+/**
  * Pulls a rule or solution to a file using symbolic links (like Bun init).
- * Returns the file path where it was written/linked.
+ * When multi-editor is configured, writes to all editor output directories.
+ * When special_file_target is set, writes to the special file path instead.
+ * Returns the file path where it was written/linked (first editor's path).
  * Throws if rule not found or if authentication is required.
  */
 export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}): Promise<string> => {
@@ -41,75 +126,41 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
   }
 
   const config = getProjectConfig({ warnIfMissing: true });
-  let outDir: string;
-  if (options.outputPath) {
-    // Custom output path: treat as base, append kind subfolder
-    const base = options.outputPath.startsWith('/') ? options.outputPath : join(process.cwd(), options.outputPath);
-    outDir = join(base, KIND_SUBFOLDERS[rule.kind]);
-  } else if (options.global) {
-    outDir = getGlobalOutputDirForKind(rule.kind);
-  } else {
-    outDir = getOutputDirForKind(config, rule.kind);
+
+  // Handle special file targets — write to project-relative path, skip multi-editor
+  if (rule.special_file_target && SPECIAL_FILE_TARGETS[rule.special_file_target]) {
+    const target = SPECIAL_FILE_TARGETS[rule.special_file_target];
+    const cwd = process.cwd();
+    const filePath = join(cwd, target.path);
+    mkdirSync(dirname(filePath), { recursive: true });
+    removeExisting(filePath);
+    // Special files: write body only, no frontmatter
+    writeFileSync(filePath, rule.body.trimEnd() + '\n');
+    return filePath;
   }
 
-  mkdirSync(outDir, { recursive: true });
-
-  let filename: string;
-  switch (rule.kind) {
-    case 'solution':
-      filename = join(outDir, solutionFilename(rule.title, rule.id));
-      break;
-    case 'skill':
-      filename = join(outDir, skillFilename(rule.title, rule.id));
-      break;
-    case 'command':
-      filename = join(outDir, commandFilename(rule.title, rule.id));
-      break;
-    case 'rule':
-    default:
-      filename = join(outDir, ruleFilename(rule.title, rule.id));
-      break;
-  }
-
-  // Remove existing file/symlink if it exists
-  if (existsSync(filename)) {
-    try {
-      const stats = lstatSync(filename);
-      if (stats.isSymbolicLink() || stats.isFile()) {
-        unlinkSync(filename);
-      }
-    } catch {
-      // Ignore errors when removing
+  // Custom output path or global: single directory, no multi-editor
+  if (options.outputPath || options.global) {
+    let outDir: string;
+    if (options.outputPath) {
+      const base = options.outputPath.startsWith('/') ? options.outputPath : join(process.cwd(), options.outputPath);
+      outDir = join(base, KIND_SUBFOLDERS[rule.kind]);
+    } else {
+      outDir = getGlobalOutputDirForKind(rule.kind);
     }
+    mkdirSync(outDir, { recursive: true });
+    return writeRuleToPath(rule, outDir, cachedPath, useSymlink);
   }
 
-  // Commands and solutions: always write plain .md (no frontmatter), never symlink
-  const useCopyForPlainMd = rule.kind === 'command' || rule.kind === 'solution';
-  const shouldSymlink = useSymlink && !useCopyForPlainMd;
+  // Multi-editor: write to all configured editor output directories
+  const outDirs = getOutputDirsForKind(config, rule.kind);
+  let firstPath = '';
 
-  if (shouldSymlink) {
-    const relativePath = relative(dirname(filename), cachedPath);
-    try {
-      symlinkSync(relativePath, filename);
-    } catch (error: unknown) {
-      const err = error as { code?: string };
-      if (err.code === 'ENOENT' || err.code === 'EXDEV') {
-        symlinkSync(cachedPath, filename);
-      } else {
-        throw error;
-      }
-    }
-  } else {
-    const content =
-      rule.kind === 'rule'
-        ? buildRuleMdcContent(rule)
-        : rule.kind === 'skill'
-          ? buildSkillContent(rule)
-          : rule.kind === 'command'
-            ? buildCommandContent(rule)
-            : buildSolutionContent(rule);
-    writeFileSync(filename, content);
+  for (const outDir of outDirs) {
+    mkdirSync(outDir, { recursive: true });
+    const filePath = writeRuleToPath(rule, outDir, cachedPath, useSymlink);
+    if (!firstPath) firstPath = filePath;
   }
 
-  return filename;
+  return firstPath;
 };

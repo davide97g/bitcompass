@@ -22,6 +22,8 @@ export interface Rule {
   always_apply?: boolean;
   /** 'private' = only visible to owner, 'public' = visible to everyone. Default 'private'. */
   visibility: RuleVisibility;
+  /** Maps to a key in SPECIAL_FILE_TARGETS (e.g. 'claude.md'). When set, output goes to the special path. */
+  special_file_target?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -40,6 +42,8 @@ export interface RuleInsert {
   always_apply?: boolean;
   /** Default 'private'. */
   visibility?: RuleVisibility;
+  /** Maps to a key in SPECIAL_FILE_TARGETS (e.g. 'claude.md'). When set, output goes to the special path. */
+  special_file_target?: string | null;
 }
 
 export interface StoredCredentials {
@@ -65,6 +69,8 @@ export interface ProjectConfig {
   editor: EditorProvider;
   /** Folder for rules/docs/commands output (e.g. .cursor/rules/) */
   outputPath: string;
+  /** When set, output to all listed editors. Falls back to single `editor` field when absent. */
+  editors?: EditorProvider[];
   /** Compass project this folder is associated with (null = personal only). */
   compassProjectId?: string | null;
   /** Default visibility when sharing rules/solutions. Default 'private'. */

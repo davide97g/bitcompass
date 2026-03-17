@@ -3,6 +3,7 @@ import { loadConfig, loadCredentials, loadCredentialsWithRefresh } from '../auth
 import { DEFAULT_SUPABASE_ANON_KEY, DEFAULT_SUPABASE_URL } from '../auth/defaults.js';
 import type {
   CompassProject,
+  ProjectConfig,
   Rule,
   RuleGroup,
   RuleInsert,
@@ -268,4 +269,42 @@ export const fetchRulesByGroupId = async (groupId: string): Promise<Rule[]> => {
   const ids = ((ruleIds ?? []) as string[]);
   if (ids.length === 0) return [];
   return fetchRulesByIds(ids);
+};
+
+/**
+ * Pushes project config to the Compass project's `config` JSONB column.
+ * Strips `compassProjectId` from the uploaded config (teammates have their own link).
+ */
+export const pushProjectConfig = async (projectId: string, config: ProjectConfig): Promise<void> => {
+  const client = await getSupabaseClient();
+  if (!client) throw new Error(NOT_CONFIGURED_MSG);
+  const { compassProjectId: _, ...configToUpload } = config;
+  const { error } = await client
+    .from('compass_projects')
+    .update({ config: configToUpload })
+    .eq('id', projectId);
+  if (error) throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
+};
+
+/**
+ * Pulls project config from the Compass project's `config` JSONB column.
+ * Returns null if no config is stored or project not found.
+ */
+export const pullProjectConfig = async (projectId: string): Promise<ProjectConfig | null> => {
+  const client = await getSupabaseClient();
+  if (!client) throw new Error(NOT_CONFIGURED_MSG);
+  const { data, error } = await client
+    .from('compass_projects')
+    .select('config')
+    .eq('id', projectId)
+    .single();
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw new Error(isAuthError(error) ? AUTH_REQUIRED_MSG : error.message);
+  }
+  const raw = (data as { config?: unknown })?.config;
+  if (!raw || typeof raw !== 'object') return null;
+  const cfg = raw as Record<string, unknown>;
+  if (typeof cfg.editor !== 'string' || typeof cfg.outputPath !== 'string') return null;
+  return raw as ProjectConfig;
 };

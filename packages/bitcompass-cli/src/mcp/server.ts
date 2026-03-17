@@ -124,6 +124,7 @@ function createStdioServer(): {
                     technologies: { type: 'array', items: { type: 'string' } },
                     project_id: { type: 'string', description: 'Optional: Compass project UUID to scope this rule to' },
                     visibility: { type: 'string', enum: ['private', 'public'], description: "Optional: 'private' (default, only you) or 'public' (everyone)" },
+                    special_file_target: { type: 'string', enum: ['claude.md', 'agents.md', 'cursorrules', 'copilot-instructions', 'windsurfrules'], description: 'Optional: map to a special output file (e.g. CLAUDE.md, .cursorrules)' },
                   },
                   required: ['kind', 'title', 'body'],
                 },
@@ -388,6 +389,7 @@ Then collect: title, description, body (and optionally context, examples, techno
       technologies: Array.isArray(args.technologies) ? (args.technologies as string[]) : undefined,
       project_id: typeof args.project_id === 'string' ? args.project_id : undefined,
       visibility: args.visibility === 'public' ? 'public' : 'private',
+      special_file_target: typeof args.special_file_target === 'string' ? args.special_file_target : undefined,
     };
     try {
       const created = await insertRule(payload);

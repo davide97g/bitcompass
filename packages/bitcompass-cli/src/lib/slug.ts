@@ -32,12 +32,12 @@ export const solutionFilename = (title: string, id: string): string => {
 };
 
 /**
- * Returns the skill filename (e.g. strava-api-authentication-flow.md).
+ * Returns the skill path as a subdirectory with SKILL.md (e.g. strava-api-authentication-flow/SKILL.md).
  * Falls back to id if slug is empty.
  */
 export const skillFilename = (title: string, id: string): string => {
   const base = titleToSlug(title) || id;
-  return `${base}.md`;
+  return `${base}/SKILL.md`;
 };
 
 /**

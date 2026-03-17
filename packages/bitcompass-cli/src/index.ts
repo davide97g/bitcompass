@@ -71,6 +71,7 @@ program
   .description('Share a rule, solution, skill, or command (prompts for type if not in file or --kind)')
   .option('-k, --kind <kind>', 'Type: rule, solution, skill, or command (skips type prompt)')
   .option('--project-id <uuid>', 'Scope to Compass project (UUID)')
+  .option('--special-file <target>', 'Map to a special output file (claude.md, agents.md, cursorrules, copilot-instructions, windsurfrules)')
   .addHelpText(
     'after',
     `
@@ -78,15 +79,16 @@ Examples:
   bitcompass share
   bitcompass share ./my-rule.mdc
   bitcompass share ./doc.md --kind solution
+  bitcompass share CLAUDE.md --special-file claude.md
 `
   )
-  .action((file?: string, opts?: { kind?: string; projectId?: string }) => {
+  .action((file?: string, opts?: { kind?: string; projectId?: string; specialFile?: string }) => {
     const kind = opts?.kind as 'rule' | 'solution' | 'skill' | 'command' | undefined;
     if (opts?.kind && kind !== 'rule' && kind !== 'solution' && kind !== 'skill' && kind !== 'command') {
       console.error(chalk.red('--kind must be one of: rule, solution, skill, command'));
       process.exit(1);
     }
-    return runSharePush(file, { kind, projectId: opts?.projectId }).catch(handleErr);
+    return runSharePush(file, { kind, projectId: opts?.projectId, specialFile: opts?.specialFile }).catch(handleErr);
   });
 
 program
@@ -163,6 +165,20 @@ configCmd.action(async () => {
 configCmd.command('list').description('List config values').action(runConfigList);
 configCmd.command('set <key> <value>').description('Set supabaseUrl, supabaseAnonKey, or apiUrl').action((key: string, value: string) => runConfigSet(key, value));
 configCmd.command('get <key>').description('Get a config value').action((key: string) => runConfigGet(key));
+configCmd
+  .command('push')
+  .description('Push local project config to the linked Compass project')
+  .action(async () => {
+    const { runConfigPush } = await import('./commands/config-cmd.js');
+    return runConfigPush().catch(handleErr);
+  });
+configCmd
+  .command('pull')
+  .description('Pull project config from the linked Compass project')
+  .action(async () => {
+    const { runConfigPull } = await import('./commands/config-cmd.js');
+    return runConfigPull().catch(handleErr);
+  });
 
 // project (Compass project for this folder: pull, sync, list)
 const projectCmd = program.command('project').description('Compass project for this folder (see bitcompass init)');

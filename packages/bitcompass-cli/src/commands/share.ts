@@ -100,7 +100,7 @@ const promptForKind = async (): Promise<RuleKind> => {
  */
 export const runSharePush = async (
   file?: string,
-  options?: { kind?: RuleKind; projectId?: string }
+  options?: { kind?: RuleKind; projectId?: string; specialFile?: string }
 ): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
@@ -143,6 +143,7 @@ export const runSharePush = async (
       always_apply: parsed.always_apply,
       version: parsed.version ? bumpRuleVersionMajor(parsed.version) : '1.0.0',
       visibility,
+      special_file_target: options?.specialFile ?? undefined,
     };
   } else {
     const kind = options?.kind ?? (await promptForKind());
@@ -159,6 +160,7 @@ export const runSharePush = async (
       project_id: projectId,
       version: '1.0.0',
       visibility,
+      special_file_target: options?.specialFile ?? undefined,
     };
   }
 

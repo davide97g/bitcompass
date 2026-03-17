@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { getConfigDir } from '../auth/config.js';
 import { getRuleById } from '../api/client.js';
-import { ruleFilename, solutionFilename, skillFilename, commandFilename } from './slug.js';
+import { ruleFilename, solutionFilename, commandFilename, titleToSlug } from './slug.js';
 import { buildRuleMdcContent, buildMarkdownWithKind, buildSkillContent } from './mdc-format.js';
 import type { Rule } from '../types.js';
 
@@ -22,11 +22,12 @@ export const getCacheDir = (): string => {
  */
 export const getCachedRulePath = (rule: Rule): string => {
   const cacheDir = getCacheDir();
+  // Skills use subdirectory output (slug/SKILL.md) but cache stays flat
   const filename =
     rule.kind === 'solution'
       ? solutionFilename(rule.title, rule.id)
       : rule.kind === 'skill'
-        ? skillFilename(rule.title, rule.id)
+        ? `${titleToSlug(rule.title) || rule.id}.md`
         : rule.kind === 'command'
           ? commandFilename(rule.title, rule.id)
           : ruleFilename(rule.title, rule.id);

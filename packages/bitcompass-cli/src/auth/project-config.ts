@@ -13,12 +13,29 @@ const EDITOR_DEFAULT_PATHS: Record<EditorProvider, string> = {
   claudecode: '.claude/rules',
 };
 
+/** Editor base path (without /rules suffix) for each provider. */
+export const EDITOR_BASE_PATHS: Record<EditorProvider, string> = {
+  cursor: '.cursor/',
+  claudecode: '.claude/',
+  vscode: '.vscode/',
+  antigrativity: '.antigrativity/',
+};
+
 /** Subfolder name per kind under the editor base path (e.g. .cursor/skills, .cursor/commands). */
 export const KIND_SUBFOLDERS: Record<RuleKind, string> = {
   rule: 'rules',
   skill: 'skills',
   command: 'commands',
   solution: 'documentation',
+};
+
+/** Special file output targets with hardcoded project-relative paths. */
+export const SPECIAL_FILE_TARGETS: Record<string, { path: string; description: string }> = {
+  'claude.md': { path: 'CLAUDE.md', description: 'Claude Code project instructions' },
+  'agents.md': { path: 'AGENTS.md', description: 'OpenAI Codex instructions' },
+  'cursorrules': { path: '.cursorrules', description: 'Cursor legacy rules' },
+  'copilot-instructions': { path: '.github/copilot-instructions.md', description: 'GitHub Copilot instructions' },
+  'windsurfrules': { path: '.windsurfrules', description: 'Windsurf rules' },
 };
 
 const DEFAULT_EDITOR: EditorProvider = 'cursor';
@@ -40,6 +57,7 @@ export const loadProjectConfig = (): ProjectConfig | null => {
     const raw = readFileSync(path, 'utf-8');
     const data = JSON.parse(raw) as {
       editor?: string;
+      editors?: string[];
       outputPath?: string;
       compassProjectId?: string | null;
       defaultSharing?: string;
@@ -55,7 +73,12 @@ export const loadProjectConfig = (): ProjectConfig | null => {
             : null;
       const defaultSharing =
         data.defaultSharing === 'public' ? 'public' as const : 'private' as const;
-      return { editor, outputPath, compassProjectId, defaultSharing };
+      const editors = Array.isArray(data.editors)
+        ? (data.editors as string[]).filter((e): e is EditorProvider =>
+            Object.keys(EDITOR_DEFAULT_PATHS).includes(e)
+          )
+        : undefined;
+      return { editor, outputPath, editors: editors?.length ? editors : undefined, compassProjectId, defaultSharing };
     }
     return null;
   } catch {
@@ -103,6 +126,19 @@ export const getOutputDirForKind = (config: ProjectConfig, kind: RuleKind): stri
   const basePath = dirname(config.outputPath);
   const fullBase = basePath.startsWith('/') ? basePath : join(cwd, basePath);
   return join(fullBase, KIND_SUBFOLDERS[kind]);
+};
+
+/**
+ * Returns the project output directories for a given kind across all configured editors.
+ * When `editors` is set, returns one dir per editor; otherwise falls back to single `editor` path.
+ */
+export const getOutputDirsForKind = (config: ProjectConfig, kind: RuleKind): string[] => {
+  const cwd = process.cwd();
+  const editors = config.editors?.length ? config.editors : [config.editor];
+  return editors.map((editor) => {
+    const basePath = EDITOR_BASE_PATHS[editor];
+    return join(cwd, basePath, KIND_SUBFOLDERS[kind]);
+  });
 };
 
 /**

@@ -7,6 +7,7 @@ import { basename, join, relative } from 'path';
 import { fetchCompassProjectsForCurrentUser, insertRule } from '../api/client.js';
 import { getCurrentUserEmail, isLoggedIn } from '../auth/config.js';
 import {
+    CURRENT_CONFIG_VERSION,
     EDITOR_BASE_PATHS,
     getEditorDefaultPath,
     getOutputDirForKind,
@@ -205,6 +206,26 @@ export const runInit = async (): Promise<void> => {
   await printBanner();
 
   const existing = loadProjectConfig();
+
+  // Offer migration for old configs
+  if (
+    existing &&
+    (existing.configVersion === undefined || existing.configVersion < CURRENT_CONFIG_VERSION)
+  ) {
+    const { shouldMigrate } = await inquirer.prompt<{ shouldMigrate: boolean }>([
+      {
+        name: 'shouldMigrate',
+        message: 'Your project was set up with an older version of BitCompass. Run migration now?',
+        type: 'confirm',
+        default: true,
+      },
+    ]);
+    if (shouldMigrate) {
+      const { runMigrate } = await import('./migrate.js');
+      await runMigrate();
+      console.log('');
+    }
+  }
   const { editors: selectedEditors } = await inquirer.prompt<{ editors: EditorProvider[] }>([
     {
       name: 'editors',
@@ -271,6 +292,7 @@ export const runInit = async (): Promise<void> => {
     outputPath: answers.outputPath.trim() || getEditorDefaultPath(primaryEditor),
     editors: selectedEditors,
     compassProjectId,
+    configVersion: CURRENT_CONFIG_VERSION,
   };
 
   saveProjectConfig(config);

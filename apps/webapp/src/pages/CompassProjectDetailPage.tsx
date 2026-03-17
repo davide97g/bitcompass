@@ -807,6 +807,15 @@ export default function CompassProjectDetailPage() {
                   ariaLabel="Copy bitcompass project pull command"
                 />
               </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">
+                  Upgrading? Update your file layout
+                </Label>
+                <CodeBlockWithCopy
+                  code="bitcompass migrate"
+                  ariaLabel="Copy bitcompass migrate command"
+                />
+              </div>
             </CardContent>
           </Card>
 

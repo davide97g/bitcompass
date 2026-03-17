@@ -38,6 +38,9 @@ export const SPECIAL_FILE_TARGETS: Record<string, { path: string; description: s
   'windsurfrules': { path: '.windsurfrules', description: 'Windsurf rules' },
 };
 
+/** Bump this when file layout changes require migration. */
+export const CURRENT_CONFIG_VERSION = 1;
+
 const DEFAULT_EDITOR: EditorProvider = 'cursor';
 const DEFAULT_OUTPUT_PATH = EDITOR_DEFAULT_PATHS[DEFAULT_EDITOR];
 
@@ -61,6 +64,7 @@ export const loadProjectConfig = (): ProjectConfig | null => {
       outputPath?: string;
       compassProjectId?: string | null;
       defaultSharing?: string;
+      configVersion?: number;
     };
     const editor = data.editor as EditorProvider | undefined;
     const outputPath = typeof data.outputPath === 'string' ? data.outputPath : undefined;
@@ -78,7 +82,8 @@ export const loadProjectConfig = (): ProjectConfig | null => {
             Object.keys(EDITOR_DEFAULT_PATHS).includes(e)
           )
         : undefined;
-      return { editor, outputPath, editors: editors?.length ? editors : undefined, compassProjectId, defaultSharing };
+      const configVersion = typeof data.configVersion === 'number' ? data.configVersion : undefined;
+      return { editor, outputPath, editors: editors?.length ? editors : undefined, compassProjectId, defaultSharing, configVersion };
     }
     return null;
   } catch {
@@ -96,10 +101,12 @@ const ensureProjectConfigDir = (): void => {
 export const saveProjectConfig = (config: ProjectConfig): void => {
   ensureProjectConfigDir();
   const path = getProjectConfigPath();
-  writeFileSync(path, JSON.stringify(config, null, 2), { mode: 0o644 });
+  const toWrite = { ...config, configVersion: config.configVersion ?? CURRENT_CONFIG_VERSION };
+  writeFileSync(path, JSON.stringify(toWrite, null, 2), { mode: 0o644 });
 };
 
 let warnedMissing = false;
+let warnedMigration = false;
 
 /**
  * Returns project config, or defaults if not configured.
@@ -107,7 +114,19 @@ let warnedMissing = false;
  */
 export const getProjectConfig = (options?: { warnIfMissing?: boolean }): ProjectConfig => {
   const config = loadProjectConfig();
-  if (config) return config;
+  if (config) {
+    if (
+      !warnedMigration &&
+      (config.configVersion === undefined || config.configVersion < CURRENT_CONFIG_VERSION) &&
+      process.stderr.isTTY
+    ) {
+      warnedMigration = true;
+      process.stderr.write(
+        '[bitcompass] Project config is from an older version. Run "bitcompass migrate" to update file layout.\n'
+      );
+    }
+    return config;
+  }
   if (options?.warnIfMissing && !warnedMissing) {
     warnedMissing = true;
     process.stderr.write(

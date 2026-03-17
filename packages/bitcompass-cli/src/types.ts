@@ -75,6 +75,8 @@ export interface ProjectConfig {
   compassProjectId?: string | null;
   /** Default visibility when sharing rules/solutions. Default 'private'. */
   defaultSharing?: DefaultSharing;
+  /** Schema version for migration detection. Absent in pre-0.10.2 configs. */
+  configVersion?: number;
 }
 
 export interface BitcompassConfig {

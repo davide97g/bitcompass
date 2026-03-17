@@ -23,6 +23,7 @@ import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './
 import { runSolutionsList, runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
 import { runUpdate } from './commands/update.js';
 import { runWhoami } from './commands/whoami.js';
+import { runMigrate } from './commands/migrate.js';
 import { runSelfUpdate } from './commands/self-update.js';
 import { checkForCliUpdate } from './lib/version-check.js';
 
@@ -364,6 +365,13 @@ commands
 const mcp = program.command('mcp').description('MCP server');
 mcp.command('start').description('Start MCP server (stdio)').action(() => runMcpStart().catch(handleErr));
 mcp.command('status').description('Show MCP status').action(runMcpStatus);
+
+// migrate
+program
+  .command('migrate')
+  .description('Migrate project files from older BitCompass versions to current layout')
+  .option('--dry-run', 'Show what would be changed without modifying files')
+  .action((opts?: { dryRun?: boolean }) => runMigrate({ dryRun: opts?.dryRun }).catch(handleErr));
 
 // self-update
 program

@@ -35,12 +35,13 @@ export const RulesPageSkeleton = () => (
 
 /** Single row skeleton for list view. */
 const RuleRowSkeleton = () => (
-  <div className="grid grid-cols-[1fr_80px_120px_90px_120px_90px] gap-4 px-4 py-3 items-center border-b border-zinc-100 dark:border-white/5">
+  <div className="grid grid-cols-[1fr_80px_120px_90px_120px_60px_90px] gap-4 px-4 py-3 items-center border-b border-zinc-100 dark:border-white/5">
     <Skeleton className="h-4 w-3/4" />
     <Skeleton className="h-5 w-14 rounded" />
     <Skeleton className="h-6 w-16 rounded" />
     <Skeleton className="h-4 w-14" />
     <Skeleton className="h-4 w-16" />
+    <Skeleton className="h-4 w-8" />
     <Skeleton className="h-4 w-12" />
   </div>
 );
@@ -49,12 +50,13 @@ const RuleRowSkeleton = () => (
 export const RulesListSkeleton = () => (
   <div className="rounded-lg border border-zinc-200 dark:border-white/10 overflow-hidden" aria-busy="true" aria-label="Loading rules">
     {/* Header */}
-    <div className="grid grid-cols-[1fr_80px_120px_90px_120px_90px] gap-4 px-4 py-2.5 bg-zinc-50 dark:bg-white/[0.03] border-b border-zinc-200 dark:border-white/10">
+    <div className="grid grid-cols-[1fr_80px_120px_90px_120px_60px_90px] gap-4 px-4 py-2.5 bg-zinc-50 dark:bg-white/[0.03] border-b border-zinc-200 dark:border-white/10">
       <Skeleton className="h-3 w-10" />
       <Skeleton className="h-3 w-8" />
       <Skeleton className="h-3 w-16" />
       <Skeleton className="h-3 w-14" />
       <Skeleton className="h-3 w-12" />
+      <Skeleton className="h-3 w-8" />
       <Skeleton className="h-3 w-12" />
     </div>
     {Array.from({ length: 10 }).map((_, i) => (

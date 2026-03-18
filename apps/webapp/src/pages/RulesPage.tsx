@@ -730,12 +730,13 @@ export default function RulesPage() {
           /* ── List View ── */
           <div className="rounded-lg border border-zinc-200 dark:border-white/10 overflow-hidden">
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_80px_120px_90px_120px_90px] gap-4 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500 bg-zinc-50 dark:bg-white/[0.03] border-b border-zinc-200 dark:border-white/10">
+            <div className="grid grid-cols-[1fr_80px_120px_90px_120px_60px_90px] gap-4 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500 bg-zinc-50 dark:bg-white/[0.03] border-b border-zinc-200 dark:border-white/10">
               <span>Title</span>
               <span>Type</span>
               <span>Command</span>
               <span>Visibility</span>
               <span>Project</span>
+              <span>Pulls</span>
               <span>Updated</span>
             </div>
             {/* Rows */}
@@ -753,7 +754,7 @@ export default function RulesPage() {
                   }
                 }}
                 className={cn(
-                  'grid grid-cols-[1fr_80px_120px_90px_120px_90px] gap-4 px-4 py-3 items-center cursor-pointer',
+                  'grid grid-cols-[1fr_80px_120px_90px_120px_60px_90px] gap-4 px-4 py-3 items-center cursor-pointer',
                   'hover:bg-zinc-50 dark:hover:bg-white/[0.03] transition-colors duration-150',
                   idx < filtered.length - 1 && 'border-b border-zinc-100 dark:border-white/5'
                 )}
@@ -825,6 +826,12 @@ export default function RulesPage() {
                 {/* Project */}
                 <span className="text-xs text-muted-foreground truncate">
                   {rule.project_id ? (projectIdToTitle[rule.project_id] ?? '—') : '—'}
+                </span>
+
+                {/* Pulls */}
+                <span className="text-xs text-muted-foreground tabular-nums inline-flex items-center gap-1">
+                  <Download className="h-3 w-3" />
+                  {downloadCounts[rule.id] ?? 0}
                 </span>
 
                 {/* Updated */}

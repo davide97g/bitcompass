@@ -61,6 +61,7 @@ import { getTechStyle } from '@/lib/tech-styles';
 import { Badge } from '@/components/ui/badge';
 import { RuleDetailSkeleton } from '@/components/skeletons';
 import { useRuleDownloadCount } from '@/hooks/use-download-stats';
+import { formatDistanceToNowStrict } from 'date-fns';
 
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
@@ -744,6 +745,16 @@ export default function RuleDetailPage() {
               >
                 {authorName}
               </Link>
+            </div>
+
+            {/* Last updated */}
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground dark:text-zinc-500 block mb-1.5">
+                Last updated
+              </span>
+              <span className="text-sm text-foreground" title={rule.updated_at}>
+                {formatDistanceToNowStrict(new Date(rule.updated_at), { addSuffix: true })}
+              </span>
             </div>
           </div>
         )}

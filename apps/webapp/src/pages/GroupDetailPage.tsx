@@ -356,11 +356,11 @@ export default function GroupDetailPage() {
                   key={rule.id}
                   role="link"
                   tabIndex={0}
-                  onClick={() => navigate(`/rules/${rule.id}`)}
+                  onClick={() => navigate(`/skills/${rule.id}`)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      navigate(`/rules/${rule.id}`);
+                      navigate(`/skills/${rule.id}`);
                     }
                   }}
                   className="block cursor-pointer"

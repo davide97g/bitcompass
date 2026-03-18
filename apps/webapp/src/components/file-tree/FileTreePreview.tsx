@@ -67,7 +67,7 @@ export function FileTreePreview({ rule }: FileTreePreviewProps) {
         )}
         <div className="flex-1" />
         <Link
-          to={`/rules/${rule.id}`}
+          to={`/skills/${rule.id}`}
           className="flex shrink-0 items-center gap-1 text-[12px] text-muted-foreground/60 transition-colors hover:text-muted-foreground"
         >
           Open detail

@@ -90,7 +90,7 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
     setShowResults(false);
     setSearchQuery('');
     if (type === 'rules') {
-      navigate(`/rules/${id}`);
+      navigate(`/skills/${id}`);
       return;
     }
     navigate(`/${type}/${id}`);

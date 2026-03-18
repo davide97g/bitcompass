@@ -21,7 +21,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useUserStats } from '@/hooks/use-user-stats';
 import { useToast } from '@/hooks/use-toast';
 import type { Rule, RuleKind, RuleVisibility } from '@/types/bitcompass';
-import { BookMarked, FileDown, Search, User, Link2, GitFork, Lock, Globe, ArrowLeft, Layers } from 'lucide-react';
+import { BookMarked, Download, FileDown, Search, User, Link2, GitFork, Lock, Globe, ArrowLeft, Layers } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -31,6 +31,7 @@ import { ruleDownloadBasename } from '@/lib/utils';
 import { getTechStyle } from '@/lib/tech-styles';
 import { RulesPageSkeleton } from '@/components/skeletons';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserDownloadsReceived } from '@/hooks/use-download-stats';
 
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
@@ -112,6 +113,7 @@ export default function UserDetailPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const { data: stats } = useUserStats(userId);
+  const { data: downloadsReceived } = useUserDownloadsReceived(userId);
 
   const { data: compassProjects = [] } = useCompassProjects();
   const projectIdToTitle = Object.fromEntries(compassProjects.map((p) => [p.id, p.title]));
@@ -202,9 +204,17 @@ export default function UserDetailPage() {
                 <StatBadge label="Commands" count={stats.commands} color="amber" />
               </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border dark:border-white/10">
-                <div className="flex items-center gap-1.5">
-                  <Layers className="h-3.5 w-3.5" />
-                  <span>{stats.sharedProjects} {stats.sharedProjects === 1 ? 'project' : 'projects'}</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <Layers className="h-3.5 w-3.5" />
+                    <span>{stats.sharedProjects} {stats.sharedProjects === 1 ? 'project' : 'projects'}</span>
+                  </div>
+                  {downloadsReceived != null && downloadsReceived > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <Download className="h-3.5 w-3.5" />
+                      <span>{downloadsReceived} pull{downloadsReceived === 1 ? '' : 's'} received</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
@@ -320,11 +330,11 @@ export default function UserDetailPage() {
                   key={rule.id}
                   role="link"
                   tabIndex={0}
-                  onClick={() => navigate(`/rules/${rule.id}`)}
+                  onClick={() => navigate(`/skills/${rule.id}`)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      navigate(`/rules/${rule.id}`);
+                      navigate(`/skills/${rule.id}`);
                     }
                   }}
                   className="block cursor-pointer"

@@ -78,6 +78,7 @@ export const runProjectPull = async (options?: {
       await pullRuleToFile(rule.id, {
         global: options?.global,
         useSymlink,
+        source: 'sync',
       });
       s.succeed(chalk.green('Pulled'));
     } catch (e) {
@@ -123,6 +124,7 @@ export const runProjectSync = async (options?: {
         await pullRuleToFile(rule.id, {
           global: options?.global,
           useSymlink: true,
+          source: 'sync',
         });
         s.succeed(chalk.green('Synced'));
         pulled++;

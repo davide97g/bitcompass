@@ -306,6 +306,7 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
         await pullRuleToFile(item.id, {
           global: options.global,
           useSymlink: true,
+          source: 'sync',
         });
         s.succeed(chalk.green(item.status === 'new' ? 'Pulled' : 'Updated') + ' ' + item.title);
         pulledCount++;

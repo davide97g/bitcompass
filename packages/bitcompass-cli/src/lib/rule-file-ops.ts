@@ -17,6 +17,7 @@ import {
   buildCommandContent,
   buildSolutionContent,
 } from './mdc-format.js';
+import { trackDownload } from './tracking.js';
 
 export interface PullRuleOptions {
   /** Install globally to ~/.cursor/rules/ for all projects */
@@ -25,6 +26,8 @@ export interface PullRuleOptions {
   outputPath?: string;
   /** Use symbolic links instead of copying files (default: true) */
   useSymlink?: boolean;
+  /** Source context for download tracking */
+  source?: 'cli' | 'mcp' | 'sync';
 }
 
 /**
@@ -161,6 +164,8 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
     const filePath = writeRuleToPath(rule, outDir, cachedPath, useSymlink);
     if (!firstPath) firstPath = filePath;
   }
+
+  trackDownload(id, options.source ?? 'cli');
 
   return firstPath;
 };

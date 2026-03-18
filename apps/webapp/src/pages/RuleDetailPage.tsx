@@ -27,7 +27,26 @@ import { useProfilesByIds } from '@/hooks/use-profiles';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import type { Rule, RuleKind, RuleVisibility } from '@/types/bitcompass';
-import { ArrowLeft, FileDown, FolderTree, Layers, Pencil, Trash2, User, Link2, Lock, Globe, X, Plus, FileText } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  Copy,
+  Download,
+  FileDown,
+  FolderTree,
+  Layers,
+  Pencil,
+  Trash2,
+  User,
+  Lock,
+  Globe,
+  X,
+  Plus,
+  FileText,
+  Tag,
+  GitBranch,
+  Terminal,
+} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
@@ -36,13 +55,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
-import { PageHeader } from '@/components/ui/page-header';
 import { MarkdownContent } from '@/components/ui/markdown-content';
-import { CommandBlock } from '@/components/ui/CommandBlock';
 import { ruleDownloadBasename, cn, bumpRuleVersionMajor } from '@/lib/utils';
 import { getTechStyle } from '@/lib/tech-styles';
 import { Badge } from '@/components/ui/badge';
 import { RuleDetailSkeleton } from '@/components/skeletons';
+import { useRuleDownloadCount } from '@/hooks/use-download-stats';
 
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
@@ -55,14 +73,15 @@ const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string
   return `${prefixMap[kind]}${ruleId}${copyFlag}`;
 };
 
-const getKindDescription = (kind: RuleKind): string => {
-  const descriptions: Record<RuleKind, string> = {
-    rule: 'Rule',
-    solution: 'Problem solution',
-    skill: 'Skill',
-    command: 'Command',
+/** Display command for the pull snippet — hides the ugly ID. */
+const getPullCommandDisplay = (kind: RuleKind): string => {
+  const prefixMap: Record<RuleKind, string> = {
+    rule: 'bitcompass rules pull',
+    solution: 'bitcompass solutions pull',
+    skill: 'bitcompass skills pull',
+    command: 'bitcompass commands pull',
   };
-  return descriptions[kind];
+  return `$ ${prefixMap[kind]}`;
 };
 
 /** Special file output targets with display info. */
@@ -74,12 +93,12 @@ const SPECIAL_FILE_TARGETS: Record<string, { path: string; description: string }
   'windsurfrules': { path: '.windsurfrules', description: 'Windsurf rules' },
 };
 
-/** Card/recap accent by kind (align with list cards) */
-const RECAP_KIND_BORDER: Record<RuleKind, string> = {
-  rule: 'dark:border-l-sky-500/40',
-  solution: 'dark:border-l-emerald-500/40',
-  skill: 'dark:border-l-violet-500/40',
-  command: 'dark:border-l-amber-500/40',
+/** Kind badge colors */
+const KIND_BADGE_CLASSES: Record<RuleKind, string> = {
+  rule: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
+  solution: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  skill: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  command: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
 };
 
 const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
@@ -138,6 +157,8 @@ export default function RuleDetailPage() {
     special_file_target: null as string | null,
   });
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pullCopied, setPullCopied] = useState(false);
+  const { data: downloadCount } = useRuleDownloadCount(id);
 
   const handleStartEdit = () => {
     if (rule) {
@@ -211,11 +232,23 @@ export default function RuleDetailPage() {
     try {
       await deleteRule.mutateAsync(id);
       toast({ title: 'Deleted' });
-      navigate('/rules');
+      navigate('/skills');
     } catch (e) {
       toast({ title: e instanceof Error ? e.message : 'Failed', variant: 'destructive' });
     }
     setDeleteOpen(false);
+  };
+
+  const handleCopyPull = async () => {
+    if (!id || !rule) return;
+    try {
+      await navigator.clipboard.writeText(getPullCommand(id, rule.kind, false));
+      setPullCopied(true);
+      setTimeout(() => setPullCopied(false), 2000);
+      toast({ title: 'Copied to clipboard' });
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
   };
 
   if (isLoading || !id) {
@@ -230,9 +263,9 @@ export default function RuleDetailPage() {
     return (
       <div className="space-y-6">
         <Button variant="ghost" asChild>
-          <Link to="/rules">
+          <Link to="/skills">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Rules
+            Back to Skills
           </Link>
         </Button>
         <Card>
@@ -247,122 +280,177 @@ export default function RuleDetailPage() {
   if (!id) return null;
 
   return (
-    <div className="space-y-6">
-      <PageBreadcrumb items={[{ label: 'Rules', href: '/rules' }, { label: rule.title }]} />
-      <PageHeader
-        title={editing ? `Edit ${rule.kind}` : rule.title}
-        description={getKindDescription(rule.kind)}
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/rules">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Link>
-          </Button>
-          {!editing ? (
-            <>
-              <Button variant="ghost" size="sm" onClick={handleStartEdit} aria-label="Edit">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => downloadRule(rule, 'markdown')} aria-label="Download Markdown">
-                <FileDown className="mr-2 h-4 w-4" />
-                Download MD
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => downloadRule(rule, 'json')} aria-label="Download JSON">
-                Download JSON
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)} className="text-destructive" aria-label="Delete">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button size="sm" onClick={() => void handleSaveEdit()} disabled={updateRule.isPending}>
-                Save
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setEditing(false)}>
-                Cancel
-              </Button>
-            </>
-          )}
-        </div>
-      </PageHeader>
+    <div className="space-y-0">
+      {/* ── Header zone ── */}
+      <div className="relative -mx-6 -mt-6 border-b border-border dark:border-white/10">
+        <div className="absolute inset-0 dark:bg-gradient-to-b dark:from-violet-950/20 dark:to-transparent bg-gradient-to-b from-blue-50 to-transparent pointer-events-none" />
+        <div className="relative px-6 pt-6 pb-8">
+          {/* Breadcrumb */}
+          <PageBreadcrumb items={[{ label: 'Skills & Rules', href: '/skills' }, { label: rule.title }]} />
 
-      {/* ReCAP: Type, Version, Author, Tech stack, Project, Pull to project — grouped and always on top */}
-      <Card
-        id="pull-to-project"
-        className={cn(
-          'border-l-4 dark:border-l-4 border-border dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-sm',
-          RECAP_KIND_BORDER[rule.kind]
-        )}
-      >
-        <CardContent className="p-5 space-y-4">
-          {/* Metadata row: Type, Version, Author, Tech stack */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            <span className="text-muted-foreground dark:text-zinc-400 font-medium">
-              Type: <span className="text-foreground">{getKindDescription(rule.kind)}</span>
-            </span>
-            {rule.version && (
-              <span className="text-muted-foreground dark:text-zinc-400">
-                Version: <span className="font-medium text-foreground">v{rule.version}</span>
-              </span>
-            )}
-            <div className="flex items-center gap-1.5 text-muted-foreground dark:text-zinc-400">
-              <User className="h-4 w-4 shrink-0" aria-hidden />
-              <span>Author:{' '}
-                <Link to={`/users/${rule.user_id}`} className="text-foreground hover:underline">
-                  {authorName}
-                </Link>
-              </span>
+          {/* Title + actions row */}
+          <div className="mt-4 flex items-start justify-between gap-4">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+              {editing ? `Editing: ${rule.title}` : rule.title}
+            </h1>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {!editing ? (
+                <>
+                  {isOwner && (
+                    <Button variant="ghost" size="sm" onClick={handleStartEdit} className="h-8 w-8 p-0" aria-label="Edit">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Download">
+                        <FileDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => downloadRule(rule, 'markdown')}>
+                        Download .md
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => downloadRule(rule, 'json')}>
+                        Download .json
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  {isOwner && (
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)} className="h-8 w-8 p-0 text-destructive hover:text-destructive" aria-label="Delete">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Button size="sm" onClick={() => void handleSaveEdit()} disabled={updateRule.isPending}>
+                    Save
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setEditing(false)}>
+                    Cancel
+                  </Button>
+                </>
+              )}
             </div>
+          </div>
+
+          {/* Metadata chips row — icons only, no labels */}
+          <div className="mt-3 flex flex-wrap items-center gap-2.5 text-sm">
+            {/* Kind badge */}
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border capitalize',
+                KIND_BADGE_CLASSES[rule.kind]
+              )}
+            >
+              <Tag className="h-3 w-3" />
+              {rule.kind}
+            </span>
+
+            {/* Visibility */}
             {isOwner ? (
-              <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                <Lock className={cn('h-3.5 w-3.5', rule.visibility === 'private' ? 'text-zinc-400' : 'text-zinc-600')} />
+              <label className="inline-flex items-center gap-1.5 cursor-pointer select-none px-2 py-1 rounded-md border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03]">
+                <Lock className={cn('h-3 w-3', rule.visibility === 'private' ? 'text-zinc-400' : 'text-zinc-600 dark:text-zinc-600')} />
                 <Switch
                   checked={rule.visibility === 'public'}
                   onCheckedChange={(checked) => void handleVisibilityToggle(checked)}
                   disabled={updateRule.isPending}
                   aria-label="Toggle visibility"
+                  className="scale-75"
                 />
-                <Globe className={cn('h-3.5 w-3.5', rule.visibility === 'public' ? 'text-green-400' : 'text-zinc-600')} />
-                <span className="text-xs text-muted-foreground">
-                  {rule.visibility === 'public' ? 'Public' : 'Private'}
-                </span>
+                <Globe className={cn('h-3 w-3', rule.visibility === 'public' ? 'text-green-400' : 'text-zinc-600 dark:text-zinc-600')} />
               </label>
             ) : (
-              <span className={cn(
-                'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border',
-                rule.visibility === 'public'
-                  ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                  : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
-              )}>
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border',
+                  rule.visibility === 'public'
+                    ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                    : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+                )}
+              >
                 {rule.visibility === 'public' ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-                {rule.visibility === 'public' ? 'Public' : 'Private'}
+                {rule.visibility}
               </span>
             )}
+
+            {/* Version */}
+            {rule.version && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] text-muted-foreground">
+                      <GitBranch className="h-3 w-3" />
+                      v{rule.version}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>Version</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
+            {/* Author chip — clickable */}
+            <Link
+              to={`/users/${rule.user_id}`}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] text-muted-foreground hover:text-foreground hover:border-zinc-300 dark:hover:border-white/20 transition-colors"
+            >
+              <User className="h-3 w-3" />
+              {authorName}
+            </Link>
+
+            {/* Project chip — clickable */}
+            {rule.project_id ? (
+              <Link
+                to={`/compass-projects/${rule.project_id}`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] text-muted-foreground hover:text-foreground hover:border-zinc-300 dark:hover:border-white/20 transition-colors"
+              >
+                <Layers className="h-3 w-3" />
+                {projectIdToTitle[rule.project_id] ?? 'Project'}
+              </Link>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] text-muted-foreground">
+                <Layers className="h-3 w-3" />
+                Global
+              </span>
+            )}
+
+            {/* Special file target */}
             {rule.special_file_target && SPECIAL_FILE_TARGETS[rule.special_file_target] && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border bg-orange-500/10 text-orange-400 border-orange-500/20 cursor-help">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md border bg-orange-500/10 text-orange-400 border-orange-500/20 cursor-help">
                       <FileText className="h-3 w-3" />
                       {SPECIAL_FILE_TARGETS[rule.special_file_target].path}
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>{SPECIAL_FILE_TARGETS[rule.special_file_target].description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      When pulled, this rule writes directly to <code className="font-mono">{SPECIAL_FILE_TARGETS[rule.special_file_target].path}</code> in your project root
-                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
+
+            {/* Downloads */}
+            {downloadCount != null && downloadCount > 0 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] text-muted-foreground tabular-nums">
+                      <Download className="h-3 w-3" />
+                      {downloadCount}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>Total pulls</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
+            {/* Tech badges */}
             {rule.technologies && rule.technologies.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
+              <>
+                <div className="h-4 w-px bg-border dark:bg-white/10" />
                 {rule.technologies.map((tech) => {
                   const style = getTechStyle(tech);
                   return (
@@ -379,215 +467,287 @@ export default function RuleDetailPage() {
                     </span>
                   );
                 })}
-              </div>
+              </>
             )}
           </div>
 
-          {/* Project */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-muted-foreground dark:text-zinc-400 flex items-center gap-1.5">
-              <Layers className="h-4 w-4 shrink-0" aria-hidden />
-              Project:
-            </span>
-            <Badge variant="outline" className="text-xs font-normal">
-              {rule.project_id ? (
-                <Link to={`/compass-projects/${rule.project_id}`} className="hover:underline">
-                  {projectIdToTitle[rule.project_id] ?? 'Project'}
-                </Link>
-              ) : (
-                <span>Global (open to everyone)</span>
-              )}
-            </Badge>
-            {!editing && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs" aria-label="Change project">
-                    Change project
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => handleProjectChange(null)}>
-                    Global (default – open to everyone)
-                  </DropdownMenuItem>
-                  {compassProjects.map((p) => (
-                    <DropdownMenuItem
-                      key={p.id}
-                      onClick={() => handleProjectChange(p.id)}
-                    >
-                      {p.title}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-
-          {/* Groups */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-muted-foreground dark:text-zinc-400 flex items-center gap-1.5">
-              <FolderTree className="h-4 w-4 shrink-0" aria-hidden />
-              Groups:
-            </span>
-            {ruleGroups.length === 0 && (
-              <span className="text-sm text-muted-foreground">None</span>
-            )}
-            {ruleGroups.map((g) => (
-              <Badge key={g.id} variant="outline" className="text-xs font-normal gap-1">
-                <Link to={`/groups/${g.id}`} className="hover:underline">
-                  {g.title}
-                </Link>
-                {isOwner && (
-                  <button
-                    type="button"
-                    className="ml-1 hover:text-destructive"
-                    onClick={() => {
-                      if (id) void removeFromGroup.mutateAsync({ groupId: g.id, ruleId: id });
-                    }}
-                    aria-label={`Remove from ${g.title}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+          {/* Pull command snippet */}
+          {!editing && (
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={() => void handleCopyPull()}
+                className={cn(
+                  'group flex items-center gap-3 rounded-lg border px-4 py-2.5',
+                  'bg-zinc-100 dark:bg-white/5 border-zinc-200 dark:border-white/10',
+                  'hover:border-zinc-300 dark:hover:border-white/20',
+                  'transition-all duration-200 cursor-pointer'
                 )}
-              </Badge>
-            ))}
-            {isOwner && !editing && availableGroups.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs">
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add to group
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
-                  {availableGroups.map((g) => (
-                    <DropdownMenuItem
-                      key={g.id}
-                      onClick={() => {
-                        if (id) void addToGroup.mutateAsync({ groupId: g.id, ruleId: id });
-                      }}
-                    >
-                      {g.title}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-
-          {/* Pull to project: explanatory text + command + copy (grouped) */}
-          <div className="space-y-2 pt-2 border-t border-border dark:border-white/10">
-            <p className="text-sm font-medium flex items-center gap-2">
-              <Link2 className="h-4 w-4" aria-hidden />
-              Pull to project
-            </p>
-            <p className="text-xs text-muted-foreground dark:text-zinc-400">
-              Run this in your terminal to install this {getKindDescription(rule.kind).toLowerCase()} into your project{rule.special_file_target && SPECIAL_FILE_TARGETS[rule.special_file_target] ? `. Output: ${SPECIAL_FILE_TARGETS[rule.special_file_target].path}` : ' (symbolic link)'}. Copy the command with the button.
-            </p>
-            <CommandBlock commands={[getPullCommand(id, rule.kind, false)]} />
-            <p className="text-xs text-muted-foreground dark:text-zinc-400">
-              To copy the file instead of a symlink, use:{' '}
-              <code className="bg-muted dark:bg-white/10 px-1.5 py-0.5 rounded font-mono text-xs">
-                {getPullCommand(id, rule.kind, true)}
-              </code>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          {editing ? (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input
-                  value={editForm.title}
-                  onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Input
-                  value={editForm.description}
-                  onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Version (auto-bumped on save)</Label>
-                <Input
-                  value={editForm.version}
-                  readOnly
-                  className="bg-muted"
-                  placeholder="1.0.0"
-                  aria-label="Version, automatically set on save"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Compass project (optional)</Label>
-                <select
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                  value={editForm.project_id ?? ''}
-                  onChange={(e) =>
-                    setEditForm((p) => ({ ...p, project_id: e.target.value || undefined }))
-                  }
-                  aria-label="Scope to Compass project"
-                >
-                  <option value="">Global (default – open to everyone)</option>
-                  {compassProjects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label>Technologies (comma-separated)</Label>
-                <Input
-                  value={editForm.technologies.join(', ')}
-                  onChange={(e) =>
-                    setEditForm((p) => ({
-                      ...p,
-                      technologies: e.target.value.split(',').map((t) => t.trim()).filter(Boolean),
-                    }))
-                  }
-                  placeholder="React, TypeScript, Tailwind"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Special file target (optional)</Label>
-                <select
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                  value={editForm.special_file_target ?? ''}
-                  onChange={(e) =>
-                    setEditForm((p) => ({ ...p, special_file_target: e.target.value || null }))
-                  }
-                  aria-label="Map to a special output file"
-                >
-                  <option value="">None (default)</option>
-                  {Object.entries(SPECIAL_FILE_TARGETS).map(([key, target]) => (
-                    <option key={key} value={key}>
-                      {target.path} – {target.description}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label>Content</Label>
-                <textarea
-                  className="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={editForm.body}
-                  onChange={(e) => setEditForm((p) => ({ ...p, body: e.target.value }))}
-                />
-              </div>
-            </div>
-          ) : (
-            <div>
-              {rule.description && <p className="text-muted-foreground mb-4">{rule.description}</p>}
-              <MarkdownContent content={rule.body} />
+              >
+                <Terminal className="h-4 w-4 text-muted-foreground dark:text-zinc-500 shrink-0" />
+                <code className="text-sm font-mono text-foreground dark:text-zinc-200">
+                  {getPullCommandDisplay(rule.kind)}
+                </code>
+                <span className="ml-2 shrink-0 text-muted-foreground dark:text-zinc-500 group-hover:text-foreground dark:group-hover:text-zinc-300 transition-colors">
+                  {pullCopied ? (
+                    <Check className="h-4 w-4 text-emerald-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </span>
+              </button>
+              <p className="mt-1.5 text-[11px] text-muted-foreground dark:text-zinc-500">
+                Clicking copies the full command with ID. Add <code className="font-mono bg-zinc-100 dark:bg-white/5 px-1 rounded">--copy</code> for a standalone file instead of symlink.
+              </p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* ── Main content: two-column layout ── */}
+      <div className="pt-6 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+        {/* Left: body content */}
+        <div>
+          {editing ? (
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input
+                    value={editForm.title}
+                    onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Input
+                    value={editForm.description}
+                    onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Version (auto-bumped on save)</Label>
+                  <Input
+                    value={editForm.version}
+                    readOnly
+                    className="bg-muted"
+                    placeholder="1.0.0"
+                    aria-label="Version, automatically set on save"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Compass project (optional)</Label>
+                  <select
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    value={editForm.project_id ?? ''}
+                    onChange={(e) =>
+                      setEditForm((p) => ({ ...p, project_id: e.target.value || undefined }))
+                    }
+                    aria-label="Scope to Compass project"
+                  >
+                    <option value="">Global (default – open to everyone)</option>
+                    {compassProjects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Technologies (comma-separated)</Label>
+                  <Input
+                    value={editForm.technologies.join(', ')}
+                    onChange={(e) =>
+                      setEditForm((p) => ({
+                        ...p,
+                        technologies: e.target.value.split(',').map((t) => t.trim()).filter(Boolean),
+                      }))
+                    }
+                    placeholder="React, TypeScript, Tailwind"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Special file target (optional)</Label>
+                  <select
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    value={editForm.special_file_target ?? ''}
+                    onChange={(e) =>
+                      setEditForm((p) => ({ ...p, special_file_target: e.target.value || null }))
+                    }
+                    aria-label="Map to a special output file"
+                  >
+                    <option value="">None (default)</option>
+                    {Object.entries(SPECIAL_FILE_TARGETS).map(([key, target]) => (
+                      <option key={key} value={key}>
+                        {target.path} – {target.description}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Content</Label>
+                  <textarea
+                    className="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={editForm.body}
+                    onChange={(e) => setEditForm((p) => ({ ...p, body: e.target.value }))}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div>
+              {rule.description && (
+                <p className="text-muted-foreground dark:text-zinc-400 mb-6 text-base leading-relaxed">{rule.description}</p>
+              )}
+              <Card className="dark:bg-white/[0.02] dark:border-white/10">
+                <CardContent className="pt-6">
+                  <MarkdownContent content={rule.body} />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+
+        {/* Right sidebar — metadata panels */}
+        {!editing && (
+          <div className="space-y-5">
+            {/* Downloads */}
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground dark:text-zinc-500 block mb-1">
+                Pulls
+              </span>
+              <span className="text-2xl font-extrabold tabular-nums text-foreground">
+                {downloadCount != null ? downloadCount.toLocaleString() : '—'}
+              </span>
+            </div>
+
+            {/* Project */}
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground dark:text-zinc-500 block mb-1.5">
+                Project
+              </span>
+              <div className="flex items-center gap-2">
+                {rule.project_id ? (
+                  <Link
+                    to={`/compass-projects/${rule.project_id}`}
+                    className="text-sm text-foreground hover:underline"
+                  >
+                    {projectIdToTitle[rule.project_id] ?? 'Project'}
+                  </Link>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Global</span>
+                )}
+                {isOwner && !editing && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                        (change)
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem onClick={() => handleProjectChange(null)}>
+                        Global
+                      </DropdownMenuItem>
+                      {compassProjects.map((p) => (
+                        <DropdownMenuItem
+                          key={p.id}
+                          onClick={() => handleProjectChange(p.id)}
+                        >
+                          {p.title}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            </div>
+
+            {/* Groups */}
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground dark:text-zinc-500 block mb-1.5">
+                Groups
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {ruleGroups.length === 0 && (
+                  <span className="text-sm text-muted-foreground">None</span>
+                )}
+                {ruleGroups.map((g) => (
+                  <Badge key={g.id} variant="outline" className="text-xs font-normal gap-1">
+                    <Link to={`/groups/${g.id}`} className="hover:underline">
+                      {g.title}
+                    </Link>
+                    {isOwner && (
+                      <button
+                        type="button"
+                        className="ml-0.5 hover:text-destructive"
+                        onClick={() => {
+                          if (id) void removeFromGroup.mutateAsync({ groupId: g.id, ruleId: id });
+                        }}
+                        aria-label={`Remove from ${g.title}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </Badge>
+                ))}
+                {isOwner && availableGroups.length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-6 text-xs px-2 gap-1">
+                        <Plus className="h-3 w-3" />
+                        Add
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
+                      {availableGroups.map((g) => (
+                        <DropdownMenuItem
+                          key={g.id}
+                          onClick={() => {
+                            if (id) void addToGroup.mutateAsync({ groupId: g.id, ruleId: id });
+                          }}
+                        >
+                          {g.title}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            </div>
+
+            {/* Special file target */}
+            {rule.special_file_target && SPECIAL_FILE_TARGETS[rule.special_file_target] && (
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground dark:text-zinc-500 block mb-1.5">
+                  Output file
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-orange-400" />
+                  <code className="text-sm font-mono text-foreground">
+                    {SPECIAL_FILE_TARGETS[rule.special_file_target].path}
+                  </code>
+                </div>
+                <p className="text-[11px] text-muted-foreground dark:text-zinc-500 mt-0.5">
+                  {SPECIAL_FILE_TARGETS[rule.special_file_target].description}
+                </p>
+              </div>
+            )}
+
+            {/* Author */}
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground dark:text-zinc-500 block mb-1.5">
+                Author
+              </span>
+              <Link
+                to={`/users/${rule.user_id}`}
+                className="text-sm text-foreground hover:underline"
+              >
+                {authorName}
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>

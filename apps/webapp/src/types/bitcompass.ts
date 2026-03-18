@@ -86,3 +86,13 @@ export interface RuleGroupItem {
   rule_id: string;
   added_at: string;
 }
+
+export interface Download {
+  id: string;
+  rule_id: string;
+  user_id: string;
+  editor: string | null;
+  compass_project_id: string | null;
+  source: 'cli' | 'mcp' | 'sync';
+  created_at: string;
+}

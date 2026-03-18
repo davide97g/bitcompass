@@ -33,6 +33,7 @@ import type { Rule, RuleKind } from '@/types/bitcompass';
 import {
   ArrowLeft,
   BookMarked,
+  Download,
   FileDown,
   GitFork,
   Link2,
@@ -47,6 +48,7 @@ import {
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useProjectDownloadTotal } from '@/hooks/use-download-stats';
 
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
@@ -139,6 +141,7 @@ export default function CompassProjectDetailPage() {
   const [rulesPage, setRulesPage] = useState(1);
   const [copiedRuleId, setCopiedRuleId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'content' | 'members' | 'setup'>('files');
+  const { data: projectDownloads } = useProjectDownloadTotal(id);
 
   const { data: searchResults = [], isLoading: searchLoading } = useProfilesSearch(searchQuery);
   const existingIds = new Set(memberIds);
@@ -293,6 +296,12 @@ export default function CompassProjectDetailPage() {
         ) : (
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold">{project.title}</h1>
+            {projectDownloads != null && projectDownloads > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border bg-white/5 text-muted-foreground border-white/10">
+                <Download className="h-3 w-3" />
+                {projectDownloads} pull{projectDownloads === 1 ? '' : 's'}
+              </span>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -425,7 +434,7 @@ export default function CompassProjectDetailPage() {
                       <Button
                         variant="outline"
                         className="mt-4"
-                        onClick={() => navigate('/rules')}
+                        onClick={() => navigate('/skills')}
                       >
                         Go to Rules & solutions
                       </Button>
@@ -446,11 +455,11 @@ export default function CompassProjectDetailPage() {
                           key={rule.id}
                           role="link"
                           tabIndex={0}
-                          onClick={() => navigate(`/rules/${rule.id}`)}
+                          onClick={() => navigate(`/skills/${rule.id}`)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
-                              navigate(`/rules/${rule.id}`);
+                              navigate(`/skills/${rule.id}`);
                             }
                           }}
                           className="block cursor-pointer"

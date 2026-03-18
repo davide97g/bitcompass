@@ -26,6 +26,7 @@ const RuleDetailPage = lazy(() => import("./pages/RuleDetailPage"));
 const GroupDetailPage = lazy(() => import("./pages/GroupDetailPage"));
 const GroupsPage = lazy(() => import("./pages/GroupsPage"));
 const RulesPage = lazy(() => import("./pages/RulesPage"));
+const StatsPage = lazy(() => import("./pages/StatsPage"));
 const UserDetailPage = lazy(() => import("./pages/UserDetailPage"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
 const TopicDetailPage = lazy(() => import("./pages/TopicDetailPage"));
@@ -74,8 +75,8 @@ const App = () => (
             <Route path="/people/:id" element={<PersonDetailPage />} />
             <Route path="/automations" element={<AutomationsPage />} />
             <Route path="/automations/:id" element={<AutomationDetailPage />} />
-            <Route path="/rules" element={<RulesPage />} />
-            <Route path="/rules/:id" element={<RuleDetailPage />} />
+            <Route path="/skills" element={<RulesPage />} />
+            <Route path="/skills/:id" element={<RuleDetailPage />} />
             <Route path="/groups" element={<GroupsPage />} />
             <Route path="/groups/:id" element={<GroupDetailPage />} />
             <Route path="/users" element={<UsersPage />} />
@@ -84,6 +85,7 @@ const App = () => (
             <Route path="/compass-projects/:id" element={<CompassProjectDetailPage />} />
             <Route path="/cli" element={<CLIPage />} />
             <Route path="/mcp" element={<MCPPage />} />
+            <Route path="/stats" element={<StatsPage />} />
             <Route path="/glossary" element={<GlossaryPage />} />
           </Route>
 

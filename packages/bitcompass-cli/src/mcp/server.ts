@@ -600,7 +600,7 @@ handlers.set('get-rule', async (args: ToolArgs) => {
     const global = Boolean(args.global);
     const outputPath = typeof args.output_path === 'string' ? args.output_path : undefined;
     try {
-      const filePath = await pullRuleToFile(id, { global, outputPath });
+      const filePath = await pullRuleToFile(id, { global, outputPath, source: 'mcp' });
       return { success: true, file_path: filePath, id };
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to pull rule.';
@@ -621,7 +621,7 @@ handlers.set('pull-group', async (args: ToolArgs) => {
       const pulled: string[] = [];
       for (const rule of rules) {
         try {
-          await pullRuleToFile(rule.id, { global, outputPath });
+          await pullRuleToFile(rule.id, { global, outputPath, source: 'mcp' });
           pulled.push(rule.title);
         } catch {
           // skip individual failures

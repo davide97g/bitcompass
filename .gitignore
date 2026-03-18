@@ -36,6 +36,9 @@ dist-ssr
 
 !CLAUDE.md
 !.claude/
+.claude/settings.local.json
 !.cursor/
 .turbopackages/bitcompass-cli/bun.lock
 .turbo/
+
+.superpowers/

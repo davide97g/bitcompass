@@ -12,6 +12,7 @@ import { runConfigGet, runConfigList, runConfigSet } from './commands/config-cmd
 import { runGlossary } from './commands/glossary.js';
 import { runInit } from './commands/init.js';
 import { runLogin } from './commands/login.js';
+import { runSetup } from './commands/setup.js';
 import { runLogout } from './commands/logout.js';
 import { runMcpStart, runMcpStatus } from './commands/mcp.js';
 import { runRulesList, runRulesPull, runRulesPush, runRulesSearch } from './commands/rules.js';
@@ -91,6 +92,11 @@ Examples:
     }
     return runSharePush(file, { kind, projectId: opts?.projectId, specialFile: opts?.specialFile }).catch(handleErr);
   });
+
+program
+  .command('setup')
+  .description('Quick onboarding: login → init → sync (skips completed steps)')
+  .action(() => runSetup().catch(handleErr));
 
 program
   .command('init')

@@ -238,9 +238,12 @@ function createStdioServer(): {
           id,
           result: {
             prompts: [
-              { name: 'share', title: 'Share something', description: 'Guide to publish a rule, solution, skill, or command. Asks what you\'re sharing, then collects content and publishes.' },
+              { name: 'share', title: 'Share something', description: 'Guide to publish a rule, solution, skill, or command. Checks for duplicates first, then collects content and publishes.' },
               { name: 'share_new_rule', title: 'Share a new rule', description: 'Guide to collect and publish a reusable rule' },
               { name: 'share_problem_solution', title: 'Share a problem solution', description: 'Guide to collect and publish a problem solution' },
+              { name: 'update', title: 'Update existing content', description: 'Guide to find and update an existing rule, solution, skill, or command you own.' },
+              { name: 'pull', title: 'Pull content into project', description: 'Guide to search for and pull rules, solutions, skills, or commands into your project.' },
+              { name: 'sync', title: 'Sync with Compass project', description: 'Guide to sync local content with the linked Compass project (delegates to CLI).' },
             ],
           },
         });
@@ -265,7 +268,9 @@ function createStdioServer(): {
 - Skill: How the AI should behave in a domain (e.g. front-end design, back-end implementation).
 - Command (workflow): A workflow or command (e.g. release checklist).
 
-Then collect: title, description, body (and optionally context, examples, technologies). Ask one question at a time. Then call post-rules with the chosen kind and the collected fields.`,
+Before publishing, search for similar content using search-rules to avoid duplicates. If something similar exists, ask the user whether to update the existing item or create a new one.
+
+Then collect: title, description, body (and optionally context, examples, technologies). Ask one question at a time. Then call post-rules with the chosen kind and the collected fields. After publishing, offer to pull the item into the project using pull-rule.`,
                   },
                 },
               ],
@@ -292,6 +297,83 @@ Then collect: title, description, body (and optionally context, examples, techno
             result: {
               messages: [
                 { role: 'user', content: { type: 'text', text: 'You are helping share a problem solution. Collect: problem title, description, and solution text. Ask one question at a time. Then call post-rules with kind: "solution".' } },
+              ],
+            },
+          });
+          return;
+        }
+        if (name === 'update') {
+          send({
+            jsonrpc: '2.0',
+            id,
+            result: {
+              messages: [
+                {
+                  role: 'user',
+                  content: {
+                    type: 'text',
+                    text: `You are helping the user update an existing item in BitCompass.
+
+1. Ask what they want to update — by keyword or ID.
+2. If they gave a keyword, use search-rules to find matches. Present the results and ask which one.
+3. If they gave an ID (or selected one), use get-rule to fetch the full content. Show them the current title, description, body, and other fields.
+4. Ask what fields they want to change. Collect changes one at a time.
+5. Call update-rule with the id and changed fields.
+6. After updating, offer to re-pull the item into the project using pull-rule so local files stay current.`,
+                  },
+                },
+              ],
+            },
+          });
+          return;
+        }
+        if (name === 'pull') {
+          send({
+            jsonrpc: '2.0',
+            id,
+            result: {
+              messages: [
+                {
+                  role: 'user',
+                  content: {
+                    type: 'text',
+                    text: `You are helping the user pull content from BitCompass into their project.
+
+1. Ask what they are looking for — a topic, keyword, or specific ID.
+2. Use search-rules (or search-solutions for solutions) to find matches. Present the results.
+3. Ask which item(s) to pull. The user can select one or more.
+4. For each selected item, call pull-rule with its ID. Report the file path written.
+5. Summarize what was pulled and where the files are.`,
+                  },
+                },
+              ],
+            },
+          });
+          return;
+        }
+        if (name === 'sync') {
+          send({
+            jsonrpc: '2.0',
+            id,
+            result: {
+              messages: [
+                {
+                  role: 'user',
+                  content: {
+                    type: 'text',
+                    text: `You are helping the user sync their local project with their linked Compass project.
+
+Sync keeps local rules, skills, commands, and solutions in sync with the remote Compass project. This is a CLI operation — delegate to the terminal.
+
+Options:
+- \`bitcompass sync --check\` — show what would change without applying
+- \`bitcompass sync\` — interactive sync (select items to pull/update)
+- \`bitcompass sync --all -y\` — sync everything non-interactively
+- \`bitcompass sync --prune\` — also remove items no longer in the project
+
+Ask the user what kind of sync they want, then run the appropriate CLI command. After sync, verify the results by checking the output.`,
+                  },
+                },
               ],
             },
           });
@@ -377,8 +459,16 @@ Then collect: title, description, body (and optionally context, examples, techno
     }
   });
   handlers.set('post-rules', async (args: ToolArgs) => {
-    const creds = loadCredentials();
+    const creds = await loadCredentialsWithRefresh();
     if (!creds?.access_token) return { error: AUTH_REQUIRED_MSG };
+    // Auto-detect Compass project from local config when not provided
+    let projectId = typeof args.project_id === 'string' ? args.project_id : undefined;
+    if (!projectId) {
+      try {
+        const projConfig = getProjectConfig({ warnIfMissing: false });
+        if (projConfig.compassProjectId) projectId = projConfig.compassProjectId;
+      } catch { /* ignore */ }
+    }
     const payload: RuleInsert = {
       kind: (args.kind as RuleKind) ?? 'rule',
       title: (args.title as string) ?? 'Untitled',
@@ -387,9 +477,10 @@ Then collect: title, description, body (and optionally context, examples, techno
       context: (args.context as string) || undefined,
       examples: Array.isArray(args.examples) ? (args.examples as string[]) : undefined,
       technologies: Array.isArray(args.technologies) ? (args.technologies as string[]) : undefined,
-      project_id: typeof args.project_id === 'string' ? args.project_id : undefined,
-      visibility: args.visibility === 'public' ? 'public' : 'private',
+      project_id: projectId,
+      visibility: projectId ? 'public' : (args.visibility === 'public' ? 'public' : 'private'),
       special_file_target: typeof args.special_file_target === 'string' ? args.special_file_target : undefined,
+      version: '1.0.0',
     };
     try {
       const created = await insertRule(payload);
@@ -463,7 +554,7 @@ handlers.set('get-rule', async (args: ToolArgs) => {
     }
   });
   handlers.set('update-rule', async (args: ToolArgs) => {
-    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
+    if (!(await loadCredentialsWithRefresh())?.access_token) return { error: AUTH_REQUIRED_MSG };
     const id = args.id as string;
     if (!id) return { error: 'id is required' };
     const updates: Partial<RuleInsert> = {};
@@ -491,7 +582,7 @@ handlers.set('get-rule', async (args: ToolArgs) => {
     }
   });
   handlers.set('delete-rule', async (args: ToolArgs) => {
-    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
+    if (!(await loadCredentialsWithRefresh())?.access_token) return { error: AUTH_REQUIRED_MSG };
     const id = args.id as string;
     if (!id) return { error: 'id is required' };
     try {
@@ -503,7 +594,7 @@ handlers.set('get-rule', async (args: ToolArgs) => {
     }
   });
   handlers.set('pull-rule', async (args: ToolArgs) => {
-    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
+    if (!(await loadCredentialsWithRefresh())?.access_token) return { error: AUTH_REQUIRED_MSG };
     const id = args.id as string;
     if (!id) return { error: 'id is required' };
     const global = Boolean(args.global);
@@ -517,7 +608,7 @@ handlers.set('get-rule', async (args: ToolArgs) => {
     }
   });
 handlers.set('pull-group', async (args: ToolArgs) => {
-    if (!loadCredentials()?.access_token) return { error: AUTH_REQUIRED_MSG };
+    if (!(await loadCredentialsWithRefresh())?.access_token) return { error: AUTH_REQUIRED_MSG };
     const id = args.id as string;
     if (!id) return { error: 'id is required' };
     const global = Boolean(args.global);

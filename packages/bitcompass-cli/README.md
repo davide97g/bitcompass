@@ -1,6 +1,6 @@
 # BitCompass CLI
 
-CLI for rules, solutions, and MCP server. Same backend as the webapp (Supabase).
+CLI for rules, solutions, skills, commands, and MCP server. Same backend as the webapp (Supabase).
 
 ## Install
 
@@ -16,37 +16,63 @@ npx bitcompass --help
 
 Package: [npmjs.com/package/bitcompass](https://www.npmjs.com/package/bitcompass)
 
-## Setup
+## Quick Start
 
-1. Configure Supabase (required for login and API):
-   - `bitcompass config set supabaseUrl https://YOUR_PROJECT.supabase.co`
-   - `bitcompass config set supabaseAnonKey YOUR_ANON_KEY`
-   - Or set `BITCOMPASS_SUPABASE_URL` and `BITCOMPASS_SUPABASE_ANON_KEY`
-2. Log in: `bitcompass login` (opens browser)
+```bash
+bitcompass setup    # login → init → sync (skips completed steps)
+```
+
+Or step by step:
+
+1. `bitcompass login` – Google login (opens browser)
+2. `bitcompass init` – Configure editors, output folder, Compass project link
+3. `bitcompass sync` – Sync local files with Compass project
 
 ## Commands
 
+### Authentication
 - `bitcompass login` – Google login (opens browser)
 - `bitcompass logout` – Remove credentials
 - `bitcompass whoami` – Show current user
-- `bitcompass rules search [query]` – Search rules
-- `bitcompass rules list` – List rules
-- `bitcompass rules pull [id]` – Pull rule to file
-- `bitcompass rules push [file]` – Push rule (or interactive)
-- `bitcompass solutions search|pull|push` – Same for solutions
-- `bitcompass mcp start` – Start MCP server (stdio) for Cursor/IDEs
+
+### Project Setup
+- `bitcompass setup` – Quick onboarding: login → init → sync (skips completed steps)
+- `bitcompass init` – Configure editors, output folder, Compass project link
+- `bitcompass migrate` – Migrate from older BitCompass versions
+
+### Content Management
+Each kind (rules, skills, commands, solutions) supports `search`, `list`, `pull`, `push`:
+
+- `bitcompass rules search|list|pull|push` – Manage rules (`.mdc` files)
+- `bitcompass skills search|list|pull|push` – Manage skills (`SKILL.md` in subdirectory)
+- `bitcompass commands search|list|pull|push` – Manage commands (`.md` files)
+- `bitcompass solutions search|list|pull|push` – Manage solutions (`.md` files)
+- `bitcompass share [file]` – Publish to BitCompass (auto-detects kind and special file target)
+- `bitcompass sync` – Sync local files with Compass project (`--check`, `--all -y`, `--prune`)
+- `bitcompass update` – Check for and apply updates to installed content
+
+### Groups & Projects
+- `bitcompass group pull|sync|list` – Pull/sync rules by knowledge group
+- `bitcompass project pull|sync|list` – Manage Compass project content
+
+### Configuration
+- `bitcompass config` – Interactive config TUI
+- `bitcompass config list|get|set` – Manage config values
+- `bitcompass config push|pull` – Share/pull config with Compass project teammates
+
+### MCP Server
+- `bitcompass mcp start` – Start MCP server (stdio) for AI editors
 - `bitcompass mcp status` – Show MCP login status
-- `bitcompass config` – List config; `config set/get` for values
+
+### Other
+- `bitcompass glossary` – Show terminology
+- `bitcompass self-update` – Update to latest version
 
 ## MCP
 
 ### Cursor (global install)
 
-If you installed via `npm install -g bitcompass`, add this to Cursor’s MCP config:
-
-**Cursor:** Settings → Features → MCP → Edit config (or open `~/.cursor/mcp.json`).
-
-Add the `bitcompass` entry under `mcpServers`:
+Add to Cursor's MCP config (Settings → Features → MCP → Edit config, or `~/.cursor/mcp.json`):
 
 ```json
 {
@@ -60,46 +86,53 @@ Add the `bitcompass` entry under `mcpServers`:
 }
 ```
 
-Run `bitcompass login` before using MCP. If you added the MCP before logging in, restart the MCP server in Cursor after logging in.
+Run `bitcompass login` before using MCP. If you added the MCP before logging in, restart the MCP server after logging in.
 
 ### Development (this repo)
 
-This repo includes **`.cursor/mcp.json`** so Cursor points at the local CLI when the project is open. Build and log in:
+Build and log in:
 
 ```bash
-cd packages/bitcompass-cli && npm run build && bitcompass login
+cd packages/bitcompass-cli && bun run build && bitcompass login
 ```
-
-**Manual (local path):** Settings → MCP → stdio, Command **node**, Args **path/to/packages/bitcompass-cli/dist/index.js** **mcp** **start**.
 
 ### MCP Tools
 
-**Rules & Solutions:**
-- `search-rules` - Search rules by query (with optional kind filter)
-- `search-solutions` - Search solutions by query
-- `get-rule` - Get full rule/solution details by ID
-- `list-rules` - List all rules/solutions (with optional kind filter and limit)
-- `post-rules` - Create/publish a new rule or solution
-- `update-rule` - Update an existing rule or solution
-- `delete-rule` - Delete a rule or solution by ID
-- `pull-rule` - Pull a rule/solution to a file in the project rules directory
+- `search-rules` – Search rules, solutions, skills, or commands by keyword (optional kind filter)
+- `search-solutions` – Search solutions by query
+- `get-rule` – Get full content by ID
+- `list-rules` – List all content (optional kind filter and limit)
+- `post-rules` – Publish new content (auto-detects Compass project, sets version)
+- `update-rule` – Update existing content you own
+- `delete-rule` – Delete content by ID
+- `pull-rule` – Pull content into project (writes to configured editor directories)
+- `pull-group` – Pull all rules from a knowledge group
 
-**Activity Logs:**
-- `create-activity-log` - Create activity log from git repo (day/week/month)
-- `list-activity-logs` - List user's activity logs (with optional filters)
-- `get-activity-log` - Get activity log details by ID
+### MCP Prompts
 
-**Prompts:**
-- `share_new_rule` - Guide to collect and publish a reusable rule
-- `share_problem_solution` - Guide to collect and publish a problem solution
+- `share` – Guide to publish content (checks duplicates, collects fields, offers pull)
+- `share_new_rule` – Guide to publish a reusable rule
+- `share_problem_solution` – Guide to publish a problem solution
+- `update` – Guide to find and update existing content
+- `pull` – Guide to search and pull content into project
+- `sync` – Guide to sync with Compass project (delegates to CLI)
+
+## Multi-Editor Support
+
+BitCompass outputs to multiple editors simultaneously. During `bitcompass init`, select all editors you use:
+
+| Editor | Base path | Rules | Skills | Commands | Solutions |
+|--------|-----------|-------|--------|----------|-----------|
+| Cursor | `.cursor/` | `rules/` | `skills/{slug}/SKILL.md` | `commands/` | `documentation/` |
+| Claude Code | `.claude/` | `rules/` | `skills/{slug}/SKILL.md` | `commands/` | `documentation/` |
+| VSCode | `.vscode/` | same | same | same | same |
+| Antigrativity | `.antigrativity/` | same | same | same | same |
 
 ## Publish (maintainers)
 
-From the CLI package directory:
-
 ```bash
 cd packages/bitcompass-cli
-npm run build
+bun run build
 npm publish
 ```
 

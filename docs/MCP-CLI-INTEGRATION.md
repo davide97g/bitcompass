@@ -258,10 +258,12 @@ The AI assistant must know:
 
 ### 7.2 Where to put the rules
 
-- **Cursor:** Put a rule file in the project’s rules directory (e.g. `.cursor/rules/rule-myapp-mcp-and-cli-usage.md`). You can **generate this file** from `mycli init` so every initialized project gets the same guidance.
-- **Content:** List MCP tools (name, when to use, parameters, example). List CLI commands (login, init, config, mcp start/status, rules/solutions, etc.). Add a “Decision guide”: use MCP when …, use CLI when …. Add “Authentication notes”: most tools require auth; on auth error, instruct user to run `mycli login` and restart MCP.
+- **Skill file (recommended):** Put a skill file in the project’s skills directory (e.g. `.claude/skills/myapp-usage/SKILL.md` or `.cursor/skills/myapp-usage/SKILL.md`). You can **generate this file** from `mycli init` so every initialized project gets the same guidance. Skills use YAML frontmatter with `name` and `description` fields.
+- **Slash commands:** Provide agentic slash commands (e.g. `.claude/commands/share.md`, `.claude/commands/pull-content.md`) that guide the LLM through multi-step workflows (search → select → act → verify).
+- **MCP prompts:** Register prompts in the MCP server (`prompts/list` and `prompts/get`) for workflows accessible from editor prompt menus.
+- **Content:** List MCP tools (name, when to use, parameters, example). List CLI commands (login, setup, init, config, mcp start/status, rules/solutions, etc.). Add a “Decision guide”: use MCP when …, use CLI when …, use slash commands when …. Add “Authentication notes”: most tools require auth; on auth error, instruct user to run `mycli login` and restart MCP.
 
-See the reference rule in `.cursor/rules/rule-bitcompass-mcp-and-cli-usage.md` (or the template in `packages/bitcompass-cli/src/commands/init.ts`) for structure and wording.
+See the reference skill in `.claude/skills/bitcompass-usage/SKILL.md` (or the template in `packages/bitcompass-cli/src/commands/init.ts`) for structure and wording.
 
 ### 7.3 Keep rule and app docs in sync
 
@@ -324,12 +326,15 @@ Use this to verify your MCP + CLI setup:
 |----------------------|----------|
 | MCP server (stdio)   | `packages/bitcompass-cli/src/mcp/server.ts` |
 | MCP CLI commands     | `packages/bitcompass-cli/src/commands/mcp.ts` |
+| Setup command        | `packages/bitcompass-cli/src/commands/setup.ts` |
 | Shared API client    | `packages/bitcompass-cli/src/api/client.ts` (auth messages, Supabase) |
 | Shared auth/config   | `packages/bitcompass-cli/src/auth/config.ts`, `project-config.ts` |
-| Shared business logic | e.g. `commands/log.ts` (`buildAndPushActivityLog`), `lib/rule-file-ops.ts` (`pullRuleToFile`) |
-| Init (writes rule)   | `packages/bitcompass-cli/src/commands/init.ts` |
-| Rule template        | Inline in `init.ts`; same content as `.cursor/rules/rule-bitcompass-mcp-and-cli-usage.md` |
-| App MCP page         | `src/pages/MCPPage.tsx` (config, deeplink, tools, auth, CLI) |
+| Shared business logic | e.g. `lib/rule-file-ops.ts` (`pullRuleToFile`), `commands/sync.ts` |
+| Init (writes skill)  | `packages/bitcompass-cli/src/commands/init.ts` |
+| Usage skill template | Inline in `init.ts`; same content as `.claude/skills/bitcompass-usage/SKILL.md` |
+| Slash commands       | `.claude/commands/share.md`, `update-content.md`, `pull-content.md`, `sync-project.md` |
+| App MCP page         | `apps/webapp` (config, deeplink, tools, auth, CLI) |
 | Cursor MCP config    | `.cursor/mcp.json` (optional, for local dev) |
+| CLI tests            | `packages/bitcompass-cli/src/__tests__/` |
 
 Using this structure and the checklist above, you can replicate the same MCP + CLI behavior in another application on a similar stack.

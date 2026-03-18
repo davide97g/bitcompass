@@ -333,148 +333,121 @@ export const runInit = async (): Promise<void> => {
     }
   }
 
-  const rulesDir = getOutputDirForKind(config, 'rule');
-  const rulePath = join(rulesDir, 'rule-bitcompass-mcp-and-cli-usage.md');
-  const ruleContent = `# BitCompass MCP and CLI Usage
+  // Generate usage skill (skill format replaces old rule format)
+  const skillsDir = getOutputDirForKind(config, 'skill');
+  const skillDir = join(skillsDir, 'bitcompass-usage');
+  mkdirSync(skillDir, { recursive: true });
+  const skillPath = join(skillDir, 'SKILL.md');
+  const skillContent = `---
+name: bitcompass-usage
+description: How to use BitCompass MCP tools, CLI commands, and slash commands for managing rules, solutions, skills, and commands
+---
 
-This project uses BitCompass for managing rules, solutions, skills, and commands. LLMs should use the available MCP tools and CLI commands when appropriate.
+# BitCompass Usage Guide
 
-## Multi-Editor Support
+You have access to BitCompass for managing rules, solutions, skills, and commands. Use this guide to decide which tool to use.
 
-BitCompass supports outputting to multiple editors simultaneously. During \`bitcompass init\`, select all editors you use (e.g. Cursor + Claude Code). Content is written to each editor's directory:
+## Decision Guide
 
-| Editor        | Base path         |
-|---------------|-------------------|
-| Cursor        | \`.cursor/\`       |
-| Claude Code   | \`.claude/\`       |
-| VSCode        | \`.vscode/\`       |
-| Antigrativity | \`.antigrativity/\` |
+| Need | Use | Why |
+|------|-----|-----|
+| Search/browse content | MCP tools (\\\`search-rules\\\`, \\\`list-rules\\\`) | Direct from editor, no terminal needed |
+| Publish new content | \\\`/share\\\` command or \\\`post-rules\\\` MCP tool | Guided workflow with duplicate checking |
+| Update existing content | \\\`/update-content\\\` command or \\\`update-rule\\\` MCP tool | Find → review → edit flow |
+| Pull content to project | \\\`/pull-content\\\` command or \\\`pull-rule\\\` MCP tool | Search → select → install flow |
+| Sync with Compass project | \\\`/sync-project\\\` command or \\\`bitcompass sync\\\` CLI | Bulk sync delegated to CLI |
+| Login/auth | \\\`bitcompass login\\\` CLI | Requires browser, terminal only |
+| First-time setup | \\\`bitcompass setup\\\` CLI | Login + init + sync in one step |
+| Project configuration | \\\`bitcompass init\\\` CLI | Interactive editor/output setup |
 
-## Output Folders and Formats
+## Slash Commands
 
-Each editor base path contains kind-specific subfolders:
+- \\\`/share\\\` — Publish new content to BitCompass (guided: determine kind, check duplicates, collect fields, publish, offer pull)
+- \\\`/update-content\\\` — Find and update existing content you own
+- \\\`/pull-content\\\` — Search and pull content into this project
+- \\\`/sync-project\\\` — Sync local files with linked Compass project
 
-| Type      | Subfolder        | Format | Notes |
-|-----------|------------------|--------|--------|
-| Rules     | \`rules/\`        | \`.mdc\` | YAML frontmatter: \`description\`, \`globs\`, \`alwaysApply\`. |
-| Skills    | \`skills/{slug}/SKILL.md\` | \`.md\` | Subdirectory per skill. YAML frontmatter: \`name\`, \`description\`. |
-| Commands  | \`commands/\`     | \`.md\` | Plain markdown, no frontmatter. |
-| Solutions | \`documentation/\` | \`.md\` | Plain markdown, no frontmatter. |
-
-Example with Cursor + Claude Code configured: pulling a skill creates both \`.cursor/skills/my-skill/SKILL.md\` and \`.claude/skills/my-skill/SKILL.md\`.
-
-## Special Files
-
-Some rules map to "special files" with hardcoded project-relative output paths. When pulled, they write directly to the target path (body only, no frontmatter) instead of a kind subfolder:
-
-| Target key           | Output path                       | Description |
-|----------------------|-----------------------------------|-------------|
-| \`claude.md\`         | \`CLAUDE.md\`                      | Claude Code project instructions |
-| \`agents.md\`         | \`AGENTS.md\`                      | OpenAI Codex instructions |
-| \`cursorrules\`       | \`.cursorrules\`                   | Cursor legacy rules |
-| \`copilot-instructions\` | \`.github/copilot-instructions.md\` | GitHub Copilot instructions |
-| \`windsurfrules\`     | \`.windsurfrules\`                 | Windsurf rules |
-
-Special files are auto-detected when sharing (e.g. \`bitcompass share CLAUDE.md\` auto-sets \`special_file_target: claude.md\`). They can also be set explicitly with \`--special-file\` or via the MCP \`post-rules\` tool.
-
-## MCP Tools (Available in AI Editor)
+## MCP Tools
 
 ### search-rules
-Search rules by query. **Parameters:** \`query\` (required), \`kind\` (optional: rule/solution/skill/command), \`limit\` (optional, default 20).
+Search by keyword. **Params:** \\\`query\\\` (required), \\\`kind\\\` (optional: rule/solution/skill/command), \\\`limit\\\` (optional, default 20).
 
 ### search-solutions
-Search solutions by query. **Parameters:** \`query\` (required), \`limit\` (optional).
+Search solutions specifically. **Params:** \\\`query\\\` (required), \\\`limit\\\` (optional).
 
 ### post-rules
-Publish a new rule, solution, skill, or command.
-
-**Parameters:**
-- \`kind\` (required): 'rule', 'solution', 'skill', or 'command'
-- \`title\` (required), \`body\` (required)
-- \`description\`, \`context\`, \`examples\`, \`technologies\` (optional)
-- \`project_id\` (optional): Compass project UUID
-- \`visibility\` (optional): 'private' (default) or 'public'
-- \`special_file_target\` (optional): map to a special output file (e.g. 'claude.md', 'agents.md', 'cursorrules', 'copilot-instructions', 'windsurfrules')
+Publish new content. **Params:** \\\`kind\\\` (required: rule/solution/skill/command), \\\`title\\\` (required), \\\`body\\\` (required), \\\`description\\\`, \\\`context\\\`, \\\`examples\\\`, \\\`technologies\\\`, \\\`project_id\\\`, \\\`visibility\\\` (private/public), \\\`special_file_target\\\` (optional).
 
 ### get-rule
-Fetch complete rule by ID. **Parameters:** \`id\` (required), \`kind\` (optional filter).
+Fetch full content by ID. **Params:** \\\`id\\\` (required), \\\`kind\\\` (optional filter).
 
 ### list-rules
-Browse all rules. **Parameters:** \`kind\` (optional), \`limit\` (optional, default 50).
+Browse all content. **Params:** \\\`kind\\\` (optional), \\\`limit\\\` (optional, default 50).
 
 ### update-rule
-Edit an existing rule you own. **Parameters:** \`id\` (required), plus any fields to update.
+Edit content you own. **Params:** \\\`id\\\` (required), plus any fields to update.
 
 ### delete-rule
-Remove a rule by ID. Requires ownership.
+Remove by ID (requires ownership). **Params:** \\\`id\\\` (required).
 
 ### pull-rule
-Install a rule into the project. Writes to configured editor directories (or special file path). **Parameters:** \`id\` (required), \`output_path\` (optional), \`global\` (optional).
+Install into project. **Params:** \\\`id\\\` (required), \\\`output_path\\\` (optional), \\\`global\\\` (optional).
 
 ### pull-group
-Pull all rules from a knowledge group. **Parameters:** \`id\` (required), \`output_path\` (optional), \`global\` (optional).
+Pull all rules from a knowledge group. **Params:** \\\`id\\\` (required), \\\`output_path\\\` (optional), \\\`global\\\` (optional).
 
 ## CLI Commands
 
 ### Authentication
-- \`bitcompass login\` - Log in with Google
-- \`bitcompass logout\` - Remove credentials
-- \`bitcompass whoami\` - Show current user
+- \\\`bitcompass login\\\` — Log in with Google
+- \\\`bitcompass logout\\\` — Remove credentials
+- \\\`bitcompass whoami\\\` — Show current user
 
 ### Project Setup
-- \`bitcompass init\` - Configure editors, output folder, Compass project link
+- \\\`bitcompass setup\\\` — Quick onboarding: login → init → sync (skips completed steps)
+- \\\`bitcompass init\\\` — Configure editors, output folder, Compass project link
+- \\\`bitcompass migrate\\\` — Migrate from older BitCompass versions
 
-### Rules / Skills / Commands / Solutions
-Each kind supports: \`search [query]\`, \`list\`, \`pull [id]\`, \`push [file]\`.
-
-- \`bitcompass rules pull [id]\` - Saves to \`<editor>/rules/\` as \`.mdc\`
-- \`bitcompass skills pull [id]\` - Saves to \`<editor>/skills/{slug}/SKILL.md\`
-- \`bitcompass commands pull [id]\` - Saves to \`<editor>/commands/\` as \`.md\`
-- \`bitcompass solutions pull [id]\` - Saves to \`<editor>/documentation/\` as \`.md\`
-- Use \`--global\` to install to \`~/.cursor/<folder>\`
-
-### Share (Push)
-- \`bitcompass share [file]\` - Publish to BitCompass (auto-detects kind and special file target)
-- \`--kind <kind>\` - Explicitly set kind
-- \`--special-file <target>\` - Map to a special output file (e.g. \`--special-file claude.md\`)
-
-### Sync
-- \`bitcompass sync\` - Sync local rules with Compass project (pull new, update changed)
-- \`--prune\` - Remove locally installed items no longer in the project
-- \`--check\` - Dry-run, show status only
+### Content Management
+Each kind (rules, skills, commands, solutions) supports: \\\`search [query]\\\`, \\\`list\\\`, \\\`pull [id]\\\`, \\\`push [file]\\\`.
+- \\\`bitcompass share [file]\\\` — Publish (auto-detects kind and special file target)
+- \\\`bitcompass sync\\\` — Sync local files with Compass project (\\\`--check\\\`, \\\`--all -y\\\`, \\\`--prune\\\`)
+- \\\`bitcompass update\\\` — Check for and apply updates to installed content
 
 ### Configuration
-- \`bitcompass config list\` - List all config values
-- \`bitcompass config get <key>\` / \`set <key> <value>\` - Get/set config
-- \`bitcompass config push\` - Share local project config with Compass project teammates
-- \`bitcompass config pull\` - Pull shared config from Compass project
+- \\\`bitcompass config list\\\` / \\\`get <key>\\\` / \\\`set <key> <value>\\\` — Manage config
+- \\\`bitcompass config push\\\` / \\\`pull\\\` — Share/pull config with Compass project teammates
 
-### MCP Server
-- \`bitcompass mcp start\` - Start MCP server (stdio mode)
-- \`bitcompass mcp status\` - Show status
+## Multi-Editor Support
 
-## Decision Guide
+BitCompass outputs to multiple editors simultaneously. Content is written to each editor's directory:
 
-**Use MCP tools when:** working in the AI editor, searching/publishing rules, or the user wants to share something.
+| Editor | Base path | Rules | Skills | Commands | Solutions |
+|--------|-----------|-------|--------|----------|-----------|
+| Cursor | \\\`.cursor/\\\` | \\\`rules/\\\` (.mdc) | \\\`skills/{slug}/SKILL.md\\\` | \\\`commands/\\\` (.md) | \\\`documentation/\\\` (.md) |
+| Claude Code | \\\`.claude/\\\` | \\\`rules/\\\` (.mdc) | \\\`skills/{slug}/SKILL.md\\\` | \\\`commands/\\\` (.md) | \\\`documentation/\\\` (.md) |
+| VSCode | \\\`.vscode/\\\` | same layout | same layout | same layout | same layout |
 
-**Use CLI commands when:** authenticating, pulling content to disk, syncing with a Compass project, or sharing config.
+## Special Files
+
+Some rules map to hardcoded output paths: \\\`claude.md\\\` → \\\`CLAUDE.md\\\`, \\\`agents.md\\\` → \\\`AGENTS.md\\\`, \\\`cursorrules\\\` → \\\`.cursorrules\\\`, \\\`copilot-instructions\\\` → \\\`.github/copilot-instructions.md\\\`, \\\`windsurfrules\\\` → \\\`.windsurfrules\\\`.
 
 ## Authentication Notes
 
-- Most MCP tools require authentication (except search-rules and search-solutions)
-- If you get an authentication error, instruct the user to run \`bitcompass login\` and restart the MCP server
+- Most MCP tools require authentication (except \\\`search-rules\\\` and \\\`search-solutions\\\`)
+- If you get an auth error, instruct the user to run \\\`bitcompass login\\\` and restart the MCP server
+- \\\`post-rules\\\` auto-detects the Compass project from local config when \\\`project_id\\\` is not provided
 
 ## Best Practices
 
-1. **Search before creating** - check if something similar exists
-2. **Use descriptive titles** - clear, searchable names
-3. **Set special file targets** for editor-specific config files (CLAUDE.md, .cursorrules, etc.)
+1. **Search before creating** — check for duplicates with \\\`search-rules\\\`
+2. **Use descriptive titles** — clear, searchable names
+3. **Set special file targets** for editor-specific config files
 4. **Use multi-editor** to keep all team editors in sync
-5. **Share config** via \`bitcompass config push\` so teammates get the same editor setup
-6. **Use \`--global\`** for content available across all projects
+5. **Share config** via \\\`bitcompass config push\\\` so teammates get the same setup
 `;
 
-  writeFileSync(rulePath, ruleContent, 'utf-8');
+  writeFileSync(skillPath, skillContent, 'utf-8');
 
   let globalGitignoreSelected: GlobalGitignoreChoice[] = [];
   if (answers.setupGlobalGitignore) {
@@ -504,7 +477,7 @@ Each kind supports: \`search [query]\`, \`list\`, \`pull [id]\`, \`push [file]\`
       '~/.gitignore_global configured (AI editor folders).'
     );
   }
-  console.log(INDENT + chalk.bold('Usage rule:'), rulePath);
+  console.log(INDENT + chalk.bold('Usage skill:'), skillPath);
 
   const email = getCurrentUserEmail();
   const loggedIn = isLoggedIn();

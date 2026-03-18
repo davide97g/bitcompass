@@ -199,3 +199,23 @@ export const useDeleteRule = () => {
     },
   });
 };
+
+// ---------------------------------------------------------------------------
+// Fetch ALL project rules (for file-tree visualization)
+// ---------------------------------------------------------------------------
+
+const PROJECT_RULES_ALL_LIMIT = 500;
+
+export const useProjectRulesAll = (projectId: string | undefined) => {
+  return useQuery({
+    queryKey: ['project-rules-all', projectId],
+    queryFn: () =>
+      fetchRulesPaginated({
+        kind: 'all',
+        limit: PROJECT_RULES_ALL_LIMIT,
+        offset: 0,
+        projectId: projectId ?? null,
+      }),
+    enabled: Boolean(supabase && projectId),
+  });
+};

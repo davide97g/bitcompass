@@ -13,7 +13,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FileTreeView } from '@/components/file-tree';
 import { useAuth } from '@/hooks/use-auth';
 import {
   useAddCompassProjectMember,
@@ -27,6 +28,7 @@ import { useRulesPaginated } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
 import { getTechStyle } from '@/lib/tech-styles';
 import { cn, ruleDownloadBasename } from '@/lib/utils';
+import { CARD_KIND_CLASSES } from '@/components/file-tree/file-tree-constants';
 import type { Rule, RuleKind } from '@/types/bitcompass';
 import {
   ArrowLeft,
@@ -59,24 +61,6 @@ const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string
 const getKindLabel = (kind: RuleKind): string =>
   ({ rule: 'rule', solution: 'solution', skill: 'skill', command: 'command' }[kind]);
 
-const CARD_KIND_CLASSES: Record<RuleKind, { card: string; cta: string }> = {
-  rule: {
-    card: 'dark:border-l-sky-500/30 dark:hover:shadow-sky-500/10',
-    cta: 'bg-sky-700 hover:bg-sky-600 text-white dark:bg-sky-700 dark:hover:bg-sky-600',
-  },
-  solution: {
-    card: 'dark:border-l-emerald-500/30 dark:hover:shadow-emerald-500/10',
-    cta: 'bg-emerald-700 hover:bg-emerald-600 text-white dark:bg-emerald-700 dark:hover:bg-emerald-600',
-  },
-  skill: {
-    card: 'dark:border-l-violet-500/30 dark:hover:shadow-violet-500/10',
-    cta: 'bg-violet-700 hover:bg-violet-600 text-white dark:bg-violet-700 dark:hover:bg-violet-600',
-  },
-  command: {
-    card: 'dark:border-l-amber-500/30 dark:hover:shadow-amber-500/10',
-    cta: 'bg-amber-700 hover:bg-amber-600 text-white dark:bg-amber-700 dark:hover:bg-amber-600',
-  },
-};
 
 const highlightText = (text: string, query: string): React.ReactNode => {
   const q = query.trim();
@@ -154,6 +138,7 @@ export default function CompassProjectDetailPage() {
   const [rulesKindFilter, setRulesKindFilter] = useState<RuleKind | 'all'>('all');
   const [rulesPage, setRulesPage] = useState(1);
   const [copiedRuleId, setCopiedRuleId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'files' | 'content' | 'members' | 'setup'>('files');
 
   const { data: searchResults = [], isLoading: searchLoading } = useProfilesSearch(searchQuery);
   const existingIds = new Set(memberIds);
@@ -371,8 +356,22 @@ export default function CompassProjectDetailPage() {
         )}
       </div>
 
-      {/* Two-column layout: knowledge left, sidebar right (sticky) */}
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+        <TabsList>
+          <TabsTrigger value="files">Files</TabsTrigger>
+          <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="setup">Setup</TabsTrigger>
+        </TabsList>
+
+        {/* ── Files tab ── */}
+        <TabsContent value="files" className="mt-4">
+          <FileTreeView projectId={id!} projectConfig={project?.config ?? null} />
+        </TabsContent>
+
+        {/* ── Content tab (linked rules/skills/commands/solutions) ── */}
+        <TabsContent value="content" className="mt-4">
+      <div className="flex flex-col gap-6 items-start">
         {/* LEFT: Knowledge list */}
         <div className="flex-1 min-w-0">
           <Card>
@@ -666,10 +665,12 @@ export default function CompassProjectDetailPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
+        </TabsContent>
 
-        {/* RIGHT: Sidebar (Members + Dev instructions) — sticky */}
-        <aside className="w-full lg:w-[340px] shrink-0 lg:sticky lg:top-6 space-y-6">
-          {/* Members */}
+        {/* ── Members tab ── */}
+        <TabsContent value="members" className="mt-4">
+          <div className="max-w-xl space-y-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -782,8 +783,12 @@ export default function CompassProjectDetailPage() {
               </div>
             </CardContent>
           </Card>
+          </div>
+        </TabsContent>
 
-          {/* Dev instructions (Pull all via CLI) */}
+        {/* ── Setup tab (dev instructions + shared config) ── */}
+        <TabsContent value="setup" className="mt-4">
+          <div className="max-w-xl space-y-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Dev instructions</CardTitle>
@@ -819,7 +824,6 @@ export default function CompassProjectDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Shared Configuration */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -882,8 +886,9 @@ export default function CompassProjectDetailPage() {
               )}
             </CardContent>
           </Card>
-        </aside>
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

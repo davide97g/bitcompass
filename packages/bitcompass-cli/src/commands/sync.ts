@@ -1,12 +1,13 @@
 import chalk from 'chalk';
-import { unlinkSync } from 'fs';
+import { existsSync, statSync, unlinkSync } from 'fs';
+import { join } from 'path';
 import inquirer from 'inquirer';
 import {
   fetchRules,
   getCompassProjectById,
 } from '../api/client.js';
 import { loadCredentials } from '../auth/config.js';
-import { getProjectConfig, loadProjectConfig } from '../auth/project-config.js';
+import { getProjectConfig, loadProjectConfig, SPECIAL_FILE_TARGETS } from '../auth/project-config.js';
 import { scanInstalled } from '../lib/installed-scan.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import { createSpinner } from '../lib/spinner.js';
@@ -145,6 +146,33 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
     const remoteVersion = rule.version ?? null;
 
     if (!local) {
+      // Special file targets (e.g. CLAUDE.md) are written without frontmatter,
+      // so scanInstalled cannot detect them by ID. Check file existence instead.
+      if (rule.special_file_target && SPECIAL_FILE_TARGETS[rule.special_file_target]) {
+        const target = SPECIAL_FILE_TARGETS[rule.special_file_target];
+        const targetPath = join(process.cwd(), target.path);
+        if (existsSync(targetPath)) {
+          // File exists — use mtime for version comparison
+          let needsUpdate = false;
+          try {
+            const fileMtime = statSync(targetPath).mtimeMs;
+            needsUpdate = new Date(rule.updated_at).getTime() > fileMtime;
+          } catch {
+            needsUpdate = true;
+          }
+          syncItems.push({
+            id: rule.id,
+            kind: rule.kind,
+            title: rule.title,
+            localVersion: needsUpdate ? null : remoteVersion,
+            remoteVersion,
+            status: needsUpdate ? 'update' : 'up-to-date',
+            path: targetPath,
+          });
+          continue;
+        }
+      }
+
       syncItems.push({
         id: rule.id,
         kind: rule.kind,

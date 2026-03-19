@@ -24,6 +24,8 @@ export interface Rule {
   visibility: RuleVisibility;
   /** Maps to a key in SPECIAL_FILE_TARGETS (e.g. 'claude.md'). When set, output goes to the special path. */
   special_file_target?: string | null;
+  /** Optional path relative to project root for monorepo scoping (e.g. packages/frontend). */
+  relative_path?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -44,6 +46,8 @@ export interface RuleInsert {
   visibility?: RuleVisibility;
   /** Maps to a key in SPECIAL_FILE_TARGETS (e.g. 'claude.md'). When set, output goes to the special path. */
   special_file_target?: string | null;
+  /** Optional path relative to project root for monorepo scoping. */
+  relative_path?: string | null;
 }
 
 export interface StoredCredentials {

@@ -13,6 +13,7 @@ import {
     getOutputDirForKind,
     getOutputDirsForKind,
     getProjectConfigDir,
+    getProjectRoot,
     KIND_SUBFOLDERS,
     loadProjectConfig,
     saveProjectConfig,
@@ -309,7 +310,7 @@ export const runInit = async (): Promise<void> => {
   // Discover local AI rules/configs and offer to import them
   let importedCount = 0;
   if (isLoggedIn()) {
-    const discovered = discoverLocalRules(process.cwd());
+    const discovered = discoverLocalRules(getProjectRoot());
     if (discovered.length > 0) {
       console.log('');
       console.log(chalk.bold('Found local AI rules/configs:'));
@@ -327,7 +328,7 @@ export const runInit = async (): Promise<void> => {
       ]);
       if (toImport.length > 0) {
         console.log(chalk.dim('Importing…'));
-        importedCount = await importDiscoveredRules(toImport, process.cwd(), compassProjectId);
+        importedCount = await importDiscoveredRules(toImport, getProjectRoot(), compassProjectId);
         console.log(chalk.green(`Imported ${importedCount} rule(s) as private.`));
       }
     }

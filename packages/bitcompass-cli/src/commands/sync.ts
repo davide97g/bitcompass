@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { dirname, join, relative } from 'path';
 import inquirer from 'inquirer';
 import {
   fetchRules,
@@ -9,7 +9,7 @@ import {
   updateRule,
 } from '../api/client.js';
 import { loadCredentials } from '../auth/config.js';
-import { getProjectConfig, loadProjectConfig, SPECIAL_FILE_TARGETS } from '../auth/project-config.js';
+import { getProjectConfig, getProjectRoot, loadProjectConfig, SPECIAL_FILE_TARGETS } from '../auth/project-config.js';
 import { scanInstalled, scanUntracked } from '../lib/installed-scan.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import { parseFileToPayload } from './share.js';
@@ -157,7 +157,7 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
       // so scanInstalled cannot detect them by ID. Check file existence instead.
       if (rule.special_file_target && SPECIAL_FILE_TARGETS[rule.special_file_target]) {
         const target = SPECIAL_FILE_TARGETS[rule.special_file_target];
-        const targetPath = join(process.cwd(), target.path);
+        const targetPath = join(getProjectRoot(), target.path);
         if (existsSync(targetPath)) {
           // File exists — use mtime for version comparison
           let needsUpdate = false;
@@ -427,6 +427,10 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
         const raw = readFileSync(item.path, 'utf-8');
         const parsed = parseFileToPayload(item.path, raw);
         const newVersion = bumpRuleVersionMajor(item.localVersion);
+        // Infer relative_path from file location
+        const root = getProjectRoot();
+        const fileRel = relative(root, dirname(item.path));
+        const relativePath = fileRel && !fileRel.startsWith('..') && fileRel !== '.' ? fileRel : undefined;
         await updateRule(item.id, {
           title: parsed.title,
           description: parsed.description ?? '',
@@ -434,6 +438,7 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
           globs: parsed.globs,
           always_apply: parsed.always_apply,
           version: newVersion,
+          relative_path: relativePath,
         });
         // Update local file frontmatter with new version
         const updated = writeIdToFrontmatter(raw, item.id, newVersion);

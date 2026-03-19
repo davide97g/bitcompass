@@ -3,6 +3,7 @@ import { join, relative, dirname } from 'path';
 import { getRuleById } from '../api/client.js';
 import {
   getProjectConfig,
+  getProjectRoot,
   getOutputDirForKind,
   getOutputDirsForKind,
   getGlobalOutputDirForKind,
@@ -133,8 +134,10 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
   // Handle special file targets — write to project-relative path, skip multi-editor
   if (rule.special_file_target && SPECIAL_FILE_TARGETS[rule.special_file_target]) {
     const target = SPECIAL_FILE_TARGETS[rule.special_file_target];
-    const cwd = process.cwd();
-    const filePath = join(cwd, target.path);
+    const root = getProjectRoot();
+    const filePath = rule.relative_path
+      ? join(root, rule.relative_path, target.path)
+      : join(root, target.path);
     mkdirSync(dirname(filePath), { recursive: true });
     removeExisting(filePath);
     // Special files: write body only, no frontmatter
@@ -146,7 +149,7 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
   if (options.outputPath || options.global) {
     let outDir: string;
     if (options.outputPath) {
-      const base = options.outputPath.startsWith('/') ? options.outputPath : join(process.cwd(), options.outputPath);
+      const base = options.outputPath.startsWith('/') ? options.outputPath : join(getProjectRoot(), options.outputPath);
       outDir = join(base, KIND_SUBFOLDERS[rule.kind]);
     } else {
       outDir = getGlobalOutputDirForKind(rule.kind);
@@ -156,7 +159,15 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
   }
 
   // Multi-editor: write to all configured editor output directories
-  const outDirs = getOutputDirsForKind(config, rule.kind);
+  const rawOutDirs = getOutputDirsForKind(config, rule.kind);
+  // When rule has a relative_path, prefix each output dir with it under the project root
+  const outDirs = rule.relative_path
+    ? rawOutDirs.map(dir => {
+        const root = getProjectRoot();
+        const relFromRoot = relative(root, dir);
+        return join(root, rule.relative_path!, relFromRoot);
+      })
+    : rawOutDirs;
   let firstPath = '';
 
   for (const outDir of outDirs) {

@@ -433,6 +433,23 @@ export default function RuleDetailPage() {
               </TooltipProvider>
             )}
 
+            {/* Relative path (monorepo scoping) */}
+            {rule.relative_path && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md border bg-violet-500/10 text-violet-400 border-violet-500/20 cursor-help">
+                      <FolderTree className="h-3 w-3" />
+                      {rule.relative_path}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Subdirectory relative to project root (monorepo scoping)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
             {/* Downloads */}
             {downloadCount != null && downloadCount > 0 && (
               <TooltipProvider>
@@ -730,6 +747,24 @@ export default function RuleDetailPage() {
                 </div>
                 <p className="text-[11px] text-muted-foreground dark:text-zinc-500 mt-0.5">
                   {SPECIAL_FILE_TARGETS[rule.special_file_target].description}
+                </p>
+              </div>
+            )}
+
+            {/* Relative path */}
+            {rule.relative_path && (
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground dark:text-zinc-500 block mb-1.5">
+                  Relative path
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <FolderTree className="h-3.5 w-3.5 text-violet-400" />
+                  <code className="text-sm font-mono text-foreground">
+                    {rule.relative_path}
+                  </code>
+                </div>
+                <p className="text-[11px] text-muted-foreground dark:text-zinc-500 mt-0.5">
+                  Subdirectory relative to project root
                 </p>
               </div>
             )}

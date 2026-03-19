@@ -75,6 +75,7 @@ program
   .option('--project-id <uuid>', 'Scope to Compass project (UUID)')
   .option('--special-file <target>', 'Map to a special output file (claude.md, agents.md, cursorrules, copilot-instructions, windsurfrules)')
   .option('--force-new', 'Always create a new item, even if the file has an existing ID')
+  .option('--relative-path <path>', 'Subdirectory relative to project root for monorepo scoping (e.g. packages/frontend)')
   .addHelpText(
     'after',
     `
@@ -83,15 +84,16 @@ Examples:
   bitcompass share ./my-rule.mdc
   bitcompass share ./doc.md --kind solution
   bitcompass share CLAUDE.md --special-file claude.md
+  bitcompass share ./rule.mdc --relative-path packages/frontend
 `
   )
-  .action((file?: string, opts?: { kind?: string; projectId?: string; specialFile?: string; forceNew?: boolean }) => {
+  .action((file?: string, opts?: { kind?: string; projectId?: string; specialFile?: string; forceNew?: boolean; relativePath?: string }) => {
     const kind = opts?.kind as 'rule' | 'solution' | 'skill' | 'command' | undefined;
     if (opts?.kind && kind !== 'rule' && kind !== 'solution' && kind !== 'skill' && kind !== 'command') {
       console.error(chalk.red('--kind must be one of: rule, solution, skill, command'));
       process.exit(1);
     }
-    return runSharePush(file, { kind, projectId: opts?.projectId, specialFile: opts?.specialFile, forceNew: opts?.forceNew }).catch(handleErr);
+    return runSharePush(file, { kind, projectId: opts?.projectId, specialFile: opts?.specialFile, forceNew: opts?.forceNew, relativePath: opts?.relativePath }).catch(handleErr);
   });
 
 program

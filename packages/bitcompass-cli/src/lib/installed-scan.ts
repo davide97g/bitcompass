@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import {
   getProjectConfig,
+  getProjectRoot,
   getOutputDirForKind,
   getOutputDirsForKind,
   getGlobalOutputDirForKind,
@@ -123,7 +124,7 @@ export const scanInstalled = (options: { global?: boolean }): InstalledItem[] =>
 
   // Scan special file paths
   if (!options.global) {
-    const cwd = process.cwd();
+    const cwd = getProjectRoot();
     for (const target of Object.values(SPECIAL_FILE_TARGETS)) {
       const filePath = join(cwd, target.path);
       // Special files may not have frontmatter, but try to parse if they do

@@ -6,6 +6,7 @@ import { isLoggedIn } from '../auth/config.js';
 import {
   CURRENT_CONFIG_VERSION,
   EDITOR_BASE_PATHS,
+  getProjectRoot,
   KIND_SUBFOLDERS,
   SPECIAL_FILE_TARGETS,
   loadProjectConfig,
@@ -41,7 +42,7 @@ export const runMigrate = async (opts?: { dryRun?: boolean }): Promise<void> => 
     return;
   }
 
-  const cwd = process.cwd();
+  const cwd = getProjectRoot();
   const editors: EditorProvider[] = config.editors?.length ? config.editors : [config.editor];
   const summary: MigrationSummary = { moved: [], skipped: [], errors: [] };
 

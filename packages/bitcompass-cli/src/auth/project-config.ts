@@ -6,6 +6,41 @@ import type { EditorProvider, ProjectConfig, RuleKind } from '../types.js';
 const PROJECT_CONFIG_DIR = '.bitcompass';
 const PROJECT_CONFIG_FILE = 'config.json';
 
+/**
+ * Walks from cwd up to filesystem root looking for .bitcompass/config.json.
+ * Returns the directory containing it, or null if not found.
+ */
+export const findProjectRoot = (): string | null => {
+  let current = process.cwd();
+  while (true) {
+    if (existsSync(join(current, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE))) {
+      return current;
+    }
+    const parent = dirname(current);
+    if (parent === current) break; // reached filesystem root
+    current = parent;
+  }
+  return null;
+};
+
+let cachedProjectRoot: string | null = null;
+
+/**
+ * Returns the project root (directory containing .bitcompass/config.json),
+ * falling back to cwd when no config exists (e.g. during `bitcompass init`).
+ * Result is memoized for the process lifetime.
+ */
+export const getProjectRoot = (): string => {
+  if (cachedProjectRoot === null) {
+    cachedProjectRoot = findProjectRoot() ?? process.cwd();
+  }
+  return cachedProjectRoot;
+};
+
+export const resetProjectRootCache = (): void => {
+  cachedProjectRoot = null;
+};
+
 const EDITOR_DEFAULT_PATHS: Record<EditorProvider, string> = {
   vscode: '.vscode/rules',
   cursor: '.cursor/rules',
@@ -45,11 +80,10 @@ const DEFAULT_EDITOR: EditorProvider = 'cursor';
 const DEFAULT_OUTPUT_PATH = EDITOR_DEFAULT_PATHS[DEFAULT_EDITOR];
 
 const getProjectConfigPath = (): string => {
-  const cwd = process.cwd();
-  return join(cwd, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
+  return join(getProjectRoot(), PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
 };
 
-export const getProjectConfigDir = (): string => join(process.cwd(), PROJECT_CONFIG_DIR);
+export const getProjectConfigDir = (): string => join(getProjectRoot(), PROJECT_CONFIG_DIR);
 
 export const getEditorDefaultPath = (editor: EditorProvider): string => EDITOR_DEFAULT_PATHS[editor];
 
@@ -92,7 +126,7 @@ export const loadProjectConfig = (): ProjectConfig | null => {
 };
 
 const ensureProjectConfigDir = (): void => {
-  const dir = join(process.cwd(), PROJECT_CONFIG_DIR);
+  const dir = join(getProjectRoot(), PROJECT_CONFIG_DIR);
   if (!existsSync(dir)) {
     mkdirSync(dir, { mode: 0o755, recursive: true });
   }
@@ -141,9 +175,9 @@ export const getProjectConfig = (options?: { warnIfMissing?: boolean }): Project
  * Derives base from config.outputPath (e.g. .cursor/rules → base .cursor) and appends the kind subfolder.
  */
 export const getOutputDirForKind = (config: ProjectConfig, kind: RuleKind): string => {
-  const cwd = process.cwd();
+  const root = getProjectRoot();
   const basePath = dirname(config.outputPath);
-  const fullBase = basePath.startsWith('/') ? basePath : join(cwd, basePath);
+  const fullBase = basePath.startsWith('/') ? basePath : join(root, basePath);
   return join(fullBase, KIND_SUBFOLDERS[kind]);
 };
 
@@ -152,11 +186,11 @@ export const getOutputDirForKind = (config: ProjectConfig, kind: RuleKind): stri
  * When `editors` is set, returns one dir per editor; otherwise falls back to single `editor` path.
  */
 export const getOutputDirsForKind = (config: ProjectConfig, kind: RuleKind): string[] => {
-  const cwd = process.cwd();
+  const root = getProjectRoot();
   const editors = config.editors?.length ? config.editors : [config.editor];
   return editors.map((editor) => {
     const basePath = EDITOR_BASE_PATHS[editor];
-    return join(cwd, basePath, KIND_SUBFOLDERS[kind]);
+    return join(root, basePath, KIND_SUBFOLDERS[kind]);
   });
 };
 

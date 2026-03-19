@@ -2,10 +2,10 @@ import { readFileSync, writeFileSync } from 'fs';
 import inquirer from 'inquirer';
 import { createSpinner } from '../lib/spinner.js';
 import chalk from 'chalk';
-import { basename } from 'path';
+import { basename, dirname, relative, resolve } from 'path';
 import { loadCredentials } from '../auth/config.js';
 import { insertRule, updateRule, getRuleById } from '../api/client.js';
-import { loadProjectConfig, SPECIAL_FILE_TARGETS } from '../auth/project-config.js';
+import { loadProjectConfig, getProjectRoot, SPECIAL_FILE_TARGETS } from '../auth/project-config.js';
 import { parseRuleMdcContent, parseFrontmatterKind, writeIdToFrontmatter } from '../lib/mdc-format.js';
 import { bumpRuleVersionMajor } from '../lib/version-bump.js';
 import { SHARE_KIND_CHOICES, inferKindFromFilename } from '../lib/share-types.js';
@@ -115,7 +115,7 @@ const promptForKind = async (): Promise<RuleKind> => {
  */
 export const runSharePush = async (
   file?: string,
-  options?: { kind?: RuleKind; projectId?: string; specialFile?: string; forceNew?: boolean }
+  options?: { kind?: RuleKind; projectId?: string; specialFile?: string; forceNew?: boolean; relativePath?: string }
 ): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
@@ -135,6 +135,18 @@ export const runSharePush = async (
 
   // When scoped to a project, default to public visibility
   const visibility = projectId ? 'public' : 'private';
+
+  // Compute relative_path: explicit option, or auto-infer from file location
+  let relativePath = options?.relativePath ?? undefined;
+  if (!relativePath && file) {
+    const root = getProjectRoot();
+    const fileDir = dirname(resolve(file));
+    const rel = relative(root, fileDir);
+    // Only set if the file is in a subdirectory (not at root or outside)
+    if (rel && !rel.startsWith('..') && rel !== '.') {
+      relativePath = rel;
+    }
+  }
 
   let payload: RuleInsert;
 
@@ -159,6 +171,7 @@ export const runSharePush = async (
       version: parsed.version ? bumpRuleVersionMajor(parsed.version) : '1.0.0',
       visibility,
       special_file_target: options?.specialFile ?? inferSpecialFileTarget(file) ?? undefined,
+      relative_path: relativePath,
     };
   } else {
     const kind = options?.kind ?? (await promptForKind());
@@ -176,6 +189,7 @@ export const runSharePush = async (
       version: '1.0.0',
       visibility,
       special_file_target: options?.specialFile ?? undefined,
+      relative_path: relativePath,
     };
   }
 
@@ -207,6 +221,7 @@ export const runSharePush = async (
         always_apply: payload.always_apply,
         version: payload.version,
         special_file_target: payload.special_file_target,
+        relative_path: payload.relative_path,
       });
       spinner.succeed(chalk.green(`Updated ${label} `) + updated.id);
       console.log(chalk.dim(updated.title));

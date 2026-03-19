@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/use-auth';
 import { toast as sonnerToast } from 'sonner';
 import type { Notification } from '@/types/bitcompass';
+import { createElement } from 'react';
+import { NotificationToast } from '@/components/notifications/NotificationToast';
 
 const TABLE = 'notifications';
 const PAGE_SIZE = 20;
@@ -104,11 +106,21 @@ export const useMarkAllAsRead = () => {
   });
 };
 
-// ── Toast (stub — replaced in Task 10 with NotificationToast component) ──
+// ── Toast ──
 
 function fireNotificationToast(notification: Notification) {
-  const label = notification.type === 'pull' ? '⬇️ Pull' : '⬆️ Push';
-  sonnerToast(`${label}: ${notification.rule_title}`, { duration: 5000 });
+  sonnerToast.custom(
+    (toastId) =>
+      createElement(NotificationToast, {
+        notification,
+        toastId,
+        onView: (ruleId: string) => {
+          sonnerToast.dismiss(toastId);
+          window.location.href = `/skills/${ruleId}`;
+        },
+      }),
+    { duration: 5000 }
+  );
 }
 
 // ── Realtime subscription ──

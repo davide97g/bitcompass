@@ -74,6 +74,7 @@ program
   .option('-k, --kind <kind>', 'Type: rule, solution, skill, or command (skips type prompt)')
   .option('--project-id <uuid>', 'Scope to Compass project (UUID)')
   .option('--special-file <target>', 'Map to a special output file (claude.md, agents.md, cursorrules, copilot-instructions, windsurfrules)')
+  .option('--force-new', 'Always create a new item, even if the file has an existing ID')
   .addHelpText(
     'after',
     `
@@ -84,13 +85,13 @@ Examples:
   bitcompass share CLAUDE.md --special-file claude.md
 `
   )
-  .action((file?: string, opts?: { kind?: string; projectId?: string; specialFile?: string }) => {
+  .action((file?: string, opts?: { kind?: string; projectId?: string; specialFile?: string; forceNew?: boolean }) => {
     const kind = opts?.kind as 'rule' | 'solution' | 'skill' | 'command' | undefined;
     if (opts?.kind && kind !== 'rule' && kind !== 'solution' && kind !== 'skill' && kind !== 'command') {
       console.error(chalk.red('--kind must be one of: rule, solution, skill, command'));
       process.exit(1);
     }
-    return runSharePush(file, { kind, projectId: opts?.projectId, specialFile: opts?.specialFile }).catch(handleErr);
+    return runSharePush(file, { kind, projectId: opts?.projectId, specialFile: opts?.specialFile, forceNew: opts?.forceNew }).catch(handleErr);
   });
 
 program

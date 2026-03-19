@@ -20,6 +20,14 @@ export interface InstalledItem {
   mtimeMs: number;
 }
 
+export interface UntrackedItem {
+  kind: RuleKind;
+  title: string;
+  version: string | null;
+  path: string;
+  mtimeMs: number;
+}
+
 const EXT_BY_KIND: Record<RuleKind, string[]> = {
   rule: ['.mdc'],
   skill: ['.md'],
@@ -123,6 +131,106 @@ export const scanInstalled = (options: { global?: boolean }): InstalledItem[] =>
       if (item && !seenIds.has(item.id)) {
         seenIds.add(item.id);
         result.push(item);
+      }
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Tries to parse a file as an untracked item (no `id` in frontmatter).
+ * Returns null if the file has an id or can't be read.
+ */
+const tryParseUntracked = (path: string, kind: RuleKind): UntrackedItem | null => {
+  let raw: string;
+  let mtimeMs = 0;
+  try {
+    raw = readFileSync(path, 'utf-8');
+    mtimeMs = statSync(path).mtimeMs;
+  } catch {
+    return null;
+  }
+  const parsed = parseRuleMdcContent(raw);
+  // If it has an id, it's tracked — skip
+  if (parsed?.id) return null;
+  // Extract title from first heading or filename
+  const lines = raw.split('\n');
+  let title = '';
+  for (const line of lines) {
+    const heading = line.match(/^#\s+(.+)/);
+    if (heading) {
+      title = heading[1].trim();
+      break;
+    }
+  }
+  if (!title) {
+    title = path.split('/').pop()?.replace(/\.(mdc|md)$/, '') ?? 'Untitled';
+  }
+  return {
+    kind,
+    title,
+    version: parsed?.version ?? null,
+    path,
+    mtimeMs,
+  };
+};
+
+/**
+ * Scans a directory for untracked items (files without `id` in frontmatter).
+ */
+const scanDirUntracked = (dir: string, kind: RuleKind, exts: string[]): UntrackedItem[] => {
+  const items: UntrackedItem[] = [];
+  if (!existsSync(dir)) return items;
+  try {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if ((entry.isFile() || entry.isSymbolicLink()) && exts.some((ext) => String(entry.name).endsWith(ext))) {
+        const item = tryParseUntracked(join(dir, String(entry.name)), kind);
+        if (item) items.push(item);
+      }
+    }
+    if (kind === 'skill') {
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const skillMd = join(dir, String(entry.name), 'SKILL.md');
+          const item = tryParseUntracked(skillMd, kind);
+          if (item) items.push(item);
+        }
+      }
+    }
+  } catch {
+    return items;
+  }
+  return items;
+};
+
+/**
+ * Scans project or global output dirs for untracked files (no `id` in frontmatter).
+ * These are candidates for `push-new` during bidirectional sync.
+ */
+export const scanUntracked = (options: { global?: boolean }): UntrackedItem[] => {
+  const result: UntrackedItem[] = [];
+  const seenPaths = new Set<string>();
+  const config = getProjectConfig({ warnIfMissing: false });
+  const kinds = Object.keys(KIND_SUBFOLDERS) as RuleKind[];
+
+  for (const kind of kinds) {
+    let dirs: string[];
+    if (options.global) {
+      dirs = [getGlobalOutputDirForKind(kind)];
+    } else {
+      dirs = getOutputDirsForKind(config, kind);
+    }
+
+    for (const dir of dirs) {
+      const exts = EXT_BY_KIND[kind];
+      const items = scanDirUntracked(dir, kind, exts);
+      for (const item of items) {
+        if (!seenPaths.has(item.path)) {
+          seenPaths.add(item.path);
+          result.push(item);
+        }
       }
     }
   }

@@ -1,12 +1,12 @@
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import inquirer from 'inquirer';
 import { createSpinner } from '../lib/spinner.js';
 import chalk from 'chalk';
 import { basename } from 'path';
 import { loadCredentials } from '../auth/config.js';
-import { insertRule } from '../api/client.js';
+import { insertRule, updateRule, getRuleById } from '../api/client.js';
 import { loadProjectConfig, SPECIAL_FILE_TARGETS } from '../auth/project-config.js';
-import { parseRuleMdcContent, parseFrontmatterKind } from '../lib/mdc-format.js';
+import { parseRuleMdcContent, parseFrontmatterKind, writeIdToFrontmatter } from '../lib/mdc-format.js';
 import { bumpRuleVersionMajor } from '../lib/version-bump.js';
 import { SHARE_KIND_CHOICES, inferKindFromFilename } from '../lib/share-types.js';
 import type { RuleInsert, RuleKind } from '../types.js';
@@ -115,7 +115,7 @@ const promptForKind = async (): Promise<RuleKind> => {
  */
 export const runSharePush = async (
   file?: string,
-  options?: { kind?: RuleKind; projectId?: string; specialFile?: string }
+  options?: { kind?: RuleKind; projectId?: string; specialFile?: string; forceNew?: boolean }
 ): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
@@ -180,10 +180,63 @@ export const runSharePush = async (
   }
 
   const label = KIND_LABELS[payload.kind];
+
+  // Check if this file already has an ID in frontmatter (update vs insert)
+  let existingId: string | undefined;
+  if (file && !options?.forceNew) {
+    const raw = readFileSync(file, 'utf-8');
+    const parsed = parseRuleMdcContent(raw);
+    if (parsed?.id) {
+      existingId = parsed.id;
+    }
+  }
+
+  if (existingId) {
+    // Check if the remote rule still exists
+    const remote = await getRuleById(existingId).catch(() => null);
+    if (remote) {
+      const spinner = createSpinner(`Updating ${label}…`);
+      const updated = await updateRule(existingId, {
+        title: payload.title,
+        description: payload.description,
+        body: payload.body,
+        context: payload.context,
+        examples: payload.examples,
+        technologies: payload.technologies,
+        globs: payload.globs,
+        always_apply: payload.always_apply,
+        version: payload.version,
+        special_file_target: payload.special_file_target,
+      });
+      spinner.succeed(chalk.green(`Updated ${label} `) + updated.id);
+      console.log(chalk.dim(updated.title));
+      if (projectId) {
+        console.log(
+          chalk.dim(autoProject ? 'Auto-linked to project ' : 'Linked to project ') +
+            chalk.cyan(projectId) +
+            chalk.dim(` (${visibility})`)
+        );
+      }
+      return;
+    }
+    // Orphaned ID — fall through to insert as new
+  }
+
   const spinner = createSpinner(`Publishing ${label}…`);
   const created = await insertRule(payload);
   spinner.succeed(chalk.green(`Published ${label} `) + created.id);
   console.log(chalk.dim(created.title));
+
+  // Write the new ID back into the file's frontmatter for future updates
+  if (file) {
+    const raw = readFileSync(file, 'utf-8');
+    const updated = writeIdToFrontmatter(raw, created.id, payload.version);
+    if (updated !== raw) {
+      writeFileSync(file, updated);
+      console.log(chalk.dim('Wrote ID back to file for future updates.'));
+    }
+  }
+
   if (projectId) {
     console.log(
       chalk.dim(autoProject ? 'Auto-linked to project ' : 'Linked to project ') +

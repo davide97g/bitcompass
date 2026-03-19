@@ -198,3 +198,47 @@ export const parseFrontmatterKind = (raw: string): RuleKind | null => {
   const parsed = parseRuleMdcContent(raw);
   return parsed?.kind ?? null;
 };
+
+/**
+ * Writes or updates the `id` (and optionally `version`) field in a file's frontmatter.
+ * If the file has no frontmatter, prepends a new frontmatter block with the id.
+ * Returns the updated file content.
+ */
+export const writeIdToFrontmatter = (raw: string, id: string, version?: string): string => {
+  const trimmed = raw.trimStart();
+  if (trimmed.startsWith(FRONTMATTER_DELIM)) {
+    const rest = trimmed.slice(FRONTMATTER_DELIM.length);
+    const endIdx = rest.indexOf('\n' + FRONTMATTER_DELIM);
+    if (endIdx !== -1) {
+      const frontmatterBlock = rest.slice(0, endIdx);
+      const afterFrontmatter = rest.slice(endIdx + FRONTMATTER_DELIM.length + 1);
+      const lines = frontmatterBlock.split('\n');
+
+      // Update or add id
+      let hasId = false;
+      let hasVersion = false;
+      for (let i = 0; i < lines.length; i++) {
+        const colonIdx = lines[i].indexOf(':');
+        if (colonIdx === -1) continue;
+        const key = lines[i].slice(0, colonIdx).trim();
+        if (key === 'id') {
+          lines[i] = `id: ${id}`;
+          hasId = true;
+        } else if (key === 'version' && version) {
+          lines[i] = `version: ${escapeYamlValue(version)}`;
+          hasVersion = true;
+        }
+      }
+      if (!hasId) lines.push(`id: ${id}`);
+      if (!hasVersion && version) lines.push(`version: ${escapeYamlValue(version)}`);
+
+      return FRONTMATTER_DELIM + lines.join('\n') + '\n' + FRONTMATTER_DELIM + afterFrontmatter;
+    }
+  }
+
+  // No frontmatter — prepend a new block
+  const fmLines = [FRONTMATTER_DELIM, `id: ${id}`];
+  if (version) fmLines.push(`version: ${escapeYamlValue(version)}`);
+  fmLines.push(FRONTMATTER_DELIM, '');
+  return fmLines.join('\n') + raw;
+};

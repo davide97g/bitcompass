@@ -1,15 +1,20 @@
 import chalk from 'chalk';
-import { existsSync, statSync, unlinkSync } from 'fs';
+import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import inquirer from 'inquirer';
 import {
   fetchRules,
   getCompassProjectById,
+  insertRule,
+  updateRule,
 } from '../api/client.js';
 import { loadCredentials } from '../auth/config.js';
 import { getProjectConfig, loadProjectConfig, SPECIAL_FILE_TARGETS } from '../auth/project-config.js';
-import { scanInstalled } from '../lib/installed-scan.js';
+import { scanInstalled, scanUntracked } from '../lib/installed-scan.js';
 import { pullRuleToFile } from '../lib/rule-file-ops.js';
+import { parseFileToPayload } from './share.js';
+import { writeIdToFrontmatter } from '../lib/mdc-format.js';
+import { bumpRuleVersionMajor } from '../lib/version-bump.js';
 import { createSpinner } from '../lib/spinner.js';
 import type { Rule, RuleKind } from '../types.js';
 
@@ -21,7 +26,7 @@ export interface SyncOptions {
   global?: boolean;
 }
 
-type ItemStatus = 'new' | 'update' | 'up-to-date' | 'removed';
+type ItemStatus = 'pull-new' | 'pull-update' | 'push-new' | 'push-update' | 'up-to-date' | 'removed';
 
 interface SyncItem {
   id: string;
@@ -34,10 +39,12 @@ interface SyncItem {
 }
 
 const STATUS_ICON: Record<ItemStatus, string> = {
-  'new': chalk.green('+ new'),
-  'update': chalk.cyan('↑ update'),
-  'up-to-date': chalk.dim('✓ ok'),
-  'removed': chalk.yellow('- removed'),
+  'pull-new':    chalk.green('↓ pull new'),
+  'pull-update': chalk.cyan('↓ pull update'),
+  'push-new':    chalk.magenta('↑ push new'),
+  'push-update': chalk.yellow('↑ push update'),
+  'up-to-date':  chalk.dim('✓ ok'),
+  'removed':     chalk.yellow('- removed'),
 };
 
 const kindLabel = (k: RuleKind): string =>
@@ -166,7 +173,7 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
             title: rule.title,
             localVersion: needsUpdate ? null : remoteVersion,
             remoteVersion,
-            status: needsUpdate ? 'update' : 'up-to-date',
+            status: needsUpdate ? 'pull-update' : 'up-to-date',
             path: targetPath,
           });
           continue;
@@ -179,29 +186,66 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
         title: rule.title,
         localVersion: null,
         remoteVersion,
-        status: 'new',
+        status: 'pull-new',
       });
     } else {
-      // Check if update needed
-      let needsUpdate = false;
+      // Bidirectional version comparison
       if (remoteVersion && local.currentVersion) {
-        needsUpdate = compareVersion(remoteVersion, local.currentVersion) > 0;
+        const cmp = compareVersion(remoteVersion, local.currentVersion);
+        if (cmp > 0) {
+          syncItems.push({
+            id: rule.id,
+            kind: rule.kind,
+            title: rule.title,
+            localVersion: local.currentVersion,
+            remoteVersion,
+            status: 'pull-update',
+            path: local.path,
+          });
+        } else if (cmp < 0) {
+          syncItems.push({
+            id: rule.id,
+            kind: rule.kind,
+            title: rule.title,
+            localVersion: local.currentVersion,
+            remoteVersion,
+            status: 'push-update',
+            path: local.path,
+          });
+        } else {
+          syncItems.push({
+            id: rule.id,
+            kind: rule.kind,
+            title: rule.title,
+            localVersion: local.currentVersion,
+            remoteVersion,
+            status: 'up-to-date',
+            path: local.path,
+          });
+        }
       } else if (remoteVersion && !local.currentVersion) {
-        needsUpdate = true;
+        syncItems.push({
+          id: rule.id,
+          kind: rule.kind,
+          title: rule.title,
+          localVersion: local.currentVersion,
+          remoteVersion,
+          status: 'pull-update',
+          path: local.path,
+        });
       } else {
         // Fallback: compare by timestamp
-        needsUpdate = new Date(rule.updated_at).getTime() > local.mtimeMs;
+        const needsUpdate = new Date(rule.updated_at).getTime() > local.mtimeMs;
+        syncItems.push({
+          id: rule.id,
+          kind: rule.kind,
+          title: rule.title,
+          localVersion: local.currentVersion,
+          remoteVersion,
+          status: needsUpdate ? 'pull-update' : 'up-to-date',
+          path: local.path,
+        });
       }
-
-      syncItems.push({
-        id: rule.id,
-        kind: rule.kind,
-        title: rule.title,
-        localVersion: local.currentVersion,
-        remoteVersion,
-        status: needsUpdate ? 'update' : 'up-to-date',
-        path: local.path,
-      });
     }
   }
 
@@ -220,13 +264,31 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
     }
   }
 
-  // Sort: new first, then updates, then removed, then up-to-date
-  const statusOrder: Record<ItemStatus, number> = { 'new': 0, 'update': 1, 'removed': 2, 'up-to-date': 3 };
+  // Scan for untracked local files (no ID) → push-new candidates
+  const untracked = scanUntracked({ global: options.global });
+  for (const item of untracked) {
+    syncItems.push({
+      id: '',
+      kind: item.kind,
+      title: item.title,
+      localVersion: item.version ?? '1.0.0',
+      remoteVersion: null,
+      status: 'push-new',
+      path: item.path,
+    });
+  }
+
+  // Sort: push-new, push-update, pull-new, pull-update, removed, up-to-date
+  const statusOrder: Record<ItemStatus, number> = {
+    'push-new': 0, 'push-update': 1, 'pull-new': 2, 'pull-update': 3, 'removed': 4, 'up-to-date': 5,
+  };
   syncItems.sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
 
   // 6. Print status table
-  const newCount = syncItems.filter((i) => i.status === 'new').length;
-  const updateCount = syncItems.filter((i) => i.status === 'update').length;
+  const pullNewCount = syncItems.filter((i) => i.status === 'pull-new').length;
+  const pullUpdateCount = syncItems.filter((i) => i.status === 'pull-update').length;
+  const pushNewCount = syncItems.filter((i) => i.status === 'push-new').length;
+  const pushUpdateCount = syncItems.filter((i) => i.status === 'push-update').length;
   const upToDateCount = syncItems.filter((i) => i.status === 'up-to-date').length;
   const removedCount = syncItems.filter((i) => i.status === 'removed').length;
 
@@ -234,8 +296,10 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
   printSyncTable(syncItems);
 
   const parts: string[] = [];
-  if (newCount) parts.push(chalk.green(`${newCount} new`));
-  if (updateCount) parts.push(chalk.cyan(`${updateCount} to update`));
+  if (pushNewCount) parts.push(chalk.magenta(`${pushNewCount} to push (new)`));
+  if (pushUpdateCount) parts.push(chalk.yellow(`${pushUpdateCount} to push (update)`));
+  if (pullNewCount) parts.push(chalk.green(`${pullNewCount} to pull (new)`));
+  if (pullUpdateCount) parts.push(chalk.cyan(`${pullUpdateCount} to pull (update)`));
   if (upToDateCount) parts.push(chalk.dim(`${upToDateCount} up to date`));
   if (removedCount) parts.push(chalk.yellow(`${removedCount} removed from project`));
   console.log('  ' + parts.join(chalk.dim(' · ')));
@@ -244,7 +308,9 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
   // 7. Nothing to do?
   // "removed" items are only actionable when --prune is set
   const actionable = syncItems.filter(
-    (i) => i.status === 'new' || i.status === 'update' || (i.status === 'removed' && options.prune)
+    (i) => i.status === 'pull-new' || i.status === 'pull-update' ||
+           i.status === 'push-new' || i.status === 'push-update' ||
+           (i.status === 'removed' && options.prune)
   );
   if (actionable.length === 0) {
     console.log(chalk.green('Everything is up to date.'));
@@ -261,18 +327,24 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
   if (options.all) {
     toSync = actionable;
   } else if (process.stdout.isTTY) {
-    const choices = actionable.map((item) => {
+    const choices = actionable.map((item, idx) => {
       const label =
-        item.status === 'new'
-          ? `${chalk.green('[new]')} ${item.title}`
-          : item.status === 'update'
-            ? `${chalk.cyan('[update]')} ${item.title} ${chalk.dim(formatVersion(item.localVersion) + ' → ' + formatVersion(item.remoteVersion))}`
-            : `${chalk.yellow('[remove]')} ${item.title}`;
+        item.status === 'pull-new'
+          ? `${chalk.green('[pull new]')} ${item.title}`
+          : item.status === 'pull-update'
+            ? `${chalk.cyan('[pull update]')} ${item.title} ${chalk.dim(formatVersion(item.localVersion) + ' → ' + formatVersion(item.remoteVersion))}`
+            : item.status === 'push-new'
+              ? `${chalk.magenta('[push new]')} ${item.title}`
+              : item.status === 'push-update'
+                ? `${chalk.yellow('[push update]')} ${item.title} ${chalk.dim(formatVersion(item.localVersion) + ' → ' + formatVersion(item.remoteVersion))}`
+                : `${chalk.yellow('[remove]')} ${item.title}`;
+      // Use item.id for tracked items, index-based key for untracked (push-new with no id)
+      const value = item.id || `__untracked_${idx}`;
       return {
         name: label,
-        value: item.id,
+        value,
         short: item.title,
-        checked: true, // default: all selected
+        checked: true,
       };
     });
 
@@ -291,7 +363,10 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
       return;
     }
     const idSet = new Set(selectedIds);
-    toSync = actionable.filter((i) => idSet.has(i.id));
+    toSync = actionable.filter((item, idx) => {
+      const key = item.id || `__untracked_${idx}`;
+      return idSet.has(key);
+    });
   } else {
     if (!options.yes) {
       console.error(chalk.red('Non-interactive mode: use --all -y to sync all.'));
@@ -302,10 +377,12 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
 
   // 10. Confirmation (unless --yes)
   if (!options.yes && process.stdout.isTTY) {
-    const toPull = toSync.filter((i) => i.status === 'new' || i.status === 'update').length;
+    const toPull = toSync.filter((i) => i.status === 'pull-new' || i.status === 'pull-update').length;
+    const toPush = toSync.filter((i) => i.status === 'push-new' || i.status === 'push-update').length;
     const toRemove = toSync.filter((i) => i.status === 'removed').length;
     const desc: string[] = [];
-    if (toPull) desc.push(`pull/update ${toPull}`);
+    if (toPull) desc.push(`pull ${toPull}`);
+    if (toPush) desc.push(`push ${toPush}`);
     if (toRemove) desc.push(`remove ${toRemove}`);
 
     const { confirm } = await inquirer.prompt<{ confirm: boolean }>([
@@ -324,22 +401,74 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
 
   // 11. Apply sync
   let pulledCount = 0;
+  let pushedCount = 0;
   let prunedCount = 0;
   let failedCount = 0;
 
   for (const item of toSync) {
-    if (item.status === 'new' || item.status === 'update') {
-      const s = createSpinner(`${item.status === 'new' ? 'Pulling' : 'Updating'} ${item.title}…`);
+    if (item.status === 'pull-new' || item.status === 'pull-update') {
+      const s = createSpinner(`${item.status === 'pull-new' ? 'Pulling' : 'Updating'} ${item.title}…`);
       try {
         await pullRuleToFile(item.id, {
           global: options.global,
           useSymlink: true,
           source: 'sync',
         });
-        s.succeed(chalk.green(item.status === 'new' ? 'Pulled' : 'Updated') + ' ' + item.title);
+        s.succeed(chalk.green(item.status === 'pull-new' ? 'Pulled' : 'Updated') + ' ' + item.title);
         pulledCount++;
       } catch (e) {
         s.fail(chalk.red('Failed') + ' ' + item.title);
+        console.error(chalk.red(e instanceof Error ? e.message : String(e)));
+        failedCount++;
+      }
+    } else if (item.status === 'push-update' && item.path) {
+      const s = createSpinner(`Pushing update ${item.title}…`);
+      try {
+        const raw = readFileSync(item.path, 'utf-8');
+        const parsed = parseFileToPayload(item.path, raw);
+        const newVersion = bumpRuleVersionMajor(item.localVersion);
+        await updateRule(item.id, {
+          title: parsed.title,
+          description: parsed.description ?? '',
+          body: parsed.body,
+          globs: parsed.globs,
+          always_apply: parsed.always_apply,
+          version: newVersion,
+        });
+        // Update local file frontmatter with new version
+        const updated = writeIdToFrontmatter(raw, item.id, newVersion);
+        if (updated !== raw) writeFileSync(item.path, updated);
+        s.succeed(chalk.magenta('Pushed') + ' ' + item.title + chalk.dim(` (${newVersion})`));
+        pushedCount++;
+      } catch (e) {
+        s.fail(chalk.red('Push failed') + ' ' + item.title);
+        console.error(chalk.red(e instanceof Error ? e.message : String(e)));
+        failedCount++;
+      }
+    } else if (item.status === 'push-new' && item.path) {
+      const s = createSpinner(`Pushing new ${item.title}…`);
+      try {
+        const raw = readFileSync(item.path, 'utf-8');
+        const parsed = parseFileToPayload(item.path, raw);
+        const version = parsed.version ?? '1.0.0';
+        const created = await insertRule({
+          kind: parsed.kind ?? item.kind,
+          title: parsed.title,
+          description: parsed.description ?? '',
+          body: parsed.body,
+          globs: parsed.globs,
+          always_apply: parsed.always_apply,
+          version,
+          project_id: projectId,
+          visibility: 'public',
+        });
+        // Write ID back into local file
+        const updated = writeIdToFrontmatter(raw, created.id, version);
+        writeFileSync(item.path, updated);
+        s.succeed(chalk.magenta('Pushed') + ' ' + item.title + chalk.dim(` → ${created.id}`));
+        pushedCount++;
+      } catch (e) {
+        s.fail(chalk.red('Push failed') + ' ' + item.title);
         console.error(chalk.red(e instanceof Error ? e.message : String(e)));
         failedCount++;
       }
@@ -358,7 +487,8 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
   // 12. Summary
   console.log('');
   const summary: string[] = [];
-  if (pulledCount) summary.push(chalk.green(`${pulledCount} synced`));
+  if (pulledCount) summary.push(chalk.green(`${pulledCount} pulled`));
+  if (pushedCount) summary.push(chalk.magenta(`${pushedCount} pushed`));
   if (prunedCount) summary.push(chalk.yellow(`${prunedCount} removed`));
   if (failedCount) summary.push(chalk.red(`${failedCount} failed`));
   console.log(chalk.bold('Done: ') + summary.join(chalk.dim(', ')) + '.');

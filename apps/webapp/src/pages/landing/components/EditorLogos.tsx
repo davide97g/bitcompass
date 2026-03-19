@@ -8,7 +8,7 @@ const editors = [
   },
   {
     name: "Claude Code",
-    logo: "/claude-icon.svg",
+    logo: "/claude-icon-nobg.png",
     url: "https://claude.ai",
   },
   {

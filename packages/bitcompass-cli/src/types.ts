@@ -48,6 +48,8 @@ export interface RuleInsert {
   special_file_target?: string | null;
   /** Optional path relative to project root for monorepo scoping. */
   relative_path?: string | null;
+  /** Set to authenticated user ID on update for notification attribution. */
+  updated_by?: string | null;
 }
 
 export interface StoredCredentials {

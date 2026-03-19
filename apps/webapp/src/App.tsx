@@ -32,6 +32,7 @@ const UsersPage = lazy(() => import("./pages/UsersPage"));
 const TopicDetailPage = lazy(() => import("./pages/TopicDetailPage"));
 const TopicsPage = lazy(() => import("./pages/TopicsPage"));
 const WelcomePage = lazy(() => import("./pages/WelcomePage"));
+const LandingPage = lazy(() => import("./pages/landing/LandingPage"));
 
 // Layout (kept eager — they're needed on every route)
 import { AppLock } from "./components/AppLock";
@@ -51,6 +52,7 @@ const App = () => (
         <Suspense>
         <Routes>
           {/* Public routes */}
+          <Route path="/landing" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/welcome" element={<WelcomePage />} />
 

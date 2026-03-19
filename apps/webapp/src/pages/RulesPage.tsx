@@ -97,7 +97,7 @@ const highlightText = (text: string, query: string): React.ReactNode => {
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
     rule: 'bitcompass rules pull ',
-    solution: 'bitcompass solutions pull ',
+    documentation: 'bitcompass docs pull ',
     skill: 'bitcompass skills pull ',
     command: 'bitcompass commands pull ',
   };
@@ -108,7 +108,7 @@ const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string
 const getKindLabel = (kind: RuleKind): string => {
   const labels: Record<RuleKind, string> = {
     rule: 'rule',
-    solution: 'solution',
+    documentation: 'doc',
     skill: 'skill',
     command: 'command',
   };
@@ -121,7 +121,7 @@ const CARD_KIND_CLASSES: Record<RuleKind, { card: string; cta: string }> = {
     card: 'dark:border-l-sky-500/30 dark:hover:shadow-sky-500/10',
     cta: 'bg-sky-700 hover:bg-sky-600 text-white dark:bg-sky-700 dark:hover:bg-sky-600',
   },
-  solution: {
+  documentation: {
     card: 'dark:border-l-emerald-500/30 dark:hover:shadow-emerald-500/10',
     cta: 'bg-emerald-700 hover:bg-emerald-600 text-white dark:bg-emerald-700 dark:hover:bg-emerald-600',
   },
@@ -138,7 +138,7 @@ const CARD_KIND_CLASSES: Record<RuleKind, { card: string; cta: string }> = {
 /** Kind badge colors (shared between grid + list views) */
 const KIND_BADGE_CLASSES: Record<RuleKind, string> = {
   rule: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-  solution: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  documentation: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   skill: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
   command: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
 };
@@ -172,7 +172,7 @@ const PROJECT_PARAM = 'project';
 const VIS_PARAM = 'vis';
 const VIEW_PARAM = 'view';
 
-const VALID_KINDS: Array<RuleKind | 'all'> = ['all', 'rule', 'solution', 'skill', 'command'];
+const VALID_KINDS: Array<RuleKind | 'all'> = ['all', 'rule', 'documentation', 'skill', 'command'];
 const VALID_VISIBILITY: Array<RuleVisibility | 'all'> = ['all', 'private', 'public'];
 const RULES_PAGE_SIZE = 20;
 
@@ -181,7 +181,7 @@ const KIND_TABS: Array<{ value: RuleKind | 'all'; label: string }> = [
   { value: 'all', label: 'All' },
   { value: 'skill', label: 'Skills' },
   { value: 'rule', label: 'Rules' },
-  { value: 'solution', label: 'Solutions' },
+  { value: 'documentation', label: 'Docs' },
   { value: 'command', label: 'Commands' },
 ];
 
@@ -438,7 +438,7 @@ export default function RulesPage() {
         <div className="relative">
           <Search className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search skills, rules, solutions, commands…"
+            placeholder="Search skills, rules, docs, commands…"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-11 h-11 text-sm bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 focus:border-primary dark:focus:border-primary"
@@ -567,7 +567,7 @@ export default function RulesPage() {
                     onChange={(e) => setNewRule((p) => ({ ...p, kind: e.target.value as RuleKind }))}
                   >
                     <option value="rule">Rule</option>
-                    <option value="solution">Solution</option>
+                    <option value="documentation">Documentation</option>
                     <option value="skill">Skill</option>
                     <option value="command">Command</option>
                   </select>

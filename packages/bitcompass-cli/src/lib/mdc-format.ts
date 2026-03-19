@@ -51,8 +51,8 @@ export const buildMarkdownWithKind = (rule: Rule): string => {
     lines.push(rule.description);
     lines.push('');
   }
-  if (rule.kind === 'solution') {
-    lines.push('## Solution');
+  if (rule.kind === 'documentation') {
+    lines.push('## Documentation');
     lines.push('');
   }
   lines.push(rule.body.trimEnd());
@@ -102,11 +102,11 @@ export const buildCommandContent = (rule: Rule): string => {
 };
 
 /**
- * Builds solution .md content for .cursor/documentation: minimal frontmatter (id, version, kind) then body.
+ * Builds documentation .md content for .cursor/docs: minimal frontmatter (id, version, kind) then body.
  */
-export const buildSolutionContent = (rule: Rule): string => {
+export const buildDocumentationContent = (rule: Rule): string => {
   const lines: string[] = [FRONTMATTER_DELIM];
-  lines.push(`kind: solution`);
+  lines.push(`kind: documentation`);
   lines.push(`id: ${rule.id}`);
   if (rule.version != null && String(rule.version).trim() !== '') {
     lines.push(`version: ${escapeYamlValue(String(rule.version).trim())}`);

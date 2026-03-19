@@ -36,7 +36,7 @@ import { useUserDownloadsReceived } from '@/hooks/use-download-stats';
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
     rule: 'bitcompass rules pull ',
-    solution: 'bitcompass solutions pull ',
+    documentation: 'bitcompass docs pull ',
     skill: 'bitcompass skills pull ',
     command: 'bitcompass commands pull ',
   };
@@ -47,7 +47,7 @@ const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string
 const getKindLabel = (kind: RuleKind): string => {
   const labels: Record<RuleKind, string> = {
     rule: 'rule',
-    solution: 'solution',
+    documentation: 'documentation',
     skill: 'skill',
     command: 'command',
   };
@@ -59,7 +59,7 @@ const CARD_KIND_CLASSES: Record<RuleKind, { card: string; cta: string }> = {
     card: 'dark:border-l-sky-500/30 dark:hover:shadow-sky-500/10',
     cta: 'bg-sky-700 hover:bg-sky-600 text-white dark:bg-sky-700 dark:hover:bg-sky-600',
   },
-  solution: {
+  documentation: {
     card: 'dark:border-l-emerald-500/30 dark:hover:shadow-emerald-500/10',
     cta: 'bg-emerald-700 hover:bg-emerald-600 text-white dark:bg-emerald-700 dark:hover:bg-emerald-600',
   },
@@ -95,7 +95,7 @@ const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
   }
 };
 
-const VALID_KINDS: Array<RuleKind | 'all'> = ['all', 'rule', 'solution', 'skill', 'command'];
+const VALID_KINDS: Array<RuleKind | 'all'> = ['all', 'rule', 'documentation', 'skill', 'command'];
 const RULES_PAGE_SIZE = 20;
 
 export default function UserDetailPage() {
@@ -199,7 +199,7 @@ export default function UserDetailPage() {
               <h2 className="text-sm font-semibold text-foreground">Contribution overview</h2>
               <div className="grid grid-cols-2 gap-2">
                 <StatBadge label="Rules" count={stats.rules} color="sky" />
-                <StatBadge label="Solutions" count={stats.solutions} color="emerald" />
+                <StatBadge label="Docs" count={stats.docs} color="emerald" />
                 <StatBadge label="Skills" count={stats.skills} color="violet" />
                 <StatBadge label="Commands" count={stats.commands} color="amber" />
               </div>
@@ -240,7 +240,7 @@ export default function UserDetailPage() {
               <ChartContainer
                 config={{
                   rules: { label: 'Rules', color: '#0ea5e9' },
-                  solutions: { label: 'Solutions', color: '#10b981' },
+                  docs: { label: 'Docs', color: '#10b981' },
                   skills: { label: 'Skills', color: '#8b5cf6' },
                   commands: { label: 'Commands', color: '#f59e0b' },
                 }}
@@ -251,7 +251,7 @@ export default function UserDetailPage() {
                   <Pie
                     data={[
                       { name: 'Rules', value: stats.rules, fill: '#0ea5e9' },
-                      { name: 'Solutions', value: stats.solutions, fill: '#10b981' },
+                      { name: 'Docs', value: stats.docs, fill: '#10b981' },
                       { name: 'Skills', value: stats.skills, fill: '#8b5cf6' },
                       { name: 'Commands', value: stats.commands, fill: '#f59e0b' },
                     ].filter((d) => d.value > 0)}
@@ -267,7 +267,7 @@ export default function UserDetailPage() {
               {/* Legend */}
               <div className="flex flex-wrap items-center justify-center gap-3 mt-2 text-xs">
                 {stats.rules > 0 && <LegendDot color="bg-sky-500" label="Rules" />}
-                {stats.solutions > 0 && <LegendDot color="bg-emerald-500" label="Solutions" />}
+                {stats.docs > 0 && <LegendDot color="bg-emerald-500" label="Docs" />}
                 {stats.skills > 0 && <LegendDot color="bg-violet-500" label="Skills" />}
                 {stats.commands > 0 && <LegendDot color="bg-amber-500" label="Commands" />}
               </div>
@@ -279,7 +279,7 @@ export default function UserDetailPage() {
       {/* Knowledge base section */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-foreground">
-          Linked rules, commands, solutions &amp; skills
+          Linked rules, commands, docs &amp; skills
         </h2>
 
         <div className="flex flex-wrap items-center gap-4">
@@ -299,7 +299,7 @@ export default function UserDetailPage() {
             <TabsList>
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="rule">Rules</TabsTrigger>
-              <TabsTrigger value="solution">Solutions</TabsTrigger>
+              <TabsTrigger value="documentation">Docs</TabsTrigger>
               <TabsTrigger value="skill">Skills</TabsTrigger>
               <TabsTrigger value="command">Commands</TabsTrigger>
             </TabsList>
@@ -357,7 +357,7 @@ export default function UserDetailPage() {
                           className={cn(
                             'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border capitalize',
                             rule.kind === 'rule' && 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-                            rule.kind === 'solution' && 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                            rule.kind === 'documentation' && 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
                             rule.kind === 'skill' && 'bg-violet-500/10 text-violet-400 border-violet-500/20',
                             rule.kind === 'command' && 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                           )}

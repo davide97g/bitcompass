@@ -160,7 +160,7 @@ export default function UsersPage() {
                     {/* Stats grid */}
                     <div className="grid grid-cols-2 gap-2 mb-3">
                       <StatBadge label="Rules" count={s.rules} color="sky" />
-                      <StatBadge label="Solutions" count={s.solutions} color="emerald" />
+                      <StatBadge label="Docs" count={s.docs} color="emerald" />
                       <StatBadge label="Skills" count={s.skills} color="violet" />
                       <StatBadge label="Commands" count={s.commands} color="amber" />
                     </div>
@@ -193,11 +193,11 @@ export default function UsersPage() {
                             title={`${s.rules} rules`}
                           />
                         )}
-                        {s.solutions > 0 && (
+                        {s.docs > 0 && (
                           <div
                             className="bg-emerald-500 transition-all"
-                            style={{ width: `${(s.solutions / s.total) * 100}%` }}
-                            title={`${s.solutions} solutions`}
+                            style={{ width: `${(s.docs / s.total) * 100}%` }}
+                            title={`${s.docs} docs`}
                           />
                         )}
                         {s.skills > 0 && (

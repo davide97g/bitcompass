@@ -35,33 +35,33 @@ export const commandGroups: TuiCommandGroup[] = [
         options: [{ flags: '--project-id <id>', type: 'string', placeholder: 'uuid', description: 'Scope to Compass project' }],
       },
       {
-        label: 'solutions search [query]',
-        description: 'Search for solutions in the BitCompass registry',
-        baseArgv: ['solutions', 'search'],
+        label: 'docs search [query]',
+        description: 'Search for docs in the BitCompass registry',
+        baseArgv: ['docs', 'search'],
         args: [{ name: 'query', required: false, placeholder: 'search term' }],
         options: [{ flags: '--list', type: 'boolean', description: 'List results only; do not prompt to select' }],
       },
       {
-        label: 'solutions list',
-        description: 'List all available solutions',
-        baseArgv: ['solutions', 'list'],
+        label: 'docs list',
+        description: 'List all available docs',
+        baseArgv: ['docs', 'list'],
         options: [{ flags: '--table', type: 'boolean', description: 'Show output in aligned columns' }],
       },
       {
-        label: 'solutions pull [id]',
-        description: 'Pull a solution by ID or choose from list',
-        baseArgv: ['solutions', 'pull'],
-        args: [{ name: 'id', required: false, placeholder: 'solution-id' }],
+        label: 'docs pull [id]',
+        description: 'Pull a doc by ID or choose from list',
+        baseArgv: ['docs', 'pull'],
+        args: [{ name: 'id', required: false, placeholder: 'doc-id' }],
         options: [
           { flags: '--global', type: 'boolean', description: 'Install globally' },
           { flags: '--copy', type: 'boolean', description: 'Copy file instead of symbolic link' },
         ],
       },
       {
-        label: 'solutions push [file]',
-        description: 'Push a solution to the registry',
-        baseArgv: ['solutions', 'push'],
-        args: [{ name: 'file', required: false, placeholder: './my-solution.md' }],
+        label: 'docs push [file]',
+        description: 'Push a doc to the registry',
+        baseArgv: ['docs', 'push'],
+        args: [{ name: 'file', required: false, placeholder: './my-doc.md' }],
         options: [{ flags: '--project-id <id>', type: 'string', placeholder: 'uuid', description: 'Scope to Compass project' }],
       },
       {
@@ -131,7 +131,7 @@ export const commandGroups: TuiCommandGroup[] = [
     commands: [
       {
         label: 'sync',
-        description: 'Sync local rules/skills/commands/solutions with the linked Compass project',
+        description: 'Sync local rules/skills/commands/docs with the linked Compass project',
         baseArgv: ['sync'],
         options: [
           { flags: '--check', type: 'boolean', description: 'Show sync status only; do not apply changes' },
@@ -143,19 +143,19 @@ export const commandGroups: TuiCommandGroup[] = [
       },
       {
         label: 'update',
-        description: 'Check for and apply updates to installed rules, skills, commands, and solutions',
+        description: 'Check for and apply updates to installed rules, skills, commands, and docs',
         baseArgv: ['update'],
         options: [
           { flags: '--check', type: 'boolean', description: 'List available updates only; do not apply' },
           { flags: '--all', type: 'boolean', description: 'Select all updatable items' },
           { flags: '--yes', type: 'boolean', description: 'Apply updates without confirmation' },
           { flags: '--global', type: 'boolean', description: 'Operate on global installs' },
-          { flags: '--kind <kind>', type: 'string', placeholder: 'rule|skill|command|solution', description: 'Limit to one kind' },
+          { flags: '--kind <kind>', type: 'string', placeholder: 'rule|skill|command|documentation', description: 'Limit to one kind' },
         ],
       },
       {
         label: 'project pull',
-        description: 'Pull selected (or all) rules, skills, commands, and solutions from the Compass project',
+        description: 'Pull selected (or all) rules, skills, commands, and docs from the Compass project',
         baseArgv: ['project', 'pull'],
         options: [
           { flags: '--global', type: 'boolean', description: 'Install globally' },
@@ -165,7 +165,7 @@ export const commandGroups: TuiCommandGroup[] = [
       },
       {
         label: 'project sync',
-        description: 'Sync local rules/skills/commands/solutions with the configured Compass project',
+        description: 'Sync local rules/skills/commands/docs with the configured Compass project',
         baseArgv: ['project', 'sync'],
         options: [
           { flags: '--prune', type: 'boolean', description: 'Remove local files no longer in the project' },
@@ -195,11 +195,11 @@ export const commandGroups: TuiCommandGroup[] = [
       },
       {
         label: 'share [file]',
-        description: 'Share a rule, solution, skill, or command (prompts for type if not in file or --kind)',
+        description: 'Share a rule, doc, skill, or command (prompts for type if not in file or --kind)',
         baseArgv: ['share'],
         args: [{ name: 'file', required: false, placeholder: './my-file.mdc' }],
         options: [
-          { flags: '--kind <kind>', type: 'string', placeholder: 'rule|solution|skill|command', description: 'Type: rule, solution, skill, or command' },
+          { flags: '--kind <kind>', type: 'string', placeholder: 'rule|documentation|skill|command', description: 'Type: rule, documentation, skill, or command' },
           { flags: '--project-id <id>', type: 'string', placeholder: 'uuid', description: 'Scope to Compass project' },
         ],
       },
@@ -221,7 +221,7 @@ export const commandGroups: TuiCommandGroup[] = [
       },
       {
         label: 'glossary',
-        description: 'Show glossary (rules, solutions, skills, commands)',
+        description: 'Show glossary (rules, docs, skills, commands)',
         baseArgv: ['glossary'],
       },
     ],

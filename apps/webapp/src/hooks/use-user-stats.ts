@@ -5,7 +5,7 @@ import type { Profile, RuleKind } from '@/types/bitcompass';
 export interface UserStats {
   profile: Profile;
   rules: number;
-  solutions: number;
+  docs: number;
   skills: number;
   commands: number;
   total: number;
@@ -46,11 +46,11 @@ const fetchAllUserStats = async (): Promise<UserStats[]> => {
   const profileMap = new Map(profiles.map((p) => [p.id, p]));
 
   // Aggregate rules by user
-  const userRules = new Map<string, { rule: number; solution: number; skill: number; command: number; public: number; private: number }>();
+  const userRules = new Map<string, { rule: number; documentation: number; skill: number; command: number; public: number; private: number }>();
   for (const r of rules) {
     let entry = userRules.get(r.user_id);
     if (!entry) {
-      entry = { rule: 0, solution: 0, skill: 0, command: 0, public: 0, private: 0 };
+      entry = { rule: 0, documentation: 0, skill: 0, command: 0, public: 0, private: 0 };
       userRules.set(r.user_id, entry);
     }
     entry[r.kind]++;
@@ -76,14 +76,14 @@ const fetchAllUserStats = async (): Promise<UserStats[]> => {
     const profile = profileMap.get(userId);
     if (!profile) continue;
 
-    const r = userRules.get(userId) ?? { rule: 0, solution: 0, skill: 0, command: 0, public: 0, private: 0 };
+    const r = userRules.get(userId) ?? { rule: 0, documentation: 0, skill: 0, command: 0, public: 0, private: 0 };
     stats.push({
       profile,
       rules: r.rule,
-      solutions: r.solution,
+      docs: r.documentation,
       skills: r.skill,
       commands: r.command,
-      total: r.rule + r.solution + r.skill + r.command,
+      total: r.rule + r.documentation + r.skill + r.command,
       publicCount: r.public,
       privateCount: r.private,
       sharedProjects: userProjects.get(userId)?.size ?? 0,
@@ -118,7 +118,7 @@ const fetchUserStats = async (userId: string): Promise<Omit<UserStats, 'profile'
   const rules = (rulesRes.data ?? []) as { kind: RuleKind; visibility: 'private' | 'public' }[];
   const members = (membersRes.data ?? []) as { project_id: string }[];
 
-  const counts = { rule: 0, solution: 0, skill: 0, command: 0, public: 0, private: 0 };
+  const counts = { rule: 0, documentation: 0, skill: 0, command: 0, public: 0, private: 0 };
   for (const r of rules) {
     counts[r.kind]++;
     counts[r.visibility]++;
@@ -128,10 +128,10 @@ const fetchUserStats = async (userId: string): Promise<Omit<UserStats, 'profile'
 
   return {
     rules: counts.rule,
-    solutions: counts.solution,
+    docs: counts.documentation,
     skills: counts.skill,
     commands: counts.command,
-    total: counts.rule + counts.solution + counts.skill + counts.command,
+    total: counts.rule + counts.documentation + counts.skill + counts.command,
     publicCount: counts.public,
     privateCount: counts.private,
     sharedProjects: uniqueProjects.size,

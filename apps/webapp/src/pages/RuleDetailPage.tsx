@@ -66,7 +66,7 @@ import { formatDistanceToNowStrict } from 'date-fns';
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
     rule: 'bitcompass rules pull ',
-    solution: 'bitcompass solutions pull ',
+    documentation: 'bitcompass docs pull ',
     skill: 'bitcompass skills pull ',
     command: 'bitcompass commands pull ',
   };
@@ -78,7 +78,7 @@ const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string
 const getPullCommandDisplay = (kind: RuleKind): string => {
   const prefixMap: Record<RuleKind, string> = {
     rule: 'bitcompass rules pull',
-    solution: 'bitcompass solutions pull',
+    documentation: 'bitcompass docs pull',
     skill: 'bitcompass skills pull',
     command: 'bitcompass commands pull',
   };
@@ -97,7 +97,7 @@ const SPECIAL_FILE_TARGETS: Record<string, { path: string; description: string }
 /** Kind badge colors */
 const KIND_BADGE_CLASSES: Record<RuleKind, string> = {
   rule: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-  solution: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  documentation: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   skill: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
   command: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
 };

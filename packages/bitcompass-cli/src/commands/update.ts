@@ -16,14 +16,14 @@ export interface UpdateOptions {
   all?: boolean;
   yes?: boolean;
   global?: boolean;
-  kind?: 'rule' | 'skill' | 'command' | 'solution';
+  kind?: 'rule' | 'skill' | 'command' | 'documentation';
 }
 
 function formatVersion(v: string | null): string {
   return v != null && v !== '' ? v : '(none)';
 }
 
-/** Single table: kind (rule/skill/command/solution), name, version as-is, version to-be. */
+/** Single table: kind (rule/skill/command/documentation), name, version as-is, version to-be. */
 function printUpdatesTable(items: UpdatableItem[]): void {
   if (items.length === 0) return;
   const kindWidth = 8;
@@ -135,11 +135,11 @@ export const runUpdate = async (options: UpdateOptions): Promise<void> => {
   }
 
   const applySpinner = createSpinner(`Updating ${toUpdate.length} item(s)…`);
-  const counts = { rules: 0, skills: 0, commands: 0, solutions: 0 };
+  const counts = { rules: 0, skills: 0, commands: 0, docs: 0 };
   try {
     for (const u of toUpdate) {
       await pullRuleToFile(u.id, { global: options.global, useSymlink: true });
-      counts[u.kind === 'rule' ? 'rules' : u.kind === 'skill' ? 'skills' : u.kind === 'command' ? 'commands' : 'solutions']++;
+      counts[u.kind === 'rule' ? 'rules' : u.kind === 'skill' ? 'skills' : u.kind === 'command' ? 'commands' : 'docs']++;
     }
     applySpinner.succeed(chalk.green('Update complete'));
   } catch (err) {
@@ -153,7 +153,7 @@ export const runUpdate = async (options: UpdateOptions): Promise<void> => {
   if (counts.rules) parts.push(`${counts.rules} rule(s)`);
   if (counts.skills) parts.push(`${counts.skills} skill(s)`);
   if (counts.commands) parts.push(`${counts.commands} command(s)`);
-  if (counts.solutions) parts.push(`${counts.solutions} solution(s)`);
+  if (counts.docs) parts.push(`${counts.docs} doc(s)`);
   if (parts.length) {
     console.log(chalk.dim('Updated: ' + parts.join(', ') + '.'));
   }

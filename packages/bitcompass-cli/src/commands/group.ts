@@ -13,7 +13,7 @@ import { createSpinner } from '../lib/spinner.js';
 import type { Rule, RuleKind } from '../types.js';
 
 const kindLabel = (k: RuleKind): string =>
-  k === 'rule' ? 'rule' : k === 'solution' ? 'solution' : k === 'skill' ? 'skill' : 'command';
+  k === 'rule' ? 'rule' : k === 'documentation' ? 'doc' : k === 'skill' ? 'skill' : 'command';
 
 export const runGroupPull = async (
   groupId: string,

@@ -31,11 +31,11 @@ export const ruleFilename = (title: string, id: string): string => {
 };
 
 /**
- * Returns the solution filename (e.g. strava-api-authentication-flow-abc12345.md).
+ * Returns the documentation filename (e.g. strava-api-authentication-flow-abc12345.md).
  * Includes a short ID suffix to prevent collisions.
  * Falls back to id if slug is empty.
  */
-export const solutionFilename = (title: string, id: string): string => {
+export const documentationFilename = (title: string, id: string): string => {
   const slug = titleToSlug(title);
   if (!slug) return `${id}.md`;
   return `${slug}-${shortId(id)}.md`;

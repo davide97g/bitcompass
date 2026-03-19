@@ -13,7 +13,7 @@ import type { RuleInsert, RuleKind } from '../types.js';
 
 const KIND_LABELS: Record<RuleKind, string> = {
   rule: 'rule',
-  solution: 'solution',
+  documentation: 'doc',
   skill: 'skill',
   command: 'command',
 };

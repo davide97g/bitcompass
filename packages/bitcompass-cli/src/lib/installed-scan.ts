@@ -33,7 +33,7 @@ const EXT_BY_KIND: Record<RuleKind, string[]> = {
   rule: ['.mdc'],
   skill: ['.md'],
   command: ['.md'],
-  solution: ['.md'],
+  documentation: ['.md'],
 };
 
 /**
@@ -91,7 +91,7 @@ const tryParseItem = (path: string, kind: RuleKind): InstalledItem | null => {
 };
 
 /**
- * Scans project or global output dirs for installed rules/skills/commands/solutions.
+ * Scans project or global output dirs for installed rules/skills/commands/docs.
  * Scans all configured editor paths (not just the primary one).
  * Also scans known special file paths.
  * Only includes files that have `id` in frontmatter (so they can be matched to remote for updates).

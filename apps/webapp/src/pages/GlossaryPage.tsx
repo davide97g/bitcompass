@@ -9,9 +9,9 @@ const TERMS = [
       'A reusable guideline or standard (e.g. coding style, when to use a tool) that can be pulled into a project. Rules are typically stored in .cursor/rules/ or similar and guide AI or tooling behavior.',
   },
   {
-    term: 'Solution',
+    term: 'Documentation',
     definition:
-      'A step-by-step or narrative answer to a specific problem (e.g. "How to fix X"). Solutions can be pulled like rules and are often used to document fixes or procedures.',
+      'A step-by-step or narrative answer to a specific problem (e.g. "How to fix X"). Documentation can be pulled like rules and is often used to document fixes or procedures.',
   },
   {
     term: 'Skill',
@@ -31,7 +31,7 @@ export default function GlossaryPage() {
       <PageBreadcrumb items={[{ href: '/glossary', label: 'Glossary' }]} />
       <PageHeader
         title="Glossary"
-        description="Shared terminology for rules, solutions, skills, and commands in BitCompass."
+        description="Shared terminology for rules, documentation, skills, and commands in BitCompass."
       />
 
       <section className="space-y-4">

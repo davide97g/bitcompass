@@ -21,7 +21,7 @@ import { runProjectList, runProjectPull, runProjectSync } from './commands/proje
 import { runSharePush } from './commands/share.js';
 import { runSync } from './commands/sync.js';
 import { runSkillsList, runSkillsPull, runSkillsPush, runSkillsSearch } from './commands/skills.js';
-import { runSolutionsList, runSolutionsPull, runSolutionsPush, runSolutionsSearch } from './commands/solutions.js';
+import { runDocsList, runDocsPull, runDocsPush, runDocsSearch } from './commands/docs.js';
 import { runUpdate } from './commands/update.js';
 import { runWhoami } from './commands/whoami.js';
 import { runMigrate } from './commands/migrate.js';
@@ -44,7 +44,7 @@ const program = new Command();
 
 program
   .name('bitcompass')
-  .description('BitCompass CLI - rules, solutions, and MCP server')
+  .description('BitCompass CLI - rules, docs, and MCP server')
   .version(version, '-v, -V, --version', 'display version number')
   .option('--no-color', 'Disable colored output');
 
@@ -65,13 +65,13 @@ program
 
 program
   .command('glossary')
-  .description('Show glossary (rules, solutions, skills, commands)')
+  .description('Show glossary (rules, docs, skills, commands)')
   .action(runGlossary);
 
 program
   .command('share [file]')
-  .description('Share a rule, solution, skill, or command (prompts for type if not in file or --kind)')
-  .option('-k, --kind <kind>', 'Type: rule, solution, skill, or command (skips type prompt)')
+  .description('Share a rule, doc, skill, or command (prompts for type if not in file or --kind)')
+  .option('-k, --kind <kind>', 'Type: rule, documentation, skill, or command (skips type prompt)')
   .option('--project-id <uuid>', 'Scope to Compass project (UUID)')
   .option('--special-file <target>', 'Map to a special output file (claude.md, agents.md, cursorrules, copilot-instructions, windsurfrules)')
   .option('--force-new', 'Always create a new item, even if the file has an existing ID')
@@ -82,15 +82,15 @@ program
 Examples:
   bitcompass share
   bitcompass share ./my-rule.mdc
-  bitcompass share ./doc.md --kind solution
+  bitcompass share ./doc.md --kind documentation
   bitcompass share CLAUDE.md --special-file claude.md
   bitcompass share ./rule.mdc --relative-path packages/frontend
 `
   )
   .action((file?: string, opts?: { kind?: string; projectId?: string; specialFile?: string; forceNew?: boolean; relativePath?: string }) => {
-    const kind = opts?.kind as 'rule' | 'solution' | 'skill' | 'command' | undefined;
-    if (opts?.kind && kind !== 'rule' && kind !== 'solution' && kind !== 'skill' && kind !== 'command') {
-      console.error(chalk.red('--kind must be one of: rule, solution, skill, command'));
+    const kind = opts?.kind as 'rule' | 'documentation' | 'skill' | 'command' | undefined;
+    if (opts?.kind && kind !== 'rule' && kind !== 'documentation' && kind !== 'skill' && kind !== 'command') {
+      console.error(chalk.red('--kind must be one of: rule, documentation, skill, command'));
       process.exit(1);
     }
     return runSharePush(file, { kind, projectId: opts?.projectId, specialFile: opts?.specialFile, forceNew: opts?.forceNew, relativePath: opts?.relativePath }).catch(handleErr);
@@ -108,12 +108,12 @@ program
 
 program
   .command('update')
-  .description('Check for and apply updates to installed rules, skills, commands, and solutions')
+  .description('Check for and apply updates to installed rules, skills, commands, and docs')
   .option('--check', 'List available updates only; do not apply')
   .option('--all', 'Select all updatable items')
   .option('-y, --yes', 'Apply updates without confirmation (use with --all for non-interactive)')
   .option('--global', 'Operate on global installs (~/.cursor/...) instead of project')
-  .option('--kind <kind>', 'Limit to one kind: rule, skill, command, or solution')
+  .option('--kind <kind>', 'Limit to one kind: rule, skill, command, or documentation')
   .addHelpText(
     'after',
     `
@@ -125,9 +125,9 @@ Examples:
 `
   )
   .action((opts?: { check?: boolean; all?: boolean; yes?: boolean; global?: boolean; kind?: string }) => {
-    const kind = opts?.kind as 'rule' | 'skill' | 'command' | 'solution' | undefined;
-    if (opts?.kind && kind !== 'rule' && kind !== 'skill' && kind !== 'command' && kind !== 'solution') {
-      console.error(chalk.red('--kind must be one of: rule, skill, command, solution'));
+    const kind = opts?.kind as 'rule' | 'skill' | 'command' | 'documentation' | undefined;
+    if (opts?.kind && kind !== 'rule' && kind !== 'skill' && kind !== 'command' && kind !== 'documentation') {
+      console.error(chalk.red('--kind must be one of: rule, skill, command, documentation'));
       process.exit(1);
     }
     return runUpdate({
@@ -141,7 +141,7 @@ Examples:
 
 program
   .command('sync')
-  .description('Sync local rules/skills/commands/solutions with the linked Compass project')
+  .description('Sync local rules/skills/commands/docs with the linked Compass project')
   .option('--check', 'Show sync status only; do not apply changes')
   .option('-a, --all', 'Sync all items without interactive selection')
   .option('-y, --yes', 'Skip confirmation prompt (use with --all for non-interactive)')
@@ -195,7 +195,7 @@ const projectCmd = program.command('project').description('Compass project for t
 projectCmd
   .command('pull')
   .description(
-    'Pull selected (or all with --all) rules, skills, commands, and solutions from the Compass project'
+    'Pull selected (or all with --all) rules, skills, commands, and docs from the Compass project'
   )
   .option('-g, --global', 'Install globally to ~/.cursor/...')
   .option('--copy', 'Copy files instead of symbolic links')
@@ -205,7 +205,7 @@ projectCmd
   );
 projectCmd
   .command('sync')
-  .description('Sync local rules/skills/commands/solutions with the configured Compass project (pull new, update changed, optionally prune removed)')
+  .description('Sync local rules/skills/commands/docs with the configured Compass project (pull new, update changed, optionally prune removed)')
   .option('--prune', 'Remove local files that are no longer in the project')
   .option('-g, --global', 'Operate on global installs')
   .action((opts?: { prune?: boolean; global?: boolean }) => runProjectSync(opts).catch(handleErr));
@@ -271,37 +271,37 @@ rules
     runRulesPush(file, { projectId: opts?.projectId }).catch(handleErr)
   );
 
-// solutions
-const solutions = program.command('solutions').description('Manage solutions');
-solutions
+// docs (documentation)
+const docs = program.command('docs').description('Manage documentation');
+docs
   .command('search [query]')
-  .description('Search solutions')
+  .description('Search docs')
   .option('-l, --list', 'List results only; do not prompt to select')
   .action((query?: string, opts?: { list?: boolean }) =>
-    runSolutionsSearch(query, { listOnly: opts?.list }).catch(handleErr)
+    runDocsSearch(query, { listOnly: opts?.list }).catch(handleErr)
   );
-solutions
+docs
   .command('list')
-  .description('List solutions')
+  .description('List docs')
   .option('--table', 'Show output in aligned columns (default when TTY)')
-  .addHelpText('after', '\nExamples:\n  bitcompass solutions list\n  bitcompass solutions list --table\n')
-  .action((opts: { table?: boolean }) => runSolutionsList({ table: opts.table }).catch(handleErr));
-solutions
+  .addHelpText('after', '\nExamples:\n  bitcompass docs list\n  bitcompass docs list --table\n')
+  .action((opts: { table?: boolean }) => runDocsList({ table: opts.table }).catch(handleErr));
+docs
   .command('pull [id]')
-  .description('Pull a solution by ID or choose from list (creates symbolic link by default)')
+  .description('Pull a doc by ID or choose from list (creates symbolic link by default)')
   .option('-g, --global', 'Install globally to ~/.cursor/rules/ for all projects')
   .option('--copy', 'Copy file instead of creating symbolic link')
   .addHelpText(
     'after',
-    '\nExamples:\n  bitcompass solutions pull <id>\n  bitcompass solutions pull <id> --global\n'
+    '\nExamples:\n  bitcompass docs pull <id>\n  bitcompass docs pull <id> --global\n'
   )
-  .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runSolutionsPull(id, options).catch(handleErr));
-solutions
+  .action((id?: string, options?: { global?: boolean; copy?: boolean }) => runDocsPull(id, options).catch(handleErr));
+docs
   .command('push [file]')
-  .description('Push a solution (file or interactive)')
+  .description('Push a doc (file or interactive)')
   .option('--project-id <uuid>', 'Scope to Compass project (UUID)')
   .action((file?: string, opts?: { projectId?: string }) =>
-    runSolutionsPush(file, { projectId: opts?.projectId }).catch(handleErr)
+    runDocsPush(file, { projectId: opts?.projectId }).catch(handleErr)
   );
 
 // skills

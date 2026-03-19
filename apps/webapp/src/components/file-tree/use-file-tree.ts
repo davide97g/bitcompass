@@ -16,7 +16,7 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const KINDS: RuleKind[] = ['rule', 'skill', 'command', 'solution'];
+const KINDS: RuleKind[] = ['rule', 'skill', 'command', 'documentation'];
 
 function extensionForKind(kind: RuleKind): string {
   return kind === 'rule' ? '.mdc' : '.md';
@@ -72,7 +72,7 @@ export function useFileTree(
       rule: [],
       skill: [],
       command: [],
-      solution: [],
+      documentation: [],
     };
     const specialRules: Rule[] = [];
 

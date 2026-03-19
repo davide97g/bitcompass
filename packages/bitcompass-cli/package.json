@@ -1,7 +1,7 @@
 {
   "name": "bitcompass",
-  "version": "0.14.0",
-  "description": "BitCompass CLI - rules, solutions, and MCP server",
+  "version": "0.15.0",
+  "description": "BitCompass CLI - rules, docs, and MCP server",
   "type": "module",
   "bin": {
     "bitcompass": "./dist/index.js"

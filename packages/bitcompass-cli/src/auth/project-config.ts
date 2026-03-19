@@ -61,7 +61,7 @@ export const KIND_SUBFOLDERS: Record<RuleKind, string> = {
   rule: 'rules',
   skill: 'skills',
   command: 'commands',
-  solution: 'documentation',
+  documentation: 'docs',
 };
 
 /** Special file output targets with hardcoded project-relative paths. */

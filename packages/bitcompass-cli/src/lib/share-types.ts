@@ -1,6 +1,6 @@
 import type { RuleKind } from '../types.js';
 
-const VALID_KINDS: RuleKind[] = ['rule', 'solution', 'skill', 'command'];
+const VALID_KINDS: RuleKind[] = ['rule', 'documentation', 'skill', 'command'];
 
 export const SHARE_KIND_CHOICES: Array<{ value: RuleKind; name: string; description: string }> = [
   {
@@ -9,9 +9,9 @@ export const SHARE_KIND_CHOICES: Array<{ value: RuleKind; name: string; descript
     description: 'Behaviors, documentation, or how-to for the AI (e.g. i18n guide, coding standards)',
   },
   {
-    value: 'solution',
-    name: 'Solution',
-    description: 'How we fixed or implemented a specific problem',
+    value: 'documentation',
+    name: 'Documentation',
+    description: 'Reference docs, how-tos, problem solutions, or knowledge base articles',
   },
   {
     value: 'skill',

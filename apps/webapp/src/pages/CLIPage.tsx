@@ -29,12 +29,12 @@ const COMMAND_GROUPS: { label: string; commands: [string, string][] }[] = [
     ],
   },
   {
-    label: 'Solutions',
+    label: 'Docs',
     commands: [
-      ['bitcompass solutions search [query]', 'Search solutions'],
-      ['bitcompass solutions list', 'List all solutions'],
-      ['bitcompass solutions pull [id]', 'Pull solution into project'],
-      ['bitcompass solutions push [file]', 'Push solution to server'],
+      ['bitcompass docs search [query]', 'Search documentation'],
+      ['bitcompass docs list', 'List all documentation'],
+      ['bitcompass docs pull [id]', 'Pull documentation into project'],
+      ['bitcompass docs push [file]', 'Push documentation to server'],
     ],
   },
   {
@@ -58,8 +58,8 @@ const COMMAND_GROUPS: { label: string; commands: [string, string][] }[] = [
   {
     label: 'Share',
     commands: [
-      ['bitcompass share [file]', 'Share a rule, solution, skill, or command'],
-      ['bitcompass share [file] --kind [rule|solution|skill|command]', 'Share with explicit type'],
+      ['bitcompass share [file]', 'Share a rule, documentation, skill, or command'],
+      ['bitcompass share [file] --kind [rule|documentation|skill|command]', 'Share with explicit type'],
     ],
   },
   {
@@ -114,7 +114,7 @@ const COMMAND_GROUPS: { label: string; commands: [string, string][] }[] = [
   {
     label: 'Other',
     commands: [
-      ['bitcompass glossary', 'Show glossary (rules, solutions, skills, commands)'],
+      ['bitcompass glossary', 'Show glossary (rules, docs, skills, commands)'],
       ['bitcompass self-update', 'Update BitCompass CLI to the latest version'],
     ],
   },
@@ -125,7 +125,7 @@ export default function CLIPage() {
     <div className="space-y-10">
       <PageHeader
         title="CLI"
-        description="Install the BitCompass CLI to manage rules, solutions, and skills from the terminal."
+        description="Install the BitCompass CLI to manage rules, documentation, and skills from the terminal."
       />
 
       {/* Quick start */}

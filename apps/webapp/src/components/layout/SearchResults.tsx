@@ -4,7 +4,7 @@ import type { Rule, RuleKind } from '@/types/bitcompass';
 
 const RULE_KIND_LABELS: Record<RuleKind, string> = {
   rule: 'Rule',
-  solution: 'Solution',
+  documentation: 'Documentation',
   skill: 'Skill',
   command: 'Command',
 };
@@ -28,7 +28,7 @@ export function SearchResults({ results, onResultClick, onClose: _onClose }: Sea
     { key: 'topics', title: 'Topics', items: results.topics, icon: Lightbulb, type: 'topics' },
     { key: 'problems', title: 'Problems', items: results.problems, icon: AlertCircle, type: 'problems' },
     { key: 'projects', title: 'Projects', items: results.projects, icon: FolderKanban, type: 'projects' },
-    { key: 'rules', title: 'Rules & solutions', items: results.rules ?? [], icon: BookMarked, type: 'rules' },
+    { key: 'rules', title: 'Rules & docs', items: results.rules ?? [], icon: BookMarked, type: 'rules' },
     { key: 'automations', title: 'Automations', items: results.automations, icon: Workflow, type: 'automations' },
   ];
 

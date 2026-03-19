@@ -1,7 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
-/** Skeleton for a single rule/solution card in the grid. */
+/** Skeleton for a single rule/documentation card in the grid. */
 export const RuleCardSkeleton = () => (
   <Card>
     <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">

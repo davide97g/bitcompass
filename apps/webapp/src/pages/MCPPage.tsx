@@ -87,7 +87,7 @@ export default function MCPPage() {
     <div className="space-y-10">
       <PageHeader
         title="MCP Server"
-        description="Use BitCompass in Cursor, Claude, or Antigrativity via Model Context Protocol (MCP). Search rules and publish solutions directly from your AI editor."
+        description="Use BitCompass in Cursor, Claude, or Antigrativity via Model Context Protocol (MCP). Search rules and publish documentation directly from your AI editor."
       >
         <div className="flex flex-wrap items-center gap-3">
           <Button
@@ -164,11 +164,11 @@ export default function MCPPage() {
             </thead>
             <tbody className="divide-y divide-border dark:divide-white/10">
               {[
-                ['search-rules', 'Search rules, solutions, skills, or commands by query', 'No'],
-                ['search-solutions', 'Search solutions by query', 'No'],
+                ['search-rules', 'Search rules, docs, skills, or commands by query', 'No'],
+                ['search-docs', 'Search documentation by query', 'No'],
                 ['get-rule', 'Get full content of any item by ID', 'Yes'],
-                ['list-rules', 'List all rules, solutions, skills, or commands', 'Yes'],
-                ['post-rules', 'Publish a rule, solution, skill, or command', 'Yes'],
+                ['list-rules', 'List all rules, docs, skills, or commands', 'Yes'],
+                ['post-rules', 'Publish a rule, documentation, skill, or command', 'Yes'],
                 ['update-rule', 'Update an existing item', 'Yes'],
                 ['delete-rule', 'Delete an item by ID', 'Yes'],
                 ['pull-rule', 'Pull any item to a local file', 'Yes'],

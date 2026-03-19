@@ -11,7 +11,7 @@ const MCP_TOOLS = [
   'delete-rule',
   'pull-rule',
   'pull-group',
-  'search-solutions',
+  'search-docs',
 ];
 
 const CONFIG_SNIPPET = `{

@@ -23,7 +23,7 @@ describe('project-config constants', () => {
     expect(KIND_SUBFOLDERS.rule).toBe('rules');
     expect(KIND_SUBFOLDERS.skill).toBe('skills');
     expect(KIND_SUBFOLDERS.command).toBe('commands');
-    expect(KIND_SUBFOLDERS.solution).toBe('documentation');
+    expect(KIND_SUBFOLDERS.documentation).toBe('docs');
   });
 
   test('SPECIAL_FILE_TARGETS has expected entries', () => {

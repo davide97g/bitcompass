@@ -10,13 +10,13 @@ import {
   KIND_SUBFOLDERS,
   SPECIAL_FILE_TARGETS,
 } from '../auth/project-config.js';
-import { ruleFilename, solutionFilename, skillFilename, commandFilename } from './slug.js';
+import { ruleFilename, documentationFilename, skillFilename, commandFilename } from './slug.js';
 import { ensureRuleCached } from './rule-cache.js';
 import {
   buildRuleMdcContent,
   buildSkillContent,
   buildCommandContent,
-  buildSolutionContent,
+  buildDocumentationContent,
 } from './mdc-format.js';
 import { trackDownload } from './tracking.js';
 
@@ -36,8 +36,8 @@ export interface PullRuleOptions {
  */
 const getFilenameForKind = (rule: { kind: string; title: string; id: string }): string => {
   switch (rule.kind) {
-    case 'solution':
-      return solutionFilename(rule.title, rule.id);
+    case 'documentation':
+      return documentationFilename(rule.title, rule.id);
     case 'skill':
       return skillFilename(rule.title, rule.id);
     case 'command':
@@ -81,8 +81,8 @@ const writeRuleToPath = (
 
   removeExisting(filePath);
 
-  // Commands and solutions: always write plain .md (no frontmatter), never symlink
-  const useCopyForPlainMd = rule.kind === 'command' || rule.kind === 'solution';
+  // Commands and documentation: always write plain .md (no frontmatter), never symlink
+  const useCopyForPlainMd = rule.kind === 'command' || rule.kind === 'documentation';
   const shouldSymlink = useSymlink && !useCopyForPlainMd;
 
   if (shouldSymlink) {
@@ -105,7 +105,7 @@ const writeRuleToPath = (
           ? buildSkillContent(rule as any)
           : rule.kind === 'command'
             ? buildCommandContent(rule as any)
-            : buildSolutionContent(rule as any);
+            : buildDocumentationContent(rule as any);
     writeFileSync(filePath, content);
   }
 
@@ -126,7 +126,7 @@ export const pullRuleToFile = async (id: string, options: PullRuleOptions = {}):
   const cachedPath = await ensureRuleCached(id);
   const rule = await getRuleById(id);
   if (!rule) {
-    throw new Error(`Rule or solution with ID ${id} not found.`);
+    throw new Error(`Rule or doc with ID ${id} not found.`);
   }
 
   const config = getProjectConfig({ warnIfMissing: true });

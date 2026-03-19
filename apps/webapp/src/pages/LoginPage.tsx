@@ -16,7 +16,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isSupabaseConfigured() && session) {
-      const from = (location.state as { from?: string })?.from ?? '/topics';
+      const from = (location.state as { from?: string })?.from ?? '/skills';
       navigate(from, { replace: true });
     }
   }, [session, navigate, location.state]);
@@ -27,7 +27,7 @@ export default function LoginPage() {
       await signInWithGoogle();
       // Supabase redirects to Google and back; onAuthStateChange will update session
     } else {
-      setTimeout(() => navigate('/topics'), 800);
+      setTimeout(() => navigate('/skills'), 800);
     }
     setIsLoading(false);
   };

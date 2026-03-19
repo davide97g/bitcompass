@@ -51,7 +51,7 @@ describe('CLI command registration', () => {
       'project',
       'group',
       'rules',
-      'solutions',
+      'docs',
       'skills',
       'commands',
       'mcp',
@@ -96,8 +96,8 @@ describe('CLI command registration', () => {
     expect(output).toContain('push');
   });
 
-  test('solutions subcommands are listed', () => {
-    const output = runCli('solutions --help');
+  test('docs subcommands are listed', () => {
+    const output = runCli('docs --help');
     expect(output).toContain('search');
     expect(output).toContain('list');
     expect(output).toContain('pull');

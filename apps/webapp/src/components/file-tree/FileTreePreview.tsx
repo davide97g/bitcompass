@@ -16,7 +16,7 @@ const KIND_PLURALS: Record<RuleKind, string> = {
   rule: 'rules',
   skill: 'skills',
   command: 'commands',
-  solution: 'solutions',
+  documentation: 'docs',
 };
 
 function formatRelativeDate(dateStr: string): string {

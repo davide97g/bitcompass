@@ -21,7 +21,7 @@ export const KIND_SUBFOLDERS: Record<RuleKind, string> = {
   rule: 'rules',
   skill: 'skills',
   command: 'commands',
-  solution: 'documentation',
+  documentation: 'docs',
 };
 
 // ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ export const KIND_COLORS: Record<RuleKind, KindColorSet> = {
     badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     glow: 'shadow-amber-500/10',
   },
-  solution: {
+  documentation: {
     folder: 'text-emerald-400',
     file: 'text-emerald-300',
     badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -93,7 +93,7 @@ export const CARD_KIND_CLASSES: Record<RuleKind, { card: string; cta: string }> 
     card: 'dark:border-l-sky-500/30 dark:hover:shadow-sky-500/10',
     cta: 'bg-sky-700 hover:bg-sky-600 text-white dark:bg-sky-700 dark:hover:bg-sky-600',
   },
-  solution: {
+  documentation: {
     card: 'dark:border-l-emerald-500/30 dark:hover:shadow-emerald-500/10',
     cta: 'bg-emerald-700 hover:bg-emerald-600 text-white dark:bg-emerald-700 dark:hover:bg-emerald-600',
   },

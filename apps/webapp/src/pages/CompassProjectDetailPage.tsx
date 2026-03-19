@@ -53,7 +53,7 @@ import { useProjectDownloadTotal } from '@/hooks/use-download-stats';
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
     rule: 'bitcompass rules pull ',
-    solution: 'bitcompass solutions pull ',
+    documentation: 'bitcompass docs pull ',
     skill: 'bitcompass skills pull ',
     command: 'bitcompass commands pull ',
   };
@@ -61,7 +61,7 @@ const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string
 };
 
 const getKindLabel = (kind: RuleKind): string =>
-  ({ rule: 'rule', solution: 'solution', skill: 'skill', command: 'command' }[kind]);
+  ({ rule: 'rule', documentation: 'documentation', skill: 'skill', command: 'command' }[kind]);
 
 
 const highlightText = (text: string, query: string): React.ReactNode => {
@@ -378,14 +378,14 @@ export default function CompassProjectDetailPage() {
           <FileTreeView projectId={id!} projectConfig={project?.config ?? null} />
         </TabsContent>
 
-        {/* ── Content tab (linked rules/skills/commands/solutions) ── */}
+        {/* ── Content tab (linked rules/skills/commands/docs) ── */}
         <TabsContent value="content" className="mt-4">
       <div className="flex flex-col gap-6 items-start">
         {/* LEFT: Knowledge list */}
         <div className="flex-1 min-w-0">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Linked rules, commands, solutions & skills</CardTitle>
+              <CardTitle className="text-base">Linked rules, commands, docs & skills</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap items-center gap-4">
@@ -412,7 +412,7 @@ export default function CompassProjectDetailPage() {
                   <TabsList>
                     <TabsTrigger value="all">All</TabsTrigger>
                     <TabsTrigger value="rule">Rules</TabsTrigger>
-                    <TabsTrigger value="solution">Solutions</TabsTrigger>
+                    <TabsTrigger value="documentation">Docs</TabsTrigger>
                     <TabsTrigger value="skill">Skills</TabsTrigger>
                     <TabsTrigger value="command">Commands</TabsTrigger>
                   </TabsList>
@@ -428,7 +428,7 @@ export default function CompassProjectDetailPage() {
                     <>
                       <h3 className="font-semibold mb-1">No linked items yet</h3>
                       <p className="text-sm text-muted-foreground max-w-sm">
-                        Rules, skills, commands, and solutions scoped to this project will appear here.
+                        Rules, skills, commands, and documentation scoped to this project will appear here.
                         Add them from the Rules page and set this project as scope.
                       </p>
                       <Button
@@ -436,7 +436,7 @@ export default function CompassProjectDetailPage() {
                         className="mt-4"
                         onClick={() => navigate('/skills')}
                       >
-                        Go to Rules & solutions
+                        Go to Rules & docs
                       </Button>
                     </>
                   ) : (
@@ -486,7 +486,7 @@ export default function CompassProjectDetailPage() {
                                   'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border capitalize',
                                   rule.kind === 'rule' &&
                                   'bg-sky-500/10 text-sky-400 border-sky-500/20',
-                                  rule.kind === 'solution' &&
+                                  rule.kind === 'documentation' &&
                                   'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
                                   rule.kind === 'skill' &&
                                   'bg-violet-500/10 text-violet-400 border-violet-500/20',
@@ -804,7 +804,7 @@ export default function CompassProjectDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Link your project folder, then pull all shared rules, skills, commands, and solutions.
+                Link your project folder, then pull all shared rules, skills, commands, and documentation.
               </p>
               <div className="space-y-2">
                 <Label className="text-muted-foreground text-xs">

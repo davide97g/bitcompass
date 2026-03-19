@@ -70,7 +70,7 @@ const buildCommandContent = (opts: {
 // --- Import the units under test ---
 
 import { parseRuleMdcContent } from '../lib/mdc-format.js';
-import { titleToSlug, ruleFilename, skillFilename, commandFilename, solutionFilename } from '../lib/slug.js';
+import { titleToSlug, ruleFilename, skillFilename, commandFilename, documentationFilename } from '../lib/slug.js';
 
 // ============================================================
 // Bug 1: Special file targets (CLAUDE.md) have no frontmatter
@@ -157,9 +157,9 @@ describe('Bug 2: Filename collisions', () => {
     expect(name1).not.toBe(name2);
   });
 
-  test('solutionFilename generates unique names for different IDs with same title', () => {
-    const name1 = solutionFilename('My Solution', 'id-aaa-111');
-    const name2 = solutionFilename('My Solution', 'id-bbb-222');
+  test('documentationFilename generates unique names for different IDs with same title', () => {
+    const name1 = documentationFilename('My Doc', 'id-aaa-111');
+    const name2 = documentationFilename('My Doc', 'id-bbb-222');
     expect(name1).not.toBe(name2);
   });
 

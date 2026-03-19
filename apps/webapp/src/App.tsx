@@ -29,8 +29,6 @@ const RulesPage = lazy(() => import("./pages/RulesPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const UserDetailPage = lazy(() => import("./pages/UserDetailPage"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
-const TopicDetailPage = lazy(() => import("./pages/TopicDetailPage"));
-const TopicsPage = lazy(() => import("./pages/TopicsPage"));
 const WelcomePage = lazy(() => import("./pages/WelcomePage"));
 const LandingPage = lazy(() => import("./pages/landing/LandingPage"));
 
@@ -67,9 +65,7 @@ const App = () => (
               </AppLock>
             </RequireAuth>
           }>
-            <Route path="/topics" element={<TopicsPage />} />
-            <Route path="/topics/:id" element={<TopicDetailPage />} />
-            <Route path="/problems" element={<ProblemsPage />} />
+<Route path="/problems" element={<ProblemsPage />} />
             <Route path="/problems/:id" element={<ProblemDetailPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/:id" element={<ProjectDetailPage />} />

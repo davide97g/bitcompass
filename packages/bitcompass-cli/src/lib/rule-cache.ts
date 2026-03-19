@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { getConfigDir } from '../auth/config.js';
 import { getRuleById } from '../api/client.js';
-import { ruleFilename, solutionFilename, commandFilename, titleToSlug } from './slug.js';
+import { ruleFilename, documentationFilename, commandFilename, titleToSlug } from './slug.js';
 import { buildRuleMdcContent, buildMarkdownWithKind, buildSkillContent } from './mdc-format.js';
 import type { Rule } from '../types.js';
 
@@ -24,8 +24,8 @@ export const getCachedRulePath = (rule: Rule): string => {
   const cacheDir = getCacheDir();
   // Skills use subdirectory output (slug/SKILL.md) but cache stays flat
   const filename =
-    rule.kind === 'solution'
-      ? solutionFilename(rule.title, rule.id)
+    rule.kind === 'documentation'
+      ? documentationFilename(rule.title, rule.id)
       : rule.kind === 'skill'
         ? `${titleToSlug(rule.title) || rule.id}.md`
         : rule.kind === 'command'
@@ -41,7 +41,7 @@ export const getCachedRulePath = (rule: Rule): string => {
 export const ensureRuleCached = async (id: string): Promise<string> => {
   const rule = await getRuleById(id);
   if (!rule) {
-    throw new Error(`Rule or solution with ID ${id} not found.`);
+    throw new Error(`Rule or doc with ID ${id} not found.`);
   }
 
   const cachedPath = getCachedRulePath(rule);

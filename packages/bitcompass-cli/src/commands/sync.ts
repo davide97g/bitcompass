@@ -48,7 +48,7 @@ const STATUS_ICON: Record<ItemStatus, string> = {
 };
 
 const kindLabel = (k: RuleKind): string =>
-  k === 'rule' ? 'rule' : k === 'solution' ? 'solution' : k === 'skill' ? 'skill' : 'command';
+  k === 'rule' ? 'rule' : k === 'documentation' ? 'doc' : k === 'skill' ? 'skill' : 'command';
 
 function formatVersion(v: string | null): string {
   return v != null && v !== '' ? v : '—';

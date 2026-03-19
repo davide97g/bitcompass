@@ -17,7 +17,7 @@ const NO_PROJECT_MSG =
   'Nessun Compass project configurato. Esegui bitcompass init e scegli un progetto.';
 
 const kindLabel = (k: RuleKind): string =>
-  k === 'rule' ? 'rule' : k === 'solution' ? 'solution' : k === 'skill' ? 'skill' : 'command';
+  k === 'rule' ? 'rule' : k === 'documentation' ? 'doc' : k === 'skill' ? 'skill' : 'command';
 
 export const runProjectPull = async (options?: {
   global?: boolean;
@@ -41,7 +41,7 @@ export const runProjectPull = async (options?: {
   spinner.stop();
 
   if (projectRules.length === 0) {
-    console.log(chalk.yellow('No rules, skills, commands, or solutions in this project.'));
+    console.log(chalk.yellow('No rules, skills, commands, or docs in this project.'));
     return;
   }
 

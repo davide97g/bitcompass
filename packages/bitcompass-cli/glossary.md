@@ -1,14 +1,14 @@
 # BitCompass terminology
 
-Shared definitions for rules, solutions, skills, and commands.
+Shared definitions for rules, docs, skills, and commands.
 
 ## Rule
 
 A **rule** is a reusable guideline or standard (e.g. coding style, when to use a tool) that can be pulled into a project. Rules are typically stored in `.cursor/rules/` or similar and guide AI or tooling behavior.
 
-## Solution
+## Documentation
 
-A **solution** is a step-by-step or narrative answer to a specific problem (e.g. "How to fix X"). Solutions can be pulled like rules and are often used to document fixes or procedures.
+A **documentation** entry is a reference doc, how-to, problem solution, or knowledge base article. Docs can be pulled like rules and are typically stored in `.cursor/docs/`.
 
 ## Skill
 

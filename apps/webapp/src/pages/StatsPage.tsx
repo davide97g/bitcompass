@@ -46,7 +46,7 @@ import type { RuleKind } from '@/types/bitcompass';
 
 const KIND_COLORS: Record<RuleKind, string> = {
   rule: '#0ea5e9',
-  solution: '#10b981',
+  documentation: '#10b981',
   skill: '#8b5cf6',
   command: '#f59e0b',
 };
@@ -274,7 +274,7 @@ export default function StatsPage() {
                 <ChartContainer
                   config={{
                     rule: { label: 'Rules', color: KIND_COLORS.rule },
-                    solution: { label: 'Solutions', color: KIND_COLORS.solution },
+                    documentation: { label: 'Docs', color: KIND_COLORS.documentation },
                     skill: { label: 'Skills', color: KIND_COLORS.skill },
                     command: { label: 'Commands', color: KIND_COLORS.command },
                   }}
@@ -533,7 +533,7 @@ function OverviewCard({
 function KindBadge({ kind }: { kind: RuleKind }) {
   const styles: Record<RuleKind, string> = {
     rule: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-    solution: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    documentation: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     skill: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
     command: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   };

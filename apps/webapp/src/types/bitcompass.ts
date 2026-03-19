@@ -1,4 +1,4 @@
-export type RuleKind = 'rule' | 'solution' | 'skill' | 'command';
+export type RuleKind = 'rule' | 'documentation' | 'skill' | 'command';
 
 export type RuleVisibility = 'private' | 'public';
 

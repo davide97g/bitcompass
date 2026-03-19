@@ -7,7 +7,7 @@ import { pullRuleToFile } from '../lib/rule-file-ops.js';
 import { formatList, shouldUseTable } from '../lib/list-format.js';
 import { runSharePush } from './share.js';
 
-export const runSolutionsSearch = async (
+export const runDocsSearch = async (
   query?: string,
   options?: { listOnly?: boolean }
 ): Promise<void> => {
@@ -16,11 +16,11 @@ export const runSolutionsSearch = async (
     process.exit(1);
   }
   const q = query ?? (await inquirer.prompt<{ q: string }>([{ name: 'q', message: 'Search query', type: 'input' }])).q;
-  const spinner = createSpinner('Searching solutions…');
-  const list = await searchRules(q, { kind: 'solution', limit: 20 });
+  const spinner = createSpinner('Searching docs…');
+  const list = await searchRules(q, { kind: 'documentation', limit: 20 });
   spinner.stop();
   if (list.length === 0) {
-    console.log(chalk.yellow('No solutions found.'));
+    console.log(chalk.yellow('No docs found.'));
     return;
   }
   if (options?.listOnly) {
@@ -33,7 +33,7 @@ export const runSolutionsSearch = async (
   const choice = await inquirer.prompt<{ id: string }>([
     {
       name: 'id',
-      message: 'Select a solution',
+      message: 'Select a doc',
       type: 'list',
       choices: list.map((r) => ({ name: `${r.title} (${r.id})`, value: r.id })),
     },
@@ -45,16 +45,16 @@ export const runSolutionsSearch = async (
   }
 };
 
-export const runSolutionsList = async (options?: { table?: boolean }): Promise<void> => {
+export const runDocsList = async (options?: { table?: boolean }): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
     process.exit(1);
   }
-  const spinner = createSpinner('Loading solutions…');
-  const list = await fetchRules('solution');
+  const spinner = createSpinner('Loading docs…');
+  const list = await fetchRules('documentation');
   spinner.stop();
   if (list.length === 0) {
-    console.log(chalk.yellow('No solutions yet.'));
+    console.log(chalk.yellow('No docs yet.'));
     return;
   }
   const useTable = shouldUseTable(options?.table);
@@ -64,53 +64,53 @@ export const runSolutionsList = async (options?: { table?: boolean }): Promise<v
   );
 };
 
-export const runSolutionsPull = async (id?: string, options?: { global?: boolean; copy?: boolean }): Promise<void> => {
+export const runDocsPull = async (id?: string, options?: { global?: boolean; copy?: boolean }): Promise<void> => {
   if (!loadCredentials()) {
     console.error(chalk.red('Not logged in. Run bitcompass login.'));
     process.exit(1);
   }
   let targetId = id;
   if (!targetId) {
-    const spinner = createSpinner('Loading solutions…');
-    const list = await fetchRules('solution');
+    const spinner = createSpinner('Loading docs…');
+    const list = await fetchRules('documentation');
     spinner.stop();
     if (list.length === 0) {
-      console.log(chalk.yellow('No solutions to pull.'));
+      console.log(chalk.yellow('No docs to pull.'));
       return;
     }
     const choice = await inquirer.prompt<{ id: string }>([
-      { name: 'id', message: 'Select solution', type: 'list', choices: list.map((r) => ({ name: r.title, value: r.id })) },
+      { name: 'id', message: 'Select doc', type: 'list', choices: list.map((r) => ({ name: r.title, value: r.id })) },
     ]);
     targetId = choice.id;
   }
-  
-  const spinner = createSpinner('Pulling solution…');
+
+  const spinner = createSpinner('Pulling doc…');
   try {
     const filename = await pullRuleToFile(targetId, {
       global: options?.global,
       useSymlink: !options?.copy, // Use symlink unless --copy flag is set
     });
-    spinner.succeed(chalk.green('Pulled solution'));
+    spinner.succeed(chalk.green('Pulled doc'));
     console.log(chalk.dim(filename));
     if (options?.copy) {
       console.log(chalk.dim('Copied as file (not a symlink)'));
     } else {
-      console.log(chalk.dim('Created symbolic link to cached solution'));
+      console.log(chalk.dim('Created symbolic link to cached doc'));
     }
     if (options?.global) {
       console.log(chalk.dim('Installed globally for all projects'));
     }
   } catch (error: unknown) {
-    spinner.fail(chalk.red('Failed to pull solution'));
+    spinner.fail(chalk.red('Failed to pull doc'));
     const message = error instanceof Error ? error.message : String(error);
     console.error(chalk.red(message));
     process.exit(message.includes('not found') ? 2 : 1);
   }
 };
 
-export const runSolutionsPush = async (
+export const runDocsPush = async (
   file?: string,
   options?: { projectId?: string }
 ): Promise<void> => {
-  await runSharePush(file, { kind: 'solution', projectId: options?.projectId });
+  await runSharePush(file, { kind: 'documentation', projectId: options?.projectId });
 };

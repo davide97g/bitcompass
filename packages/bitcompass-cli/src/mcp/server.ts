@@ -92,16 +92,16 @@ function createStdioServer(): {
                   type: 'object',
                   properties: {
                     query: { type: 'string', description: 'Search query or keywords' },
-                    kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'], description: 'Optional: restrict to one kind' },
+                    kind: { type: 'string', enum: ['rule', 'documentation', 'skill', 'command'], description: 'Optional: restrict to one kind' },
                     limit: { type: 'number', description: 'Optional: max results (default 20)' },
                   },
                   required: ['query'],
                 },
               },
               {
-                name: 'search-solutions',
+                name: 'search-docs',
                 description:
-                  'Use when the user asks for problem solutions or how-to guides. Returns a list of solutions with id, title, author, and a short snippet. Prefer this over search-rules when the intent is clearly "solutions" or "problem solutions".',
+                  'Use when the user asks for documentation, how-to guides, or reference docs. Returns a list of docs with id, title, author, and a short snippet. Prefer this over search-rules when the intent is clearly "docs" or "documentation".',
                 inputSchema: {
                   type: 'object',
                   properties: { query: { type: 'string', description: 'Search query' }, limit: { type: 'number', description: 'Optional: max results' } },
@@ -111,11 +111,11 @@ function createStdioServer(): {
               {
                 name: 'post-rules',
                 description:
-                  'Use when the user wants to publish or share a new rule, solution, skill, or command to BitCompass. Requires kind, title, and body. When the user says "share" without specifying type, first ask or infer: Rule (behaviors, docs), Solution (how we fixed something), Skill (how AI should behave for X), Command (workflows). Returns the created id and title on success. User must be logged in (bitcompass login).',
+                  'Use when the user wants to publish or share a new rule, doc, skill, or command to BitCompass. Requires kind, title, and body. When the user says "share" without specifying type, first ask or infer: Rule (behaviors, guidelines), Documentation (reference docs, how-tos, knowledge base), Skill (how AI should behave for X), Command (workflows). Returns the created id and title on success. User must be logged in (bitcompass login).',
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'], description: 'Type of entry to publish' },
+                    kind: { type: 'string', enum: ['rule', 'documentation', 'skill', 'command'], description: 'Type of entry to publish' },
                     title: { type: 'string' },
                     description: { type: 'string' },
                     body: { type: 'string' },
@@ -132,12 +132,12 @@ function createStdioServer(): {
 {
                 name: 'get-rule',
                 description:
-                  'Use when you have a rule/solution ID and need the full content (title, description, body, examples, technologies). Returns the complete rule object or an error if not found. Optional kind filter verifies the entry matches that type.',
+                  'Use when you have a rule/doc ID and need the full content (title, description, body, examples, technologies). Returns the complete rule object or an error if not found. Optional kind filter verifies the entry matches that type.',
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    id: { type: 'string', description: 'Rule/solution ID' },
-                    kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'], description: 'Optional: filter by kind' },
+                    id: { type: 'string', description: 'Rule/doc ID' },
+                    kind: { type: 'string', enum: ['rule', 'documentation', 'skill', 'command'], description: 'Optional: filter by kind' },
                   },
                   required: ['id'],
                 },
@@ -145,11 +145,11 @@ function createStdioServer(): {
               {
                 name: 'list-rules',
                 description:
-                  'Use when the user wants to browse or list all rules, solutions, skills, or commands without a search query. Optional kind filter (rule, solution, skill, command) and limit. Returns an array of items with id, title, kind, description, author, snippet, created_at, plus total/returned counts.',
+                  'Use when the user wants to browse or list all rules, docs, skills, or commands without a search query. Optional kind filter (rule, documentation, skill, command) and limit. Returns an array of items with id, title, kind, description, author, snippet, created_at, plus total/returned counts.',
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    kind: { type: 'string', enum: ['rule', 'solution', 'skill', 'command'], description: 'Optional: filter by kind' },
+                    kind: { type: 'string', enum: ['rule', 'documentation', 'skill', 'command'], description: 'Optional: filter by kind' },
                     limit: { type: 'number', description: 'Optional: maximum number of results (default: 50)' },
                   },
                 },
@@ -157,11 +157,11 @@ function createStdioServer(): {
               {
                 name: 'update-rule',
                 description:
-                  'Use when the user wants to edit an existing rule or solution they own. Pass id and any fields to update (title, description, body, context, examples, technologies, globs, always_apply). Returns updated metadata. Requires authentication.',
+                  'Use when the user wants to edit an existing rule or doc they own. Pass id and any fields to update (title, description, body, context, examples, technologies, globs, always_apply). Returns updated metadata. Requires authentication.',
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    id: { type: 'string', description: 'Rule/solution ID to update' },
+                    id: { type: 'string', description: 'Rule/doc ID to update' },
                     title: { type: 'string', description: 'Updated title' },
                     description: { type: 'string', description: 'Updated description' },
                     body: { type: 'string', description: 'Updated body content' },
@@ -177,11 +177,11 @@ function createStdioServer(): {
               {
                 name: 'delete-rule',
                 description:
-                  'Use when the user wants to remove a rule or solution by ID. Returns success or error. Requires authentication; user can only delete their own entries.',
+                  'Use when the user wants to remove a rule or doc by ID. Returns success or error. Requires authentication; user can only delete their own entries.',
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    id: { type: 'string', description: 'Rule/solution ID to delete' },
+                    id: { type: 'string', description: 'Rule/doc ID to delete' },
                   },
                   required: ['id'],
                 },
@@ -189,13 +189,13 @@ function createStdioServer(): {
               {
                 name: 'pull-rule',
                 description:
-                  'Use when the user wants to install a rule, solution, skill, or command into their project (e.g. "pull this rule to my project"). Saves by kind: rules → .cursor/rules (.mdc), skills → .cursor/skills (.md), commands → .cursor/commands (.md, plain), solutions → .cursor/documentation (.md, plain). Uses project config from bitcompass init unless output_path is provided (base path); global installs to ~/.cursor/<folder>. Returns the file path written or an error.',
+                  'Use when the user wants to install a rule, doc, skill, or command into their project (e.g. "pull this rule to my project"). Saves by kind: rules → .cursor/rules (.mdc), skills → .cursor/skills (.md), commands → .cursor/commands (.md, plain), docs → .cursor/docs (.md, plain). Uses project config from bitcompass init unless output_path is provided (base path); global installs to ~/.cursor/<folder>. Returns the file path written or an error.',
                 inputSchema: {
                   type: 'object',
                   properties: {
                     id: { type: 'string', description: 'Rule/solution/skill/command ID to pull' },
                     output_path: { type: 'string', description: 'Optional: custom base path (kind subfolders created under it)' },
-                    global: { type: 'boolean', description: 'Install globally to ~/.cursor/rules|skills|commands|documentation' },
+                    global: { type: 'boolean', description: 'Install globally to ~/.cursor/rules|skills|commands|docs' },
                   },
                   required: ['id'],
                 },
@@ -238,11 +238,11 @@ function createStdioServer(): {
           id,
           result: {
             prompts: [
-              { name: 'share', title: 'Share something', description: 'Guide to publish a rule, solution, skill, or command. Checks for duplicates first, then collects content and publishes.' },
+              { name: 'share', title: 'Share something', description: 'Guide to publish a rule, doc, skill, or command. Checks for duplicates first, then collects content and publishes.' },
               { name: 'share_new_rule', title: 'Share a new rule', description: 'Guide to collect and publish a reusable rule' },
-              { name: 'share_problem_solution', title: 'Share a problem solution', description: 'Guide to collect and publish a problem solution' },
-              { name: 'update', title: 'Update existing content', description: 'Guide to find and update an existing rule, solution, skill, or command you own.' },
-              { name: 'pull', title: 'Pull content into project', description: 'Guide to search for and pull rules, solutions, skills, or commands into your project.' },
+              { name: 'share_documentation', title: 'Share documentation', description: 'Guide to collect and publish a documentation article' },
+              { name: 'update', title: 'Update existing content', description: 'Guide to find and update an existing rule, doc, skill, or command you own.' },
+              { name: 'pull', title: 'Pull content into project', description: 'Guide to search for and pull rules, docs, skills, or commands into your project.' },
               { name: 'sync', title: 'Sync with Compass project', description: 'Guide to sync local content with the linked Compass project (delegates to CLI).' },
             ],
           },
@@ -263,8 +263,8 @@ function createStdioServer(): {
                   content: {
                     type: 'text',
                     text: `You are helping the user share something to BitCompass. First determine what they are sharing. If they already said (e.g. "share this rule", "share this workflow"), use that; otherwise ask with a single choice:
-- Rule: Behaviors, documentation, or how-to for the AI (e.g. i18n guide, coding standards).
-- Solution: How we fixed or implemented a specific problem.
+- Rule: Behaviors, guidelines, or standards for the AI (e.g. i18n guide, coding standards).
+- Documentation: Reference docs, how-tos, problem solutions, or knowledge base articles.
 - Skill: How the AI should behave in a domain (e.g. front-end design, back-end implementation).
 - Command (workflow): A workflow or command (e.g. release checklist).
 
@@ -290,13 +290,13 @@ Then collect: title, description, body (and optionally context, examples, techno
           });
           return;
         }
-        if (name === 'share_problem_solution') {
+        if (name === 'share_documentation') {
           send({
             jsonrpc: '2.0',
             id,
             result: {
               messages: [
-                { role: 'user', content: { type: 'text', text: 'You are helping share a problem solution. Collect: problem title, description, and solution text. Ask one question at a time. Then call post-rules with kind: "solution".' } },
+                { role: 'user', content: { type: 'text', text: 'You are helping share documentation. Collect: title, description, and documentation body. Ask one question at a time. Then call post-rules with kind: "documentation".' } },
               ],
             },
           });
@@ -340,7 +340,7 @@ Then collect: title, description, body (and optionally context, examples, techno
                     text: `You are helping the user pull content from BitCompass into their project.
 
 1. Ask what they are looking for — a topic, keyword, or specific ID.
-2. Use search-rules (or search-solutions for solutions) to find matches. Present the results.
+2. Use search-rules (or search-docs for documentation) to find matches. Present the results.
 3. Ask which item(s) to pull. The user can select one or more.
 4. For each selected item, call pull-rule with its ID. Report the file path written.
 5. Summarize what was pulled and where the files are.`,
@@ -363,7 +363,7 @@ Then collect: title, description, body (and optionally context, examples, techno
                     type: 'text',
                     text: `You are helping the user sync their local project with their linked Compass project.
 
-Sync keeps local rules, skills, commands, and solutions in sync with the remote Compass project. This is a CLI operation — delegate to the terminal.
+Sync keeps local rules, skills, commands, and docs in sync with the remote Compass project. This is a CLI operation — delegate to the terminal.
 
 Options:
 - \`bitcompass sync --check\` — show what would change without applying
@@ -443,14 +443,14 @@ Ask the user what kind of sync they want, then run the appropriate CLI command. 
       return { error: msg };
     }
   });
-  handlers.set('search-solutions', async (args: ToolArgs) => {
+  handlers.set('search-docs', async (args: ToolArgs) => {
     const query = (args.query as string) ?? '';
     const limit = (args.limit as number) ?? 20;
     try {
-      const list = await searchRules(query, { kind: 'solution', limit });
-      const summary = list.length === 0 ? 'No solutions found.' : `Found ${list.length} solution(s).`;
+      const list = await searchRules(query, { kind: 'documentation', limit });
+      const summary = list.length === 0 ? 'No docs found.' : `Found ${list.length} doc(s).`;
       return {
-        solutions: list.map((r) => ({ id: r.id, title: r.title, author: r.author_display_name ?? null, snippet: r.body.slice(0, 200) })),
+        docs: list.map((r) => ({ id: r.id, title: r.title, author: r.author_display_name ?? null, snippet: r.body.slice(0, 200) })),
         summary,
       };
     } catch (e) {
@@ -497,7 +497,7 @@ handlers.set('get-rule', async (args: ToolArgs) => {
     try {
       const rule = await getRuleById(id);
       if (!rule) {
-        return { error: `Rule or solution with ID ${id} not found.` };
+        return { error: `Rule or doc with ID ${id} not found.` };
       }
       if (kind && rule.kind !== kind) {
         return { error: `Rule with ID ${id} is a ${rule.kind}, not a ${kind}.` };

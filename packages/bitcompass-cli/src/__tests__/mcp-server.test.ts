@@ -132,7 +132,7 @@ describe('MCP server', () => {
 
     // Core tools
     expect(toolNames).toContain('search-rules');
-    expect(toolNames).toContain('search-solutions');
+    expect(toolNames).toContain('search-docs');
     expect(toolNames).toContain('post-rules');
     expect(toolNames).toContain('get-rule');
     expect(toolNames).toContain('list-rules');
@@ -182,7 +182,7 @@ describe('MCP server', () => {
 
     expect(promptNames).toContain('share');
     expect(promptNames).toContain('share_new_rule');
-    expect(promptNames).toContain('share_problem_solution');
+    expect(promptNames).toContain('share_documentation');
     expect(promptNames).toContain('update');
     expect(promptNames).toContain('pull');
     expect(promptNames).toContain('sync');

@@ -35,7 +35,7 @@ export function FileTreeFileItem({
           kind === 'rule' && !isSpecial && 'border-l-sky-400',
           kind === 'skill' && !isSpecial && 'border-l-violet-400',
           kind === 'command' && !isSpecial && 'border-l-amber-400',
-          kind === 'solution' && !isSpecial && 'border-l-emerald-400',
+          kind === 'documentation' && !isSpecial && 'border-l-emerald-400',
           isSpecial && 'border-l-orange-400',
         ],
         !isSelected && 'border-l-2 border-l-transparent',

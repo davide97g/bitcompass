@@ -44,7 +44,7 @@ import {
 
 const CARD_KIND_CLASSES: Record<RuleKind, string> = {
   rule: 'dark:border-l-sky-500/30',
-  solution: 'dark:border-l-emerald-500/30',
+  documentation: 'dark:border-l-emerald-500/30',
   skill: 'dark:border-l-violet-500/30',
   command: 'dark:border-l-amber-500/30',
 };
@@ -379,7 +379,7 @@ export default function GroupDetailPage() {
                         className={cn(
                           'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border capitalize',
                           rule.kind === 'rule' && 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-                          rule.kind === 'solution' && 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                          rule.kind === 'documentation' && 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
                           rule.kind === 'skill' && 'bg-violet-500/10 text-violet-400 border-violet-500/20',
                           rule.kind === 'command' && 'bg-amber-500/10 text-amber-400 border-amber-500/20',
                         )}

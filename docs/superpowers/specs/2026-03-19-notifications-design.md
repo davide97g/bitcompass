@@ -22,7 +22,7 @@ Add an in-app real-time notification system to BitCompass webapp. Users receive 
 | `type` | `text` ('pull' \| 'push') | Action that triggered the notification |
 | `rule_id` | `uuid` (FK → rules) | The rule acted upon |
 | `rule_title` | `text` | Denormalized rule title at time of action |
-| `project_id` | `uuid` (FK → compass_projects, nullable) | Associated project |
+| `compass_project_id` | `uuid` (FK → compass_projects, nullable) | Associated project |
 | `project_name` | `text` (nullable) | Denormalized project name |
 | `actor_id` | `uuid` (FK → auth.users) | User who performed the action |
 | `actor_name` | `text` | Denormalized actor display name |
@@ -48,25 +48,61 @@ Unique constraint: `(user_id, rule_id)`.
 - `notifications`: Users can SELECT, UPDATE (read/dismissed only) their own rows (`user_id = auth.uid()`). INSERT restricted to service role (trigger).
 - `rule_watches`: Users can SELECT, INSERT, DELETE their own rows (`user_id = auth.uid()`).
 
-### Postgres Trigger
+### Postgres Triggers
 
-**Trigger:** `after_download_insert` on `downloads` table, fires `AFTER INSERT`.
+Two triggers generate notifications for different actions:
+
+#### Column name mapping
+
+The `rules` table uses `project_id` while `downloads` and `notifications` use `compass_project_id`. These refer to the same FK target (`compass_projects.id`). Triggers must map accordingly:
+- Trigger 1: use `downloads.compass_project_id` for the project lookup
+- Trigger 2: use `rules.project_id` → store as `notifications.compass_project_id`
+
+When `project_id` is NULL, skip the `compass_project_members` query and set `project_name = NULL`.
+
+#### Actor identification for push
+
+The `rules` table has no `updated_by` column — `user_id` is the original owner. To correctly attribute push actions, add an `updated_by` column to `rules`:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `updated_by` | `uuid` (FK → auth.users, nullable) | Last user who modified the rule |
+
+This column is set by the client on update (CLI sync sets it to the authenticated user). The trigger uses `COALESCE(NEW.updated_by, NEW.user_id)` as the actor.
+
+#### Trigger function privileges
+
+Both trigger functions are created with `SECURITY DEFINER` to bypass RLS on the `notifications` table (since RLS restricts INSERT to service role).
+
+#### Trigger 1: `after_download_insert` on `downloads` table
+
+Fires `AFTER INSERT`. All downloads are pulls (the `downloads` table only tracks pull activity from CLI/MCP/sync).
 
 **Logic:**
 1. Determine watchers:
-   - Query `rule_watches` for users watching this `rule_id`
-   - Query `compass_project_members` for members of the rule's `project_id`
+   - Query `rule_watches` for users watching `NEW.rule_id`
+   - Query `compass_project_members` for members of `NEW.compass_project_id` (skip if NULL)
    - Union both sets, deduplicate
    - Exclude the actor (`NEW.user_id`)
-2. For each watcher, INSERT into `notifications` with denormalized title/project/actor info (joined from `rules`, `compass_projects`, `profiles`)
-3. Determine action type: map `downloads.editor` / `downloads.source` to 'pull' or 'push'
-4. Call `pg_notify('notifications', json_payload)` for Supabase Realtime broadcast
+2. For each watcher, INSERT into `notifications` with `type = 'pull'` and denormalized title/project/actor info (joined from `rules`, `compass_projects`, `profiles`)
+
+#### Trigger 2: `after_rule_upsert` on `rules` table
+
+Fires `AFTER INSERT OR UPDATE`. Pushes are represented as inserts or updates to the `rules` table (from CLI sync push-new / push-update).
+
+**Logic:**
+1. Determine watchers:
+   - Query `rule_watches` for users watching `NEW.id`
+   - Query `compass_project_members` for members of `NEW.project_id` (skip if NULL)
+   - Union both sets, deduplicate
+   - Exclude the actor (`COALESCE(NEW.updated_by, NEW.user_id)`)
+2. For each watcher, INSERT into `notifications` with `type = 'push'` and denormalized info
+
+**Guard:** To avoid noisy notifications on minor edits, only fire when `NEW.version IS DISTINCT FROM OLD.version` (for updates) or always for inserts.
 
 ## Real-time Architecture
 
-Two parallel Supabase Realtime channels per connected client:
-
-### Channel 1: Postgres Changes (Persistent)
+**Single Supabase Realtime channel** per connected client using Postgres Changes:
 
 ```
 supabase
@@ -80,31 +116,22 @@ supabase
   .subscribe()
 ```
 
-- Powers notification center: updates badge count, prepends new items to list
-- On receive: invalidate React Query cache for notifications
+This single channel powers both:
+- **Toast:** On new event, immediately fire a Sonner toast with the notification payload
+- **Notification center:** Invalidate React Query cache → badge count updates + list refreshes
 
-### Channel 2: Broadcast (Ephemeral)
-
-```
-supabase
-  .channel(`notifications:${userId}`)
-  .on('broadcast', { event: 'new-notification' }, callback)
-  .subscribe()
-```
-
-- Fired by the Postgres trigger via `pg_notify`
-- Powers instant Sonner toast
-- If user is offline, toast is lost but persistent notification remains in table
+No separate Broadcast channel needed — Postgres Changes already delivers the INSERT event in real-time with the full row payload, which is sufficient for both toast and list updates.
 
 ### Client-side Flow
 
 ```
-App mount → subscribe to both channels + fetch initial unread count
+App mount → subscribe to Postgres Changes on notifications table + fetch initial unread count
 
-Broadcast event → fire Sonner toast with NotificationToast component
-Postgres Changes event → invalidate React Query → badge + list update
+New INSERT event arrives:
+  → Fire Sonner toast with NotificationToast component
+  → Invalidate React Query cache → badge + list update
 
-Offline → reconnect → React Query refetches unread notifications
+Offline → reconnect → React Query refetches unread notifications (no missed persistent data)
 ```
 
 ## Frontend Components
@@ -116,7 +143,7 @@ Offline → reconnect → React Query refetches unread notifications
 | `hooks/use-notifications.ts` | React Query queries (unread count, paginated list) + Supabase Realtime subscriptions + toast firing |
 | `hooks/use-rule-watch.ts` | Watch/unwatch toggle, check watch status for a rule |
 | `components/notifications/NotificationBell.tsx` | Bell icon button (Lucide `Bell`) with red badge counter, triggers Popover |
-| `components/notifications/NotificationCenter.tsx` | Popover content: header ("Notifications" + count badge + "Mark all read" button with ⌘⇧D shortcut), scrollable list, "View all" footer |
+| `components/notifications/NotificationCenter.tsx` | Popover content: header ("Notifications" + count badge + "Mark all read" button with ⌘⇧D shortcut), scrollable list |
 | `components/notifications/NotificationItem.tsx` | Single row: action type badge (Pull=blue, Push=purple), rule title, project + author, view icon (Eye) + dismiss icon (X) |
 | `components/notifications/NotificationToast.tsx` | Custom Sonner toast component with same layout as NotificationItem |
 
@@ -156,4 +183,5 @@ Offline → reconnect → React Query refetches unread notifications
 - Email/push browser notifications
 - Notification preferences/settings page
 - Filtering notifications by type
-- Full notification history page ("View all" is a future enhancement)
+- Full notification history page
+- Notification retention/cleanup (may be needed at scale, deferred)

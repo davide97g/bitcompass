@@ -5,6 +5,7 @@ import inquirer from 'inquirer';
 import {
   fetchRules,
   getCompassProjectById,
+  getCurrentUserId,
   insertRule,
   updateRule,
 } from '../api/client.js';
@@ -400,6 +401,7 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
   }
 
   // 11. Apply sync
+  const currentUserId = getCurrentUserId();
   let pulledCount = 0;
   let pushedCount = 0;
   let prunedCount = 0;
@@ -439,6 +441,7 @@ export const runSync = async (options: SyncOptions): Promise<void> => {
           always_apply: parsed.always_apply,
           version: newVersion,
           relative_path: relativePath,
+          updated_by: currentUserId,
         });
         // Update local file frontmatter with new version
         const updated = writeIdToFrontmatter(raw, item.id, newVersion);

@@ -45,6 +45,21 @@ export function FooterSection() {
               <Linkedin className="w-3.5 h-3.5" />
             </a>
           </span>
+          <span className="text-gray-700">·</span>
+          <a
+            href="https://viteplus.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-400 hover:text-white transition-colors inline-flex items-center gap-1.5"
+          >
+            Built with
+            <img
+              src="https://viteplus.dev/icon.svg"
+              alt="Vite+"
+              className="w-4 h-4"
+            />
+            <span>Vite+</span>
+          </a>
         </div>
       </div>
     </footer>

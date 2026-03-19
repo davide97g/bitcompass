@@ -1,18 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import type { Rule, RuleKind, Profile, CompassProject, Download } from '@/types/bitcompass';
-
-// ── Raw download row (only the columns we select) ──────────────────────────
-
-interface DownloadRow {
-  id: string;
-  rule_id: string;
-  user_id: string;
-  editor: string | null;
-  compass_project_id: string | null;
-  source: string;
-  created_at: string;
-}
+import type { RuleKind } from '@/types/bitcompass';
 
 // ── Overview ────────────────────────────────────────────────────────────────
 

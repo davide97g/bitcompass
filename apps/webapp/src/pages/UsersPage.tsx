@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useAllUserStats } from '@/hooks/use-user-stats';
 import { useAuth } from '@/hooks/use-auth';
 import { isSupabaseConfigured } from '@/lib/supabase';
-import { Search, Users, BookMarked, Layers, Globe, Lock } from 'lucide-react';
+import { Search, Users, Layers, Globe, Lock } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';

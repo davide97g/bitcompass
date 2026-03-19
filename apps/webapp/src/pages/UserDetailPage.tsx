@@ -1,37 +1,35 @@
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
+import { RulesPageSkeleton } from '@/components/skeletons';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-  PaginationEllipsis,
 } from '@/components/ui/pagination';
-import { useRulesPaginated } from '@/hooks/use-rules';
-import { useCompassProjects } from '@/hooks/use-compass-projects';
-import { useProfile } from '@/hooks/use-profiles';
-import { useAuth } from '@/hooks/use-auth';
-import { useUserStats } from '@/hooks/use-user-stats';
-import { useToast } from '@/hooks/use-toast';
-import type { Rule, RuleKind, RuleVisibility } from '@/types/bitcompass';
-import { BookMarked, Download, FileDown, Search, User, Link2, GitFork, Lock, Globe, ArrowLeft, Layers } from 'lucide-react';
-import { PageHeader } from '@/components/ui/page-header';
-import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, XAxis, YAxis, Cell, Pie, PieChart } from 'recharts';
-import { ruleDownloadBasename } from '@/lib/utils';
-import { getTechStyle } from '@/lib/tech-styles';
-import { RulesPageSkeleton } from '@/components/skeletons';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/use-auth';
+import { useCompassProjects } from '@/hooks/use-compass-projects';
 import { useUserDownloadsReceived } from '@/hooks/use-download-stats';
+import { useProfile } from '@/hooks/use-profiles';
+import { useRulesPaginated } from '@/hooks/use-rules';
+import { useToast } from '@/hooks/use-toast';
+import { useUserStats } from '@/hooks/use-user-stats';
+import { getTechStyle } from '@/lib/tech-styles';
+import { cn, ruleDownloadBasename } from '@/lib/utils';
+import type { Rule, RuleKind } from '@/types/bitcompass';
+import { BookMarked, Download, FileDown, GitFork, Globe, Layers, Link2, Lock, Search } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Pie, PieChart } from 'recharts';
 
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
@@ -95,7 +93,6 @@ const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
   }
 };
 
-const VALID_KINDS: Array<RuleKind | 'all'> = ['all', 'rule', 'documentation', 'skill', 'command'];
 const RULES_PAGE_SIZE = 20;
 
 export default function UserDetailPage() {

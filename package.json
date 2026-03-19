@@ -11,6 +11,6 @@
     "sonar:fetch": "bunx sonarflow fetch"
   },
   "devDependencies": {
-    "turbo": "^2"
+    "turbo": "^2.8.19"
   }
 }

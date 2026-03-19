@@ -26,6 +26,8 @@ export interface Rule {
   special_file_target?: string | null;
   /** Optional subdirectory relative to project root for monorepo scoping. */
   relative_path?: string | null;
+  /** Last user who modified this rule (for notification attribution). */
+  updated_by?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -49,6 +51,8 @@ export interface RuleInsert {
   special_file_target?: string | null;
   /** Optional subdirectory relative to project root for monorepo scoping. */
   relative_path?: string | null;
+  /** Set to authenticated user ID on update for notification attribution. */
+  updated_by?: string | null;
 }
 
 export interface Profile {
@@ -98,5 +102,29 @@ export interface Download {
   editor: string | null;
   compass_project_id: string | null;
   source: 'cli' | 'mcp' | 'sync';
+  created_at: string;
+}
+
+export type NotificationType = 'pull' | 'push';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  rule_id: string;
+  rule_title: string;
+  compass_project_id: string | null;
+  project_name: string | null;
+  actor_id: string;
+  actor_name: string;
+  read: boolean;
+  dismissed: boolean;
+  created_at: string;
+}
+
+export interface RuleWatch {
+  id: string;
+  user_id: string;
+  rule_id: string;
   created_at: string;
 }

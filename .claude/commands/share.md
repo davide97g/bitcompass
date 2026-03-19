@@ -1,3 +1,7 @@
+---
+id: ea46cb7a-96bf-402b-8ba2-810d058afb24
+version: "1.0.0"
+---
 Help me share something to BitCompass.
 
 ## Steps

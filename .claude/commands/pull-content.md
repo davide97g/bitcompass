@@ -1,3 +1,7 @@
+---
+id: ae97e8f7-98c8-4a8c-9a57-6bea7dacf724
+version: "1.0.0"
+---
 Help me pull content from BitCompass into this project.
 
 ## Steps

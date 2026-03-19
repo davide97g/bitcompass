@@ -1,6 +1,8 @@
 ---
 name: bitcompass-usage
 description: How to use BitCompass MCP tools, CLI commands, and slash commands for managing rules, solutions, skills, and commands
+id: c8e116e0-bc7f-4b4c-9e98-e973165fd67a
+version: "1.0.0"
 ---
 
 # BitCompass Usage Guide

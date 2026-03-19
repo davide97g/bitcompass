@@ -1,3 +1,7 @@
+---
+id: d8c00cb4-af9a-4eb2-b4a2-7804604a48c6
+version: "1.0.0"
+---
 Help me sync this project with the linked Compass project.
 
 Sync keeps local rules, skills, commands, and solutions in sync with the remote Compass project. This is a CLI operation.

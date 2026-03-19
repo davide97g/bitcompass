@@ -1,3 +1,7 @@
+---
+id: 3dae4755-68b0-453b-9516-4fd9c3b9a631
+version: "1.0.0"
+---
 Help me update an existing item in BitCompass.
 
 ## Steps

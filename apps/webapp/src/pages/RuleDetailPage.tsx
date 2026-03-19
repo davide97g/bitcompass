@@ -25,6 +25,7 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { useProfilesByIds } from '@/hooks/use-profiles';
 import { useToast } from '@/hooks/use-toast';
+import { useRuleWatch, useToggleRuleWatch } from '@/hooks/use-rule-watch';
 import { Switch } from '@/components/ui/switch';
 import type { Rule, RuleKind, RuleVisibility } from '@/types/bitcompass';
 import {
@@ -32,6 +33,8 @@ import {
   Check,
   Copy,
   Download,
+  Eye,
+  EyeOff,
   FileDown,
   FolderTree,
   Layers,
@@ -137,6 +140,9 @@ export default function RuleDetailPage() {
   const { data: allGroups = [] } = useRuleGroups();
   const addToGroup = useAddRuleToGroup();
   const removeFromGroup = useRemoveRuleFromGroup();
+  const { data: watchData } = useRuleWatch(id);
+  const toggleWatch = useToggleRuleWatch();
+  const isWatching = Boolean(watchData);
   const isOwner = Boolean(user && rule && user.id === rule.user_id);
   const assignedGroupIds = new Set(ruleGroups.map((g) => g.id));
   const availableGroups = allGroups.filter((g) => !assignedGroupIds.has(g.id));
@@ -297,6 +303,16 @@ export default function RuleDetailPage() {
             <div className="flex items-center gap-1.5 shrink-0">
               {!editing ? (
                 <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleWatch.mutate({ ruleId: rule.id, isWatching })}
+                    className="h-8 w-8 p-0"
+                    aria-label={isWatching ? 'Unwatch' : 'Watch'}
+                    disabled={toggleWatch.isPending}
+                  >
+                    {isWatching ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
                   {isOwner && (
                     <Button variant="ghost" size="sm" onClick={handleStartEdit} className="h-8 w-8 p-0" aria-label="Edit">
                       <Pencil className="h-4 w-4" />

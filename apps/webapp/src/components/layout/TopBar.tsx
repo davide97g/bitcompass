@@ -19,6 +19,7 @@ import { Fingerprint, LogOut, Menu, Search, ShieldOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SearchResults } from './SearchResults';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const getUserAvatarUrl = (user: { user_metadata?: Record<string, unknown> } | null): string | undefined => {
   if (!user?.user_metadata) return undefined;
@@ -156,6 +157,7 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
       {/* User avatar with dropdown - pushed to top right */}
       <div className="flex items-center gap-3 ml-auto shrink-0">
         <ThemeToggle />
+        <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button

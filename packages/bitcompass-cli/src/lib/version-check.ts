@@ -3,6 +3,7 @@ import { join } from 'path';
 import { spawn } from 'child_process';
 import chalk from 'chalk';
 import { getConfigDir } from '../auth/config.js';
+import { compareVersion } from './semver.js';
 
 const CHECK_FILE = 'update-check.json';
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
@@ -62,18 +63,6 @@ const spawnBackgroundCheck = (): void => {
     // Silently ignore spawn errors
   }
 };
-
-function compareVersion(a: string, b: string): number {
-  const pa = a.split('.').map((s) => parseInt(s, 10));
-  const pb = b.split('.').map((s) => parseInt(s, 10));
-  const len = Math.max(pa.length, pb.length);
-  for (let i = 0; i < len; i++) {
-    const na = pa[i] ?? 0;
-    const nb = pb[i] ?? 0;
-    if (na !== nb) return na > nb ? 1 : -1;
-  }
-  return 0;
-}
 
 /**
  * Renders a bordered update notification box matching the BitCompass CLI aesthetic.

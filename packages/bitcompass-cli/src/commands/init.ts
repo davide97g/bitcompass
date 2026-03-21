@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { compareVersion } from '../lib/semver.js';
 import { execSync } from 'child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import inquirer from 'inquirer';
@@ -211,7 +212,10 @@ export const runInit = async (): Promise<void> => {
   // Offer migration for old configs
   if (
     existing &&
-    (existing.configVersion === undefined || existing.configVersion < CURRENT_CONFIG_VERSION)
+    (existing.configVersion === undefined ||
+      typeof existing.configVersion === 'number' ||
+      (typeof existing.configVersion === 'string' &&
+        compareVersion(existing.configVersion, CURRENT_CONFIG_VERSION) < 0))
   ) {
     const { shouldMigrate } = await inquirer.prompt<{ shouldMigrate: boolean }>([
       {

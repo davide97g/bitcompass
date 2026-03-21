@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { compareVersion } from '../lib/semver.js';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
 import type { EditorProvider, ProjectConfig, RuleKind } from '../types.js';
@@ -74,7 +75,7 @@ export const SPECIAL_FILE_TARGETS: Record<string, { path: string; description: s
 };
 
 /** Bump this when file layout changes require migration. */
-export const CURRENT_CONFIG_VERSION = 1;
+export const CURRENT_CONFIG_VERSION = '0.16.0';
 
 const DEFAULT_EDITOR: EditorProvider = 'cursor';
 const DEFAULT_OUTPUT_PATH = EDITOR_DEFAULT_PATHS[DEFAULT_EDITOR];
@@ -98,7 +99,7 @@ export const loadProjectConfig = (): ProjectConfig | null => {
       outputPath?: string;
       compassProjectId?: string | null;
       defaultSharing?: string;
-      configVersion?: number;
+      configVersion?: number | string;
     };
     const editor = data.editor as EditorProvider | undefined;
     const outputPath = typeof data.outputPath === 'string' ? data.outputPath : undefined;
@@ -116,7 +117,7 @@ export const loadProjectConfig = (): ProjectConfig | null => {
             Object.keys(EDITOR_DEFAULT_PATHS).includes(e)
           )
         : undefined;
-      const configVersion = typeof data.configVersion === 'number' ? data.configVersion : undefined;
+      const configVersion = typeof data.configVersion === 'string' || typeof data.configVersion === 'number' ? data.configVersion : undefined;
       return { editor, outputPath, editors: editors?.length ? editors : undefined, compassProjectId, defaultSharing, configVersion };
     }
     return null;
@@ -151,7 +152,10 @@ export const getProjectConfig = (options?: { warnIfMissing?: boolean }): Project
   if (config) {
     if (
       !warnedMigration &&
-      (config.configVersion === undefined || config.configVersion < CURRENT_CONFIG_VERSION) &&
+      (config.configVersion === undefined ||
+        typeof config.configVersion === 'number' ||
+        (typeof config.configVersion === 'string' &&
+          compareVersion(config.configVersion, CURRENT_CONFIG_VERSION) < 0)) &&
       process.stderr.isTTY
     ) {
       warnedMigration = true;

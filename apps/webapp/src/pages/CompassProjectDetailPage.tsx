@@ -26,29 +26,30 @@ import {
 import { useProfilesByIds, useProfilesSearch } from '@/hooks/use-profiles';
 import { useRulesPaginated } from '@/hooks/use-rules';
 import { useToast } from '@/hooks/use-toast';
-import { getTechStyle } from '@/lib/tech-styles';
-import { cn, ruleDownloadBasename } from '@/lib/utils';
-import { CARD_KIND_CLASSES } from '@/components/file-tree/file-tree-constants';
+import { cn } from '@/lib/utils';
 import type { Rule, RuleKind } from '@/types/bitcompass';
 import {
-  ArrowLeft,
   BookMarked,
+  Check,
+  Copy,
   Download,
-  FileDown,
-  GitFork,
-  Link2,
+  FileText,
+  Globe,
+  Lock,
   LogOut,
+  Pencil,
   Search,
   Settings,
+  Terminal,
   Trash2,
-  User,
   UserPlus,
   Users,
 } from 'lucide-react';
+import { formatDistanceToNowStrict } from 'date-fns';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useProjectDownloadTotal } from '@/hooks/use-download-stats';
+import { useProjectDownloadTotal, useRuleDownloadCounts } from '@/hooks/use-download-stats';
 
 const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string => {
   const prefixMap: Record<RuleKind, string> = {
@@ -59,10 +60,6 @@ const getPullCommand = (ruleId: string, kind: RuleKind, useCopy = false): string
   };
   return `${prefixMap[kind]}${ruleId}${useCopy ? ' --copy' : ''}`;
 };
-
-const getKindLabel = (kind: RuleKind): string =>
-  ({ rule: 'rule', documentation: 'documentation', skill: 'skill', command: 'command' }[kind]);
-
 
 const highlightText = (text: string, query: string): React.ReactNode => {
   const q = query.trim();
@@ -86,29 +83,23 @@ const highlightText = (text: string, query: string): React.ReactNode => {
   return parts.length > 0 ? parts : text;
 };
 
-const downloadRule = (rule: Rule, format: 'json' | 'markdown'): void => {
-  const basename = ruleDownloadBasename(rule.title, rule.id);
-  if (format === 'json') {
-    const blob = new Blob([JSON.stringify(rule, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${basename}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } else {
-    const text = `# ${rule.title}\n\n${rule.description}\n\n${rule.body}\n`;
-    const blob = new Blob([text], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${basename}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-};
 
 const LINKED_PAGE_SIZE = 20;
+
+const KIND_BADGE_CLASSES: Record<RuleKind, string> = {
+  rule: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
+  documentation: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  skill: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  command: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+};
+
+const SPECIAL_FILE_TARGETS: Record<string, { path: string; description: string }> = {
+  'claude.md': { path: 'CLAUDE.md', description: 'Claude Code project instructions' },
+  'agents.md': { path: 'AGENTS.md', description: 'OpenAI Codex instructions' },
+  'cursorrules': { path: '.cursorrules', description: 'Cursor legacy rules' },
+  'copilot-instructions': { path: '.github/copilot-instructions.md', description: 'GitHub Copilot instructions' },
+  'windsurfrules': { path: '.windsurfrules', description: 'Windsurf rules' },
+};
 
 export default function CompassProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -140,6 +131,7 @@ export default function CompassProjectDetailPage() {
   const [rulesKindFilter, setRulesKindFilter] = useState<RuleKind | 'all'>('all');
   const [rulesPage, setRulesPage] = useState(1);
   const [copiedRuleId, setCopiedRuleId] = useState<string | null>(null);
+  const [setupCopied, setSetupCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'files' | 'content' | 'members' | 'setup'>('files');
   const { data: projectDownloads } = useProjectDownloadTotal(id);
 
@@ -157,6 +149,8 @@ export default function CompassProjectDetailPage() {
   const linkedRules = rulesPaginated?.data ?? [];
   const linkedTotal = rulesPaginated?.total ?? 0;
   const linkedTotalPages = Math.max(1, Math.ceil(linkedTotal / LINKED_PAGE_SIZE));
+  const linkedRuleIds = useMemo(() => linkedRules.map((r) => r.id), [linkedRules]);
+  const { data: linkedDownloadCounts = {} } = useRuleDownloadCounts(linkedRuleIds);
 
   const handleSaveTitle = async () => {
     if (!id || !titleValue.trim()) return;
@@ -219,7 +213,17 @@ export default function CompassProjectDetailPage() {
 
   const handleLeaveProject = () => {
     if (!id || !currentUser?.id) return;
-    handleRemoveMember(currentUser.id).then(() => navigate('/compass-projects'));
+    handleRemoveMember(currentUser.id).then(() => navigate('/projects'));
+  };
+
+  const handleCopySetup = async () => {
+    try {
+      await navigator.clipboard.writeText('bitcompass project pull');
+      setSetupCopied(true);
+      setTimeout(() => setSetupCopied(false), 2000);
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleCopyPullCommand = async (rule: Rule, useCopy = false) => {
@@ -246,8 +250,8 @@ export default function CompassProjectDetailPage() {
     return (
       <div className="max-w-4xl mx-auto flex flex-col items-center justify-center py-12">
         <p className="text-muted-foreground">Project not found</p>
-        <Button variant="link" onClick={() => navigate('/compass-projects')}>
-          Back to Compass projects
+        <Button variant="link" onClick={() => navigate('/projects')}>
+          Back to Projects
         </Button>
       </div>
     );
@@ -257,114 +261,150 @@ export default function CompassProjectDetailPage() {
   const showDescriptionEdit = editingDescription;
 
   return (
-    <div className="space-y-6">
-      <PageBreadcrumb
-        items={[
-          { label: 'Compass projects', href: '/compass-projects' },
-          { label: project.title },
-        ]}
-      />
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-2"
-        onClick={() => navigate('/compass-projects')}
-        aria-label="Back to Compass projects"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Compass projects
-      </Button>
-
-      {/* Title */}
-      <div>
-        {showTitleEdit ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              value={titleValue || project.title}
-              onChange={(e) => setTitleValue(e.target.value)}
-              placeholder="Project title"
-              className="max-w-md"
-              aria-label="Project title"
-            />
-            <Button size="sm" onClick={handleSaveTitle} disabled={updateProject.isPending}>
-              Save
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setEditingTitle(false)}>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{project.title}</h1>
-            {projectDownloads != null && projectDownloads > 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border bg-white/5 text-muted-foreground border-white/10">
-                <Download className="h-3 w-3" />
-                {projectDownloads} pull{projectDownloads === 1 ? '' : 's'}
-              </span>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setEditingTitle(true);
-                setTitleValue(project.title);
-              }}
-              aria-label="Edit title"
-            >
-              Edit
-            </Button>
-          </div>
-        )}
+    <div className="space-y-0">
+      {/* ── Breadcrumb + back ── */}
+      <div className="flex items-center gap-2 pb-4">
+        <PageBreadcrumb
+          items={[
+            { label: 'Projects', href: '/projects' },
+            { label: project.title },
+          ]}
+        />
       </div>
 
-      {/* Description */}
-      <div>
-        {showDescriptionEdit ? (
-          <div className="space-y-2">
-            <Label htmlFor="project-description">Description</Label>
-            <Input
-              id="project-description"
-              value={descriptionValue !== '' ? descriptionValue : project.description}
-              onChange={(e) => setDescriptionValue(e.target.value)}
-              placeholder="Optional description"
-              aria-label="Project description"
-            />
-            <div className="flex gap-2">
-              <Button size="sm" onClick={handleSaveDescription} disabled={updateProject.isPending}>
-                Save
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setEditingDescription(false);
-                  setDescriptionValue('');
-                }}
+      {/* ── Hero Section ── */}
+      <div className="relative -mx-6 overflow-hidden border-b border-border dark:border-white/10">
+        <div className="absolute inset-0 dark:bg-gradient-to-b dark:from-violet-950/20 dark:to-transparent bg-gradient-to-b from-blue-50 to-transparent pointer-events-none" />
+        <div className="relative px-6 pt-10 pb-8">
+          <div className="max-w-4xl">
+            {/* ── Title ── */}
+            {showTitleEdit ? (
+              <div className="flex flex-col gap-1">
+                <input
+                  value={titleValue}
+                  onChange={(e) => setTitleValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void handleSaveTitle();
+                    if (e.key === 'Escape') setEditingTitle(false);
+                  }}
+                  placeholder="Project title"
+                  aria-label="Project title"
+                  // biome-ignore lint/a11y/noAutofocus: intentional focus when edit is triggered
+                  autoFocus
+                  className={cn(
+                    'font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground',
+                    'bg-transparent border-0 border-b-2 border-violet-500/50 focus:border-violet-400',
+                    'outline-none w-full pb-1 transition-colors duration-150',
+                    'placeholder:text-muted-foreground/30'
+                  )}
+                />
+                <span className="text-[11px] text-muted-foreground/40 dark:text-zinc-600 tracking-wide select-none">
+                  ↵ save &nbsp;·&nbsp; esc cancel
+                </span>
+              </div>
+            ) : (
+              // biome-ignore lint/a11y/useSemanticElements: group div needed for hover affordance
+              <div
+                className="group/title inline-flex items-center gap-3 flex-wrap cursor-text"
+                onClick={() => { setEditingTitle(true); setTitleValue(project.title); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { setEditingTitle(true); setTitleValue(project.title); } }}
+                role="button"
+                tabIndex={0}
+                aria-label="Edit project title"
               >
-                Cancel
-              </Button>
-            </div>
+                <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+                  {project.title}
+                </h1>
+                {projectDownloads != null && projectDownloads > 0 && (
+                  <span
+                    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border bg-white/5 text-muted-foreground border-white/10"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <Download className="h-3 w-3" />
+                    {projectDownloads} pull{projectDownloads === 1 ? '' : 's'}
+                  </span>
+                )}
+                <Pencil className="h-3.5 w-3.5 text-zinc-600 opacity-0 group-hover/title:opacity-100 transition-opacity duration-200 shrink-0" />
+              </div>
+            )}
+
+            {/* ── Description ── */}
+            {showDescriptionEdit ? (
+              <div className="mt-4 flex flex-col gap-1 max-w-2xl">
+                <input
+                  value={descriptionValue}
+                  onChange={(e) => setDescriptionValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void handleSaveDescription();
+                    if (e.key === 'Escape') { setEditingDescription(false); setDescriptionValue(''); }
+                  }}
+                  placeholder="Add a description…"
+                  aria-label="Project description"
+                  // biome-ignore lint/a11y/noAutofocus: intentional focus when edit is triggered
+                  autoFocus
+                  className={cn(
+                    'text-base text-muted-foreground dark:text-zinc-400 leading-relaxed',
+                    'bg-transparent border-0 border-b border-violet-500/40 focus:border-violet-400/70',
+                    'outline-none w-full pb-1 transition-colors duration-150',
+                    'placeholder:text-muted-foreground/25'
+                  )}
+                />
+                <span className="text-[11px] text-muted-foreground/40 dark:text-zinc-600 tracking-wide select-none">
+                  ↵ save &nbsp;·&nbsp; esc cancel
+                </span>
+              </div>
+            ) : (
+              // biome-ignore lint/a11y/useSemanticElements: group div needed for hover affordance
+              <div
+                className="group/desc mt-3 flex items-center gap-2 max-w-2xl cursor-text"
+                onClick={() => { setEditingDescription(true); setDescriptionValue(project.description ?? ''); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { setEditingDescription(true); setDescriptionValue(project.description ?? ''); } }}
+                role="button"
+                tabIndex={0}
+                aria-label="Edit project description"
+              >
+                <p className="text-base text-muted-foreground dark:text-zinc-400 leading-relaxed flex-1">
+                  {project.description || <span className="italic opacity-50">Add a description…</span>}
+                </p>
+                <Pencil className="h-3 w-3 text-zinc-600 opacity-0 group-hover/desc:opacity-100 transition-opacity duration-200 shrink-0" />
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="flex items-start gap-2">
-            <p className="text-muted-foreground flex-1">
-              {project.description || <span className="italic">No description</span>}
-            </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setEditingDescription(true);
-                setDescriptionValue(project.description);
-              }}
-              aria-label="Edit description"
+
+          {/* Quick-start snippet */}
+          <div className="mt-6">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground dark:text-zinc-500 mb-2 block">
+              Quick start
+            </span>
+            <button
+              type="button"
+              onClick={() => void handleCopySetup()}
+              className={cn(
+                'group flex items-center gap-3 rounded-lg border px-4 py-2.5',
+                'bg-zinc-100 dark:bg-white/5 border-zinc-200 dark:border-white/10',
+                'hover:border-zinc-300 dark:hover:border-white/20',
+                'transition-all duration-200 cursor-pointer'
+              )}
             >
-              Edit
-            </Button>
+              <Terminal className="h-4 w-4 text-muted-foreground dark:text-zinc-500 shrink-0" />
+              <code className="text-sm font-mono text-foreground dark:text-zinc-200">
+                $ bitcompass project pull
+              </code>
+              <span className="ml-4 shrink-0 text-muted-foreground dark:text-zinc-500 group-hover:text-foreground dark:group-hover:text-zinc-300 transition-colors">
+                {setupCopied ? (
+                  <Check className="h-4 w-4 text-emerald-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </span>
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
+      {/* ── Tabs ── */}
+      <div className="pt-6">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
         <TabsList>
           <TabsTrigger value="files">Files</TabsTrigger>
@@ -380,10 +420,7 @@ export default function CompassProjectDetailPage() {
 
         {/* ── Content tab (linked rules/skills/commands/docs) ── */}
         <TabsContent value="content" className="mt-4">
-      <div className="flex flex-col gap-6 items-start">
-        {/* LEFT: Knowledge list */}
-        <div className="flex-1 min-w-0">
-          <Card>
+          <Card className="w-full">
             <CardHeader>
               <CardTitle className="text-base">Linked rules, commands, docs & skills</CardTitle>
             </CardHeader>
@@ -445,167 +482,114 @@ export default function CompassProjectDetailPage() {
                 </div>
               ) : (
                 <>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {linkedRules.map((rule) => {
-                      const kindStyles = CARD_KIND_CLASSES[rule.kind];
-                      return (
-                        // Card contains buttons; cannot use <a> wrapper. Same pattern as RulesPage.
-                        // biome-ignore lint/a11y/useSemanticElements: Card contains buttons; div + role="link" for keyboard nav.
-                        <div
-                          key={rule.id}
-                          role="link"
-                          tabIndex={0}
-                          onClick={() => navigate(`/skills/${rule.id}`)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              navigate(`/skills/${rule.id}`);
-                            }
-                          }}
-                          className="block cursor-pointer"
-                          aria-label={`Open ${rule.kind}: ${rule.title}`}
-                        >
-                          <Card
+                  <div className="rounded-lg border border-zinc-200 dark:border-white/10 overflow-hidden">
+                    {/* Table header */}
+                    <div className="grid grid-cols-[1fr_90px_120px_90px_60px_90px] gap-4 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500 bg-zinc-50 dark:bg-white/[0.03] border-b border-zinc-200 dark:border-white/10">
+                      <span>Title</span>
+                      <span>Type</span>
+                      <span>Command</span>
+                      <span>Visibility</span>
+                      <span>Pulls</span>
+                      <span>Updated</span>
+                    </div>
+                    {/* Rows */}
+                    {linkedRules.map((rule, idx) => (
+                      // biome-ignore lint/a11y/useSemanticElements: Row contains buttons; cannot use <a> wrapper.
+                      <div
+                        key={rule.id}
+                        role="link"
+                        tabIndex={0}
+                        onClick={() => navigate(`/skills/${rule.id}`)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            navigate(`/skills/${rule.id}`);
+                          }
+                        }}
+                        className={cn(
+                          'grid grid-cols-[1fr_90px_120px_90px_60px_90px] gap-4 px-4 py-3 items-center cursor-pointer',
+                          'hover:bg-zinc-50 dark:hover:bg-white/[0.03] transition-colors duration-150',
+                          idx < linkedRules.length - 1 && 'border-b border-zinc-100 dark:border-white/5'
+                        )}
+                        aria-label={`Open ${rule.kind}: ${rule.title}`}
+                      >
+                        {/* Title */}
+                        <span className="font-medium text-sm text-foreground truncate inline-flex items-center gap-2">
+                          <span className="truncate">
+                            {rulesSearch.trim() ? highlightText(rule.title, rulesSearch) : rule.title}
+                          </span>
+                          {rule.special_file_target && SPECIAL_FILE_TARGETS[rule.special_file_target] && (
+                            <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-semibold rounded border bg-orange-500/10 text-orange-400 border-orange-500/20 uppercase tracking-wider">
+                              <FileText className="h-2.5 w-2.5" />
+                              {SPECIAL_FILE_TARGETS[rule.special_file_target].path}
+                            </span>
+                          )}
+                        </span>
+
+                        {/* Type badge */}
+                        <span>
+                          <span
                             className={cn(
-                              'card-interactive transition-all duration-300 border-l-4',
-                              'dark:bg-white/5 dark:backdrop-blur-xl dark:border dark:border-white/10',
-                              'dark:hover:-translate-y-1 dark:hover:shadow-2xl',
-                              kindStyles.card
+                              'inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded border capitalize',
+                              KIND_BADGE_CLASSES[rule.kind]
                             )}
                           >
-                            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                              <CardTitle className="text-base font-display font-bold">
-                                <span className="hover:underline text-foreground">
-                                  {rulesSearch.trim()
-                                    ? highlightText(rule.title, rulesSearch)
-                                    : rule.title}
-                                </span>
-                              </CardTitle>
-                              <span
-                                className={cn(
-                                  'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border capitalize',
-                                  rule.kind === 'rule' &&
-                                  'bg-sky-500/10 text-sky-400 border-sky-500/20',
-                                  rule.kind === 'documentation' &&
-                                  'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-                                  rule.kind === 'skill' &&
-                                  'bg-violet-500/10 text-violet-400 border-violet-500/20',
-                                  rule.kind === 'command' &&
-                                  'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                )}
-                              >
-                                {rule.kind}
-                              </span>
-                            </CardHeader>
-                            <CardContent>
-                              <p className="text-sm text-muted-foreground dark:text-zinc-400 line-clamp-2">
-                                {rulesSearch.trim()
-                                  ? highlightText(
-                                    rule.description || rule.body,
-                                    rulesSearch
-                                  )
-                                  : rule.description || rule.body}
-                              </p>
-                              <div className="mt-3 space-y-2">
-                                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground dark:text-zinc-400">
-                                  {(rule.author_display_name ?? rule.user_id) && (
-                                    <div className="flex items-center gap-1.5">
-                                      <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                                      <span>
-                                        {rule.author_display_name ?? 'Unknown author'}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {rule.version && (
-                                    <span className="font-medium">v{rule.version}</span>
-                                  )}
-                                </div>
-                                {(rule.technologies?.length ?? 0) > 0 && (
-                                  <div className="flex flex-wrap items-center gap-1.5">
-                                    {(rule.technologies ?? []).slice(0, 5).map((tech) => {
-                                      const style = getTechStyle(tech);
-                                      return (
-                                        <span
-                                          key={tech}
-                                          className={cn(
-                                            'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border',
-                                            style.bg,
-                                            style.text,
-                                            style.border
-                                          )}
-                                        >
-                                          {rulesSearch.trim()
-                                            ? highlightText(tech, rulesSearch)
-                                            : tech}
-                                        </span>
-                                      );
-                                    })}
-                                    {(rule.technologies?.length ?? 0) > 5 && (
-                                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border bg-white/5 text-zinc-400 dark:bg-white/5 dark:text-zinc-400 dark:border-white/10">
-                                        +{(rule.technologies?.length ?? 0) - 5}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                              {/* biome-ignore lint/a11y/noStaticElementInteractions: Wrapper only stops propagation so button clicks don't trigger card nav. */}
-                              <div
-                                className="mt-4 flex flex-wrap items-center gap-2"
-                                onClick={(e) => e.stopPropagation()}
-                                onKeyDown={(e) => e.stopPropagation()}
-                              >
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    void handleCopyPullCommand(rule, false);
-                                  }}
-                                  aria-label={`Use this ${rule.kind} (symlink)`}
-                                  title={getPullCommand(rule.id, rule.kind, false)}
-                                  className={cn('gap-1.5 border-0', kindStyles.cta)}
-                                >
-                                  <Link2 className="h-4 w-4" />
-                                  Use this {getKindLabel(rule.kind)}
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    void handleCopyPullCommand(rule, true);
-                                  }}
-                                  aria-label={`Clone this ${rule.kind} (--copy)`}
-                                  className={cn(
-                                    'dark:border-white/10 dark:bg-white/5',
-                                    copiedRuleId === rule.id
-                                      ? 'bg-muted dark:bg-white/10'
-                                      : ''
-                                  )}
-                                >
-                                  <GitFork className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    downloadRule(rule, 'markdown');
-                                  }}
-                                  aria-label="Download as Markdown"
-                                  className="dark:text-zinc-400"
-                                >
-                                  <FileDown className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      );
-                    })}
+                            {rule.kind === 'documentation' ? 'Doc' : rule.kind}
+                          </span>
+                        </span>
+
+                        {/* Copy command */}
+                        {/* biome-ignore lint/a11y: Wrapper stops propagation so button clicks don't trigger row navigation. */}
+                        <span
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              void handleCopyPullCommand(rule, false);
+                            }}
+                            className={cn(
+                              'inline-flex items-center gap-1 px-2 py-1 text-[10px] font-mono rounded border transition-all duration-150',
+                              'bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10',
+                              'hover:border-zinc-300 dark:hover:border-white/20 hover:bg-zinc-100 dark:hover:bg-white/10',
+                              'text-muted-foreground hover:text-foreground cursor-pointer'
+                            )}
+                            title={getPullCommand(rule.id, rule.kind, false)}
+                          >
+                            {copiedRuleId === rule.id ? (
+                              <Check className="h-3 w-3 text-emerald-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                            pull
+                          </button>
+                        </span>
+
+                        {/* Visibility */}
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          {rule.visibility === 'public' ? (
+                            <Globe className="h-3 w-3 text-emerald-500/70" />
+                          ) : (
+                            <Lock className="h-3 w-3 text-zinc-400" />
+                          )}
+                          <span className="capitalize">{rule.visibility}</span>
+                        </span>
+
+                        {/* Pulls */}
+                        <span className="text-xs text-muted-foreground tabular-nums inline-flex items-center gap-1">
+                          <Download className="h-3 w-3" />
+                          {linkedDownloadCounts[rule.id] ?? 0}
+                        </span>
+
+                        {/* Updated */}
+                        <span className="text-xs text-muted-foreground dark:text-zinc-500 truncate" title={rule.updated_at}>
+                          {formatDistanceToNowStrict(new Date(rule.updated_at), { addSuffix: true })}
+                        </span>
+                      </div>
+                    ))}
                   </div>
 
                   {linkedTotalPages > 1 && (
@@ -673,8 +657,6 @@ export default function CompassProjectDetailPage() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </div>
         </TabsContent>
 
         {/* ── Members tab ── */}
@@ -898,6 +880,7 @@ export default function CompassProjectDetailPage() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

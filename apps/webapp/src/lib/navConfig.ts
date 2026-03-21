@@ -19,7 +19,6 @@ export interface NavItem {
 export interface NavGroup {
   label: string;
   items: NavItem[];
-  mocked?: boolean;
 }
 
 export const navGroups: NavGroup[] = [
@@ -27,7 +26,7 @@ export const navGroups: NavGroup[] = [
     label: 'Knowledge',
     items: [
       { to: '/skills', icon: BookMarked, label: 'Skills & rules' },
-      { to: '/compass-projects', icon: Layers, label: 'Compass projects' },
+      { to: '/projects', icon: Layers, label: 'Projects' },
       { to: '/groups', icon: FolderTree, label: 'Groups' },
       { to: '/users', icon: Users, label: 'Users' },
       { to: '/stats', icon: BarChart3, label: 'Stats' },
@@ -40,18 +39,6 @@ export const navGroups: NavGroup[] = [
       { to: '/mcp', icon: Plug, label: 'MCP' },
     ],
   },
-  // Mocked sections – commented out until backed by real data
-  // {
-  //   label: 'Mocked stuff',
-  //   mocked: true,
-  //   items: [
-  //     { to: '/topics', icon: Lightbulb, label: 'Topics' },
-  //     { to: '/problems', icon: AlertCircle, label: 'Problems' },
-  //     { to: '/projects', icon: FolderKanban, label: 'Projects' },
-  //     { to: '/people', icon: Users, label: 'People' },
-  //     { to: '/automations', icon: Workflow, label: 'Automations' },
-  //   ],
-  // },
   {
     label: 'Help',
     items: [

@@ -20,7 +20,7 @@ export function RequireAuth({ children }: RequireAuthProps) {
     if (!isSupabaseConfigured()) return;
     if (isLoading) return;
     if (!session) {
-      navigate('/login', { state: { from: location.pathname }, replace: true });
+      navigate('/', { replace: true });
     }
   }, [session, isLoading, navigate, location.pathname]);
 

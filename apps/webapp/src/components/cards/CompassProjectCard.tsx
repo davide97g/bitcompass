@@ -41,7 +41,7 @@ export function CompassProjectCard({
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex flex-wrap items-center gap-2 min-w-0">
             <Link
-              to={`/compass-projects/${project.id}`}
+              to={`/projects/${project.id}`}
               className="font-display text-lg font-bold text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring rounded transition-colors"
               tabIndex={0}
               aria-label={`Open project ${project.title}`}
@@ -100,7 +100,7 @@ export function CompassProjectCard({
           <span>{memberCount} {memberCount === 1 ? 'member' : 'members'}</span>
         </div>
         <Link
-          to={`/compass-projects/${project.id}`}
+          to={`/projects/${project.id}`}
           className="inline-flex items-center text-sm font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded transition-colors"
           tabIndex={0}
           aria-label={`Manage project ${project.title}`}

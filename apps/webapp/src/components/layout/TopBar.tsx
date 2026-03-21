@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { searchAll } from '@/data/mockData';
 import { useRulesSearch } from '@/hooks/use-rules';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -60,21 +59,9 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
   const avatarUrl = getUserAvatarUrl(user);
   const initials = getUserInitials(user);
 
-  const searchResults = searchQuery.length > 1 ? searchAll(searchQuery) : null;
   const { data: rulesResults = [] } = useRulesSearch(searchQuery);
-  const hasAnyResults =
-    (searchResults?.hasResults ?? false) || rulesResults.length > 0;
-  const mergedResults = searchResults
-    ? { ...searchResults, rules: rulesResults }
-    : {
-        people: [],
-        topics: [],
-        problems: [],
-        projects: [],
-        automations: [],
-        rules: rulesResults,
-        hasResults: rulesResults.length > 0,
-      };
+  const hasAnyResults = rulesResults.length > 0;
+  const mergedResults = { rules: rulesResults };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

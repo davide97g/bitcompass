@@ -383,7 +383,7 @@ export default function UserDetailPage() {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                navigate(`/compass-projects/${rule.project_id}`);
+                                navigate(`/projects/${rule.project_id}`);
                               }}
                               onKeyDown={(e) => e.stopPropagation()}
                               className="hover:underline bg-transparent border-0 p-0 text-inherit font-inherit cursor-pointer"

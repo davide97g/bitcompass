@@ -22,7 +22,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-3 overflow-hidden">
+        <NavLink to="/" className="flex items-center gap-3 overflow-hidden">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg">
             <img src={logoSvg} alt="BitCompass" className="w-8 h-8 rounded-lg" />
           </div>
@@ -31,7 +31,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               Bitcompass
             </span>
           )}
-        </div>
+        </NavLink>
       </div>
 
       {/* Navigation - no scroll: sidebar stays static; nav fits or uses internal scroll only */}

@@ -77,7 +77,7 @@ export default function CompassProjectsPage() {
   if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto">
-        <PageHeader title="Compass projects" description="Scope rules, skills, and commands by project" />
+        <PageHeader title="Projects" description="Scope rules, skills, and commands by project" />
         <div className="text-muted-foreground">Loading…</div>
       </div>
     );
@@ -86,7 +86,7 @@ export default function CompassProjectsPage() {
   return (
     <div className="max-w-6xl mx-auto">
       <PageHeader
-        title="Compass projects"
+        title="Projects"
         description="Scope rules, skills, and commands by project. Only members can see and push."
       >
         <Button
@@ -112,7 +112,7 @@ export default function CompassProjectsPage() {
       {projects.length === 0 && (
         <div className="text-center py-12 text-muted-foreground dark:text-zinc-400">
           <Layers className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>No Compass projects yet. Create one to scope rules and commands.</p>
+          <p>No Projects yet. Create one to scope rules and commands.</p>
           <Button className="mt-4 dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/10" onClick={() => setCreateOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             New project

@@ -222,4 +222,101 @@ describe('migration-runner', () => {
 
     expect(ran).toEqual(['global-0.15.0', 'project-0.16.0', 'global-0.16.0']);
   });
+
+  test('dry-run mode does not write state file', async () => {
+    const { runMigrations } = await import('../lib/migration-runner.js');
+    writeFileSync(join(tempDir, 'migration-state.json'), JSON.stringify({ lastMigratedVersion: '0.15.0' }));
+
+    const ran: string[] = [];
+    const fakeMigrations: Migration[] = [
+      {
+        version: '0.16.0',
+        description: 'dry run migration',
+        scope: 'global',
+        migrate: async () => { ran.push('0.16.0'); },
+      },
+    ];
+
+    const result = await runMigrations({
+      currentVersion: '0.16.0',
+      migrations: fakeMigrations,
+      globalStateDir: tempDir,
+      dryRun: true,
+    });
+
+    expect(ran).toEqual(['0.16.0']);
+    expect(result.success).toBe(true);
+    expect(result.migrationsRun).toBe(1);
+    // State should NOT have been updated
+    const state = JSON.parse(readFileSync(join(tempDir, 'migration-state.json'), 'utf-8'));
+    expect(state.lastMigratedVersion).toBe('0.15.0');
+  });
+
+  test('empty migrations array returns success with zero migrations', async () => {
+    const { runMigrations } = await import('../lib/migration-runner.js');
+    writeFileSync(join(tempDir, 'migration-state.json'), JSON.stringify({ lastMigratedVersion: '0.15.0' }));
+
+    const result = await runMigrations({
+      currentVersion: '0.16.0',
+      migrations: [],
+      globalStateDir: tempDir,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.migrationsRun).toBe(0);
+  });
+
+  test('returns correct migrationsRun count', async () => {
+    const { runMigrations } = await import('../lib/migration-runner.js');
+    writeFileSync(join(tempDir, 'migration-state.json'), JSON.stringify({ lastMigratedVersion: '0.14.0' }));
+
+    const fakeMigrations: Migration[] = [
+      {
+        version: '0.15.0',
+        description: 'first',
+        scope: 'global',
+        migrate: async () => {},
+      },
+      {
+        version: '0.16.0',
+        description: 'second',
+        scope: 'global',
+        migrate: async () => {},
+      },
+    ];
+
+    const result = await runMigrations({
+      currentVersion: '0.16.0',
+      migrations: fakeMigrations,
+      globalStateDir: tempDir,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.migrationsRun).toBe(2);
+  });
+
+  test('propagates error message from failed migration', async () => {
+    const { runMigrations } = await import('../lib/migration-runner.js');
+    writeFileSync(join(tempDir, 'migration-state.json'), JSON.stringify({ lastMigratedVersion: '0.14.0' }));
+
+    const fakeMigrations: Migration[] = [
+      {
+        version: '0.15.0',
+        description: 'broken',
+        scope: 'global',
+        migrate: async () => { throw new Error('disk full'); },
+      },
+    ];
+
+    const result = await runMigrations({
+      currentVersion: '0.15.0',
+      migrations: fakeMigrations,
+      globalStateDir: tempDir,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('disk full');
+    expect(result.failedVersion).toBe('0.15.0');
+    expect(result.migrationsRun).toBe(0);
+  });
 });

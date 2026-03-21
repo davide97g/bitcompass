@@ -419,7 +419,7 @@ export default function RuleDetailPage() {
             {/* Project chip — clickable */}
             {rule.project_id ? (
               <Link
-                to={`/compass-projects/${rule.project_id}`}
+                to={`/projects/${rule.project_id}`}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] text-muted-foreground hover:text-foreground hover:border-zinc-300 dark:hover:border-white/20 transition-colors"
               >
                 <Layers className="h-3 w-3" />
@@ -663,7 +663,7 @@ export default function RuleDetailPage() {
               <div className="flex items-center gap-2">
                 {rule.project_id ? (
                   <Link
-                    to={`/compass-projects/${rule.project_id}`}
+                    to={`/projects/${rule.project_id}`}
                     className="text-sm text-foreground hover:underline"
                   >
                     {projectIdToTitle[rule.project_id] ?? 'Project'}

@@ -7,8 +7,6 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 // Lazy-loaded pages
-const AutomationDetailPage = lazy(() => import("./pages/AutomationDetailPage"));
-const AutomationsPage = lazy(() => import("./pages/AutomationsPage"));
 const CLIPage = lazy(() => import("./pages/CLIPage"));
 const CompassProjectDetailPage = lazy(() => import("./pages/CompassProjectDetailPage"));
 const CompassProjectsPage = lazy(() => import("./pages/CompassProjectsPage"));
@@ -16,12 +14,6 @@ const GlossaryPage = lazy(() => import("./pages/GlossaryPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const MCPPage = lazy(() => import("./pages/MCPPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const PeoplePage = lazy(() => import("./pages/PeoplePage"));
-const PersonDetailPage = lazy(() => import("./pages/PersonDetailPage"));
-const ProblemDetailPage = lazy(() => import("./pages/ProblemDetailPage"));
-const ProblemsPage = lazy(() => import("./pages/ProblemsPage"));
-const ProjectDetailPage = lazy(() => import("./pages/ProjectDetailPage"));
-const ProjectsPage = lazy(() => import("./pages/ProjectsPage"));
 const RuleDetailPage = lazy(() => import("./pages/RuleDetailPage"));
 const GroupDetailPage = lazy(() => import("./pages/GroupDetailPage"));
 const GroupsPage = lazy(() => import("./pages/GroupsPage"));
@@ -65,22 +57,14 @@ const App = () => (
               </AppLock>
             </RequireAuth>
           }>
-<Route path="/problems" element={<ProblemsPage />} />
-            <Route path="/problems/:id" element={<ProblemDetailPage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/projects/:id" element={<ProjectDetailPage />} />
-            <Route path="/people" element={<PeoplePage />} />
-            <Route path="/people/:id" element={<PersonDetailPage />} />
-            <Route path="/automations" element={<AutomationsPage />} />
-            <Route path="/automations/:id" element={<AutomationDetailPage />} />
             <Route path="/skills" element={<RulesPage />} />
             <Route path="/skills/:id" element={<RuleDetailPage />} />
             <Route path="/groups" element={<GroupsPage />} />
             <Route path="/groups/:id" element={<GroupDetailPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/users/:id" element={<UserDetailPage />} />
-            <Route path="/compass-projects" element={<CompassProjectsPage />} />
-            <Route path="/compass-projects/:id" element={<CompassProjectDetailPage />} />
+            <Route path="/projects" element={<CompassProjectsPage />} />
+            <Route path="/projects/:id" element={<CompassProjectDetailPage />} />
             <Route path="/cli" element={<CLIPage />} />
             <Route path="/mcp" element={<MCPPage />} />
             <Route path="/stats" element={<StatsPage />} />
